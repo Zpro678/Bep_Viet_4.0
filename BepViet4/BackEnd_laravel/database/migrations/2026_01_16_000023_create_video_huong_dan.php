@@ -20,7 +20,7 @@ public function up(): void
         $table->string('tieu_de_video', 100);
         $table->text('duong_dan_video')->nullable(); // Link video
         $table->string('nen_tang', 200)->nullable(); // Youtube, TikTok...
-        $table->integer('thoi_luong')->nullable(); // Tính bằng giây
+        $table->unsignedInteger('thoi_luong')->nullable(); // Tính bằng giây
         $table->boolean('la_video_chinh')->default(0); // 0: Phụ, 1: Chính
         
         $table->timestamps();
