@@ -4,7 +4,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 class VideoHuongDan extends Model {
-    protected $table = 'VideoHuongDan';
+    protected $table = 'video_huong_dan';
     protected $primaryKey = 'ma_video';
     public $timestamps = false;
     protected $fillable = [

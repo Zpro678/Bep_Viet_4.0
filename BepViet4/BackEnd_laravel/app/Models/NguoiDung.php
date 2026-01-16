@@ -12,7 +12,7 @@ class NguoiDung extends Authenticatable
 {
     use Notifiable;
 
-    protected $table = 'NguoiDung';
+    protected $table = 'nguoi_dung';
     protected $primaryKey = 'ma_nguoi_dung';
     public $timestamps = false; // Tài liệu dùng ngay_tao, không dùng created_at/updated_at chuẩn
 

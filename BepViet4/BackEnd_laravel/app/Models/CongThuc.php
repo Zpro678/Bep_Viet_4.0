@@ -3,7 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use App\Models\NguoiDung;
+use App\Models\DanhMuc;
+use App\Models\VungMien;
+use App\Models\The;
 class CongThuc extends Model
 {
     protected $table = 'CongThuc';

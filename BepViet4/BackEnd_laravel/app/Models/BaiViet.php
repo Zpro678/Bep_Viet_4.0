@@ -4,7 +4,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 class BaiViet extends Model {
-    protected $table = 'BaiViet';
+    protected $table = 'bai_viet';
     protected $primaryKey = 'ma_bai_viet';
     public $timestamps = false;
     protected $fillable = [
