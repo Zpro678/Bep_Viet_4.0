@@ -3,13 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\NguoiDung;
-use App\Models\DanhMuc;
-use App\Models\VungMien;
 use App\Models\The;
+
 class CongThuc extends Model
 {
-    protected $table = 'CongThuc';
+    protected $table = 'cong_thuc';
     protected $primaryKey = 'ma_cong_thuc';
     public $timestamps = false; // Xử lý thủ công cột 'ngay_tao'
 
@@ -45,14 +43,14 @@ class CongThuc extends Model
     // Many-to-Many: Nguyên liệu (qua bảng trung gian CongThuc_NguyenLieu) [cite: 310, 312]
     public function nguyenLieu()
     {
-        return $this->belongsToMany(NguyenLieu::class, 'CongThuc_NguyenLieu', 'ma_cong_thuc', 'ma_nguyen_lieu')
+        return $this->belongsToMany(NguyenLieu::class, 'cong_thuc_nguyen_lieu', 'ma_cong_thuc', 'ma_nguyen_lieu')
                     ->withPivot('dinh_luong', 'don_vi_tinh'); // [cite: 313]
     }
 
     // Many-to-Many: Thẻ/Tags (qua bảng trung gian CongThuc_The) [cite: 314]
     public function the()
     {
-        return $this->belongsToMany(The::class, 'CongThuc_The', 'ma_cong_thuc', 'ma_the');
+        return $this->belongsToMany(The::class, 'cong_thuc_the', 'ma_cong_thuc', 'ma_the');
     }
 
     // HasMany: Hình ảnh [cite: 388]
