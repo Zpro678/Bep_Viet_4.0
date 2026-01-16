@@ -1,6 +1,10 @@
 <?php
 
 namespace App\Models;
+use App\Models\NguoiDung;
+use App\Models\BinhLuanBaiViet;
+use App\Models\HinhAnhBaiViet;
+
 use Illuminate\Database\Eloquent\Model;
 
 class BaiViet extends Model {
