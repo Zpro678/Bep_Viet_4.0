@@ -16,10 +16,10 @@ return new class extends Migration
             $table->increments('ma_binh_luan');
 
             // ma_nguoi_dung: Integer, Foreign Key (ref NguoiDung)
-            $table->integer('ma_nguoi_dung');
+            $table->unsignedInteger('ma_nguoi_dung');
 
             // ma_cong_thuc: Integer, Foreign Key (ref CongThuc)
-            $table->integer('ma_cong_thuc');
+            $table->unsignedInteger('ma_cong_thuc');
 
             $table->unsignedInteger('ma_binh_luan_cha')->nullable(); // Có thể null nếu là comment gốc
 

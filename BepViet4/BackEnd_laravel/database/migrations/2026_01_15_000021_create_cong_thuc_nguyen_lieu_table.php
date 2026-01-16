@@ -13,11 +13,10 @@ return new class extends Migration
     {
         Schema::create('cong_thuc_nguyen_lieu', function (Blueprint $table) {
             // Bảng trung gian nên không dùng id()
-            $table->unsignedBigInteger('ma_cong_thuc');
-            $table->unsignedBigInteger('ma_nguyen_lieu');
+            $table->unsignedInteger('ma_cong_thuc');
+            $table->unsignedInteger('ma_nguyen_lieu');
 
-            $table->float('dinh_luong')
-                  ->check('dinh_luong > 0');
+            $table->float('dinh_luong')->unsigned();
 
             $table->string('don_vi_tinh', 50);
 

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('buoc_thuc_hien', function (Blueprint $table) {
             $table->increments('ma_buoc'); // INT, PK, IDENTITY(1,1)
 
-            $table->unsignedBigInteger('ma_cong_thuc'); // FK
+            $table->unsignedInteger('ma_cong_thuc'); // FK
             
             $table->integer('so_thu_tu')
                   ->check('so_thu_tu > 0');
