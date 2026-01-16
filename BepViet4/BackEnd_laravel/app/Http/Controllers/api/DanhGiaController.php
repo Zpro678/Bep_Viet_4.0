@@ -8,4 +8,7 @@ use Illuminate\Http\Request;
 class DanhGiaController extends Controller
 {
     //
+    public function layThongKeDanhGia(){
+        return view('/');
+    }
 }

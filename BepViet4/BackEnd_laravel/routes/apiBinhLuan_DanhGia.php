@@ -5,7 +5,7 @@ use App\Http\Controllers\api\DanhGiaController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/cong-thuc/{id}/binh-luan', [BinhLuanController::class, 'layBinhLuanCongThuc'])->name('layBinhLuan'); // 51
+Route::get('/cong-thuc/{id}/binh-luan', [BinhLuanController::class, 'layBinhLuan'])->name('layBinhLuan'); // 51
 Route::post('/binh-luan/{id}/tra-loi', [BinhLuanController::class, 'traLoiBinhLuan'])->name('traLoiBinhLuan'); // 52
 Route::get('/binh-luan/{id}/danh-sach-tra-loi', [BinhLuanController::class, 'layCauTraLoi'])->name('layCauTraLoi'); // 53
 Route::delete('/binh-luan/{id}', [BinhLuanController::class, 'xoaBinhLuan'])->name('xoaBinhLuan'); // 54
@@ -19,7 +19,7 @@ Route::get('/recipes/{id}/ratings', [DanhGiaController::class, 'layThongKeDanhGi
 
 
 
-// Route::get('/recipes/{id}/comments', [BinhLuanController::class, 'layBinhLuanCongThuc'])->name('layBinhLuan'); // 51
+// Route::get('/recipes/{id}/comments', [BinhLuanController::class, 'layBinhLuan'])->name('layBinhLuan'); // 51
 // Route::post('/comments/{id}/reply', [BinhLuanController::class, 'traLoiBinhLuan'])->name('traLoiBinhLuan'); // 52
 // Route::get('/comments/{id}/replies', [BinhLuanController::class, 'layCauTraLoi'])->name('layCauTraLoi'); // 53
 // Route::delete('/comments/{id}', [BinhLuanController::class, 'xoaBinhLuan'])->name('xoaBinhLuan'); // 54
