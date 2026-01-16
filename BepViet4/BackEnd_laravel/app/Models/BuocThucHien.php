@@ -21,9 +21,9 @@ class BuocThucHien extends Model
         'thoi_gian'
     ];
 
-    // // QH: Bước thực hiện thuộc về 1 công thức
-    // public function congThuc()
-    // {
-    //     return $this->belongsTo(CongThuc::class, 'ma_cong_thuc', 'ma_cong_thuc');
-    // }
+    // QH: Bước thực hiện thuộc về 1 công thức
+    public function congThuc()
+    {
+        return $this->belongsTo(CongThuc::class, 'ma_cong_thuc', 'ma_cong_thuc');
+    }
 }
