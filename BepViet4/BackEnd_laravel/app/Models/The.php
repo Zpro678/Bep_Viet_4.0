@@ -11,7 +11,6 @@ class The extends Model
 
     protected $table = 'the';
     protected $primaryKey = 'ma_the';
-
     public $timestamps = false;
 
     protected $fillable = [
