@@ -22,18 +22,18 @@ class VungMienController extends Controller
     // 3. Lấy danh sách món ăn thuộc vùng miền cụ thể
     public function getRecipes($id)
     {
-        // Bước 1: Tìm vùng miền xem có tồn tại không
         $vungMien = VungMien::find($id);
-
         if (!$vungMien) {
             return response()->json(['message' => 'Không tìm thấy vùng miền'], 404);
         }
 
-        // Bước 2: Gọi Model Công Thức ra, tra cứu thủ công bằng 'where'
-        // "Lấy tất cả công thức CÓ ma_vung_mien BẰNG $id"
-        $danhSachMonAn = CongThuc::where('ma_vung_mien', $id)->get();
+        // TỐI ƯU: Nếu cần lấy thêm thông tin người tạo món ăn thì Join luôn user
+        // Nếu chỉ lấy món ăn đơn thuần thì where là đủ, nhưng đây là ví dụ Join với bảng User
+        $danhSachMonAn = CongThuc::select('cong_thuc.*', 'users.name as ten_nguoi_tao')
+            ->leftJoin('users', 'cong_thuc.ma_nguoi_dung', '=', 'users.id')
+            ->where('cong_thuc.ma_vung_mien', $id)
+            ->get();
 
-        // Bước 3: Xuất kết quả
         return response()->json([
             'message' => "Danh sách món ăn thuộc miền " . $vungMien->ten_vung_mien,
             'data' => $danhSachMonAn

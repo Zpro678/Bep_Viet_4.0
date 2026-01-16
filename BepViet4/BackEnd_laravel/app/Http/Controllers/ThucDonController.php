@@ -11,25 +11,29 @@ class ThucDonController extends Controller
     // 43. GET /meal-plans: Xem lịch ăn uống (có lọc theo ngày)
     public function index(Request $request)
     {
-        // Lấy ID người dùng hiện tại từ Token
         $userId = $request->user()->id;
 
-        // Bắt đầu truy vấn
-        $query = ThucDon::where('ma_nguoi_dung', $userId)
-            ->with('congThuc'); // Load kèm thông tin món ăn để hiển thị tên, ảnh...
+        // SỬ DỤNG JOIN
+        $query = ThucDon::query()
+            ->join('cong_thuc', 'thuc_don.ma_cong_thuc', '=', 'cong_thuc.ma_cong_thuc')
+            ->where('thuc_don.ma_nguoi_dung', $userId)
+            // CHÚ Ý: Phải select rõ ràng để tránh trùng tên cột (ví dụ id, ngay_tao)
+            ->select(
+                'thuc_don.*', 
+                'cong_thuc.ten_mon', 
+                'cong_thuc.hinh_anh', 
+                'cong_thuc.mo_ta'
+            );
 
-        // Lọc theo ngày bắt đầu (from_date)
         if ($request->has('from_date')) {
-            $query->whereDate('ngay_an', '>=', $request->from_date);
+            $query->whereDate('thuc_don.ngay_an', '>=', $request->from_date);
         }
 
-        // Lọc theo ngày kết thúc (to_date)
         if ($request->has('to_date')) {
-            $query->whereDate('ngay_an', '<=', $request->to_date);
+            $query->whereDate('thuc_don.ngay_an', '<=', $request->to_date);
         }
 
-        // Sắp xếp theo ngày ăn tăng dần
-        $thucDon = $query->orderBy('ngay_an', 'asc')->get();
+        $thucDon = $query->orderBy('thuc_don.ngay_an', 'asc')->get();
 
         return response()->json([
             'message' => 'Lấy danh sách thực đơn thành công',

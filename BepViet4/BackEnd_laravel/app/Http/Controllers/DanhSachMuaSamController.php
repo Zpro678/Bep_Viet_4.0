@@ -13,10 +13,19 @@ class DanhSachMuaSamController extends Controller
     {
         $userId = $request->user()->id;
 
-        // Lấy danh sách của user, kèm thông tin nguyên liệu (tên, ảnh...)
-        $danhSach = DanhSachMuaSam::where('ma_nguoi_dung', $userId)
-            ->with('nguyenLieu') // Load quan hệ để hiển thị tên nguyên liệu
-            ->orderBy('trang_thai', 'asc') // Ưu tiên hiện món chưa mua (0) trước, đã mua (1) sau
+        // SỬ DỤNG JOIN
+        $danhSach = DanhSachMuaSam::query()
+            ->join('nguyen_lieu', 'danh_sach_mua_sam.ma_nguyen_lieu', '=', 'nguyen_lieu.ma_nguyen_lieu')
+            ->where('danh_sach_mua_sam.ma_nguoi_dung', $userId)
+            ->select(
+                'danh_sach_mua_sam.*',
+                'nguyen_lieu.ten_nguyen_lieu',
+                'nguyen_lieu.hinh_anh',
+                // Nếu bảng danh sách mua sắm ko có đơn vị, lấy từ nguyên liệu gốc
+                'nguyen_lieu.don_vi_tinh as don_vi_goc' 
+            )
+            ->orderBy('danh_sach_mua_sam.trang_thai', 'asc') // Chưa mua lên trước
+            ->orderBy('nguyen_lieu.ten_nguyen_lieu', 'asc') // Sắp xếp theo tên A-Z (Chỉ JOIN mới làm được cái này dễ dàng)
             ->get();
 
         return response()->json([
