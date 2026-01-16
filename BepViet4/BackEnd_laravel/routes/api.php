@@ -19,7 +19,7 @@ require __DIR__ . '/apiDanhMuc.php';
 
 require __DIR__ . '/apiBaiViet.php';
 
-require __DIR__ . '/apiBinhLuanDanhGia.php';
+require __DIR__ . '/apiBinhLuan_DanhGia.php';
 
 require __DIR__ . '/apiHinhAnh.php';
 
