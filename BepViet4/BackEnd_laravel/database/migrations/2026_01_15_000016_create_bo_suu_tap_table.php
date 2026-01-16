@@ -16,12 +16,17 @@ return new class extends Migration
             $table->increments('ma_bo_suu_tap');
 
             // ma_nguoi_dung: Integer, Foreign Key (Ref NguoiDung)
-            $table->integer('ma_nguoi_dung');
+            $table->unsignedInteger('ma_nguoi_dung');
 
             // ten_bo_suu_tap: NVARCHAR(100), Not Null
             $table->string('ten_bo_suu_tap', 100);
 
             $table->timestamps(); // created_at and updated_at
+            
+            $table->foreign('ma_nguoi_dung')
+            ->references('ma_nguoi_dung')
+            ->on('nguoi_dung')
+            ->onDelete('cascade');
         });
     }
 

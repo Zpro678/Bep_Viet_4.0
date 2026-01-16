@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('_danh_sach_mua_sam', function (Blueprint $table) {
+        Schema::create('danh_sach_mua_sam', function (Blueprint $table) {
             $table->increments('ma_mua_sam');
 
-            $table->integer('ma_nguoi_dung');
+            $table->unsignedInteger('ma_nguoi_dung');
 
-            $table->integer('ma_nguyen_lieu');
+            $table->unsignedInteger('ma_nguyen_lieu');
 
             $table->float('so_luong_can');
 
@@ -25,6 +25,10 @@ return new class extends Migration
             $table->boolean('trang_thai')->default(0);
 
             $table->timestamps();
+            
+            $table->foreign('ma_nguoi_dung')->references('ma_nguoi_dung')->on('nguoi_dung')->onDelete('cascade');
+            
+            $table->foreign('ma_nguyen_lieu')->references('ma_nguyen_lieu')->on('nguyen_lieu')->onDelete('cascade');
         });
     }
 

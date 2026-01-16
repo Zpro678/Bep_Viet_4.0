@@ -49,6 +49,19 @@ return new class extends Migration
         $table->dateTime('ngay_tao')->useCurrent();
 
         $table->timestamps();
+
+        // Ràng buộc khóa
+        $table->foreign('ma_nguoi_dung')
+              ->references('ma_nguoi_dung')->on('nguoi_dung')
+              ->onDelete('cascade'); // Xóa user thì xóa luôn công thức
+
+        $table->foreign('ma_danh_muc')
+              ->references('ma_danh_muc')->on('danh_muc')
+              ->onDelete('set null'); // Xóa danh mục thì để null
+
+        $table->foreign('ma_vung_mien')
+              ->references('ma_vung_mien')->on('vung_mien')
+              ->onDelete('set null');
     });
 }
 

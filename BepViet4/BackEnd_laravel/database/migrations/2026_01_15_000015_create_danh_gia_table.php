@@ -16,10 +16,10 @@ return new class extends Migration
             $table->increments('ma_danh_gia');
 
             // ma_nguoi_dung: Integer, Foreign Key
-            $table->integer('ma_nguoi_dung');
+            $table->unsignedInteger('ma_nguoi_dung');
 
             // ma_cong_thuc: Integer, Foreign Key
-            $table->integer('ma_cong_thuc');
+            $table->unsignedInteger('ma_cong_thuc');
 
             // so_sao: Integer, Not Null (Check 1-5 thường xử lý ở logic code hoặc DB Raw)
             $table->integer('so_sao');
@@ -28,6 +28,16 @@ return new class extends Migration
             $table->unique(['ma_nguoi_dung', 'ma_cong_thuc']);
 
             $table->timestamps(); // created_at and updated_at
+            
+            $table->foreign('ma_nguoi_dung')
+                ->references('ma_nguoi_dung')
+                ->on('nguoi_dung')
+                ->onDelete('cascade');
+                
+            $table->foreign('ma_cong_thuc')
+                ->references('ma_cong_thuc')
+                ->on('cong_thuc')
+                ->onDelete('cascade');
         });
     }
 

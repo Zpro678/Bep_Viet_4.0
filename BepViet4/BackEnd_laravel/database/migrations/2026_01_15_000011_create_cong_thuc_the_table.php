@@ -13,13 +13,21 @@ return new class extends Migration
     {
         Schema::create('cong_thuc_the', function (Blueprint $table) {
             // ma_cong_thuc: Integer, tham chiếu đến bảng CongThuc
-            $table->integer('ma_cong_thuc');
+            $table->unsignedInteger('ma_cong_thuc');
+            $table->unsignedInteger('ma_the');
 
-            // ma_the: Integer, tham chiếu đến bảng The
-            $table->integer('ma_the');
-
+            $table->primary(['ma_cong_thuc', 'ma_the']);
             // created_at and updated_at
             $table->timestamps();
+
+            // --- KHAI BÁO RÀNG BUỘC KHÓA NGOẠI ---
+            $table->foreign('ma_cong_thuc')
+                ->references('ma_cong_thuc')->on('cong_thuc')
+                ->onDelete('cascade'); // Xóa công thức -> xóa dòng này
+
+            $table->foreign('ma_the')
+                ->references('ma_the')->on('the')
+                ->onDelete('cascade'); // Xóa thẻ (tag) -> xóa dòng này
         });
     }
 

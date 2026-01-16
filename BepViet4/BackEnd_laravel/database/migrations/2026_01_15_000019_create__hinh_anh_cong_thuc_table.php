@@ -11,16 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('_hinh_anh_cong_thuc', function (Blueprint $table) {
+        Schema::create('hinh_anh_cong_thuc', function (Blueprint $table) {
             $table->increments('ma_hinh_anh');
+
+            $table->unsignedInteger('ma_cong_thuc');
 
             $table->text('duong_dan')->nullable();
 
             $table->text('mo_ta');
 
-            $table->integer('ma_cong_thuc');
-
             $table->timestamps();
+            
+            $table->foreign('ma_cong_thuc')->references('ma_cong_thuc')->on('cong_thuc')->onDelete('cascade');
         });
     }
 

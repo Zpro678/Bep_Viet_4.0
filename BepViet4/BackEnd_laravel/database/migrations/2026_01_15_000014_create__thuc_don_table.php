@@ -11,18 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('_thuc_don', function (Blueprint $table) {
+        Schema::create('thuc_don', function (Blueprint $table) {
             $table->increments('ma_thuc_don');
 
-            $table->integer('ma_nguoi_dung');
+            $table->unsignedInteger('ma_nguoi_dung');
 
-            $table->integer('ma_cong_thuc');
+            $table->unsignedInteger('ma_cong_thuc');
 
             $table->date('ngay_an');
 
             $table->enum('buoi', ['Sáng', 'Trưa', 'Tối', 'Phụ']);
 
             $table->timestamps();
+            
+            $table->foreign('ma_nguoi_dung')->references('ma_nguoi_dung')->on('nguoi_dung')->onDelete('cascade');
+            $table->foreign('ma_cong_thuc')->references('ma_cong_thuc')->on('cong_thuc')->onDelete('cascade');
         });
     }
 

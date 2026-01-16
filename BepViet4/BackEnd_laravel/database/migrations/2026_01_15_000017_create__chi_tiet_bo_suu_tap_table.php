@@ -11,16 +11,22 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('_chi_tiet_bo_suu_tap', function (Blueprint $table) {
-            $table->integer('ma_bo_suu_tap');
-
-            $table->integer('ma_cong_thuc');
+        Schema::create('chi_tiet_bo_suu_tap', function (Blueprint $table) {
+            $table->unsignedInteger('ma_bo_suu_tap');
+           
+            $table->unsignedInteger('ma_cong_thuc');
 
             $table->dateTime('ngay_them')->useCurrent();
 
             $table->string('ghi_chu', 255)->nullable();
 
+            $table->primary(['ma_bo_suu_tap', 'ma_cong_thuc']);
+            
             $table->timestamps();
+
+            $table->foreign('ma_bo_suu_tap')->references('ma_bo_suu_tap')->on('bo_suu_tap')->onDelete('cascade');
+           
+            $table->foreign('ma_cong_thuc')->references('ma_cong_thuc')->on('cong_thuc')->onDelete('cascade');
         });
     }
 

@@ -21,13 +21,22 @@ return new class extends Migration
             // ma_cong_thuc: Integer, Foreign Key (ref CongThuc)
             $table->integer('ma_cong_thuc');
 
+            $table->unsignedInteger('ma_binh_luan_cha')->nullable(); // Có thể null nếu là comment gốc
+
             // noi_dung: Text (NVARCHAR MAX), not null
             $table->text('noi_dung');
 
             // ngay_gui: DateTime, Default GetDate()
-            $table->dateTime('ngay_gui');
+            $table->dateTime('ngay_gui')->useCurrent();
 
             $table->timestamps(); // created_at and updated_at
+
+            // Khóa ngoại
+            $table->foreign('ma_nguoi_dung')->references('ma_nguoi_dung')->on('nguoi_dung')->onDelete('cascade');
+            $table->foreign('ma_cong_thuc')->references('ma_cong_thuc')->on('cong_thuc')->onDelete('cascade');
+
+            // Tự tham chiếu chính nó (Bình luận con trỏ tới Bình luận cha)
+            $table->foreign('ma_binh_luan_cha')->references('ma_binh_luan')->on('binh_luan')->onDelete('cascade');
         });
     }
 
