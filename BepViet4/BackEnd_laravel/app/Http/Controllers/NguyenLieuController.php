@@ -10,7 +10,7 @@ class NguyenLieuController extends Controller
     // 1. Cập nhật thông tin nguyên liệu
     public function update(Request $request, $id)
     {
-        // Tìm nguyên liệu theo khóa chính (ma_nguyen_lieu)
+        //Tìm nguyên liệu theo khóa chính (ma_nguyen_lieu)
         $nguyenLieu = NguyenLieu::find($id);
 
         if (!$nguyenLieu) {

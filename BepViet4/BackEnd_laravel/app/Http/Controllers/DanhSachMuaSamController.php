@@ -13,19 +13,20 @@ class DanhSachMuaSamController extends Controller
     {
         $userId = $request->user()->id;
 
+        // $userId = $request->query('user_id');//Test API
+
         // SỬ DỤNG JOIN
         $danhSach = DanhSachMuaSam::query()
             ->join('nguyen_lieu', 'danh_sach_mua_sam.ma_nguyen_lieu', '=', 'nguyen_lieu.ma_nguyen_lieu')
             ->where('danh_sach_mua_sam.ma_nguoi_dung', $userId)
             ->select(
-                'danh_sach_mua_sam.*',
-                'nguyen_lieu.ten_nguyen_lieu',
-                'nguyen_lieu.hinh_anh',
-                // Nếu bảng danh sách mua sắm ko có đơn vị, lấy từ nguyên liệu gốc
-                'nguyen_lieu.don_vi_tinh as don_vi_goc' 
+                'danh_sach_mua_sam.*',          // Lấy hết thông tin mua sắm (đã bao gồm cột 'don_vi' bạn lưu lúc thêm)
+                'nguyen_lieu.ten_nguyen_lieu',  // Lấy tên
+                'nguyen_lieu.hinh_anh'          // Lấy ảnh
+                
             )
-            ->orderBy('danh_sach_mua_sam.trang_thai', 'asc') // Chưa mua lên trước
-            ->orderBy('nguyen_lieu.ten_nguyen_lieu', 'asc') // Sắp xếp theo tên A-Z (Chỉ JOIN mới làm được cái này dễ dàng)
+            ->orderBy('danh_sach_mua_sam.trang_thai', 'asc') 
+            ->orderBy('nguyen_lieu.ten_nguyen_lieu', 'asc')
             ->get();
 
         return response()->json([
@@ -49,6 +50,7 @@ class DanhSachMuaSamController extends Controller
 
         $item = DanhSachMuaSam::create([
             'ma_nguoi_dung'  => $request->user()->id,
+            // 'ma_nguoi_dung'  => $request->input('ma_nguoi_dung'),//TestAPI
             'ma_nguyen_lieu' => $request->input('ma_nguyen_lieu'),
             'so_luong_can'   => $request->input('so_luong_can'),
             'don_vi'         => $request->input('don_vi'),

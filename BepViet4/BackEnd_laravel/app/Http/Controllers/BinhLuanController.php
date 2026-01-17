@@ -28,6 +28,9 @@ class BinhLuanController extends Controller
         // 3. Tạo bình luận mới
         $binhLuan = BinhLuan::create([
             'ma_nguoi_dung'    => $request->user()->id, // Lấy ID người đang đăng nhập
+
+            // 'ma_nguoi_dung'    => $request->input('ma_nguoi_dung'),//Test API
+
             'ma_cong_thuc'     => $id,                  // Lấy ID công thức từ URL
             'ma_binh_luan_cha' => $request->input('ma_binh_luan_cha'), // Null hoặc ID cha
             'noi_dung'         => $request->input('noi_dung'),

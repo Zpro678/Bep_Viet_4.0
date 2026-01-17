@@ -12,6 +12,7 @@ class ThucDonController extends Controller
     public function index(Request $request)
     {
         $userId = $request->user()->id;
+        // $userId = $request->query('user_id'); TestAPI
 
         // SỬ DỤNG JOIN
         $query = ThucDon::query()
@@ -21,7 +22,6 @@ class ThucDonController extends Controller
             ->select(
                 'thuc_don.*', 
                 'cong_thuc.ten_mon', 
-                'cong_thuc.hinh_anh', 
                 'cong_thuc.mo_ta'
             );
 
@@ -54,6 +54,7 @@ class ThucDonController extends Controller
         // Tạo mới bản ghi
         $thucDon = ThucDon::create([
             'ma_nguoi_dung' => $request->user()->id, // Tự động lấy ID người đang login
+            // 'ma_nguoi_dung' => $request->input('ma_nguoi_dung'), TestAPI
             'ma_cong_thuc'  => $request->input('ma_cong_thuc'),
             'ngay_an'       => $request->input('ngay_an'),
             'buoi'          => $request->input('buoi'),

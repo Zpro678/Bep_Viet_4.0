@@ -27,10 +27,14 @@ class VungMienController extends Controller
             return response()->json(['message' => 'Không tìm thấy vùng miền'], 404);
         }
 
-        // TỐI ƯU: Nếu cần lấy thêm thông tin người tạo món ăn thì Join luôn user
-        // Nếu chỉ lấy món ăn đơn thuần thì where là đủ, nhưng đây là ví dụ Join với bảng User
-        $danhSachMonAn = CongThuc::select('cong_thuc.*', 'users.name as ten_nguoi_tao')
-            ->leftJoin('users', 'cong_thuc.ma_nguoi_dung', '=', 'users.id')
+        // SỬA LẠI ĐOẠN NÀY CHO KHỚP VỚI DB CỦA BẠN
+        $danhSachMonAn = CongThuc::query()
+            // 1. Chọn cột hiển thị (đổi users.name thành nguoi_dung.ho_ten)
+            ->select('cong_thuc.*', 'nguoi_dung.ho_ten as ten_nguoi_tao')
+
+            // 2. Join đúng tên bảng và khóa chính
+            ->leftJoin('nguoi_dung', 'cong_thuc.ma_nguoi_dung', '=', 'nguoi_dung.ma_nguoi_dung')
+
             ->where('cong_thuc.ma_vung_mien', $id)
             ->get();
 
