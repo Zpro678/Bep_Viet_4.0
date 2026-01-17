@@ -3,9 +3,9 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// Route::get('/user', function (Request $request) {
+//     return $request->user();
+// })->middleware('auth:sanctum');
 
 require __DIR__ . '/apiNguoiDung.php';
 
@@ -19,7 +19,7 @@ require __DIR__ . '/apiDanhMuc.php';
 
 require __DIR__ . '/apiBaiViet.php';
 
-require __DIR__ . '/apiBinhLuanDanhGia.php';
+require __DIR__ . '/apiBinhLuan_DanhGia.php';
 
 require __DIR__ . '/apiHinhAnh.php';
 
