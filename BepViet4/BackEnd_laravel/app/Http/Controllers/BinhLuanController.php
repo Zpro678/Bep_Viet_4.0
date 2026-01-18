@@ -21,13 +21,24 @@ class BinhLuanController extends Controller
         // 2. Validate dữ liệu gửi lên
         $request->validate([
             'noi_dung' => 'required|string',
-            'ma_binh_luan_cha' => 'nullable|exists:binh_luan,ma_binh_luan' 
+            'ma_binh_luan_cha' => 'nullable|exists:binh_luan,ma_binh_luan'
             // ma_binh_luan_cha: có thể null (bình luận gốc) hoặc phải là ID của 1 bình luận có thật (trả lời)
         ]);
 
+        if ($request->filled('ma_binh_luan_cha')) {
+            $binhLuanCha = BinhLuan::find($request->ma_binh_luan_cha);
+
+            if ($binhLuanCha->ma_cong_thuc != $id) {
+                return response()->json([
+                    'message' => 'Bình luận cha không thuộc công thức này'
+                ], 400);
+            }
+        }
+
+
         // 3. Tạo bình luận mới
         $binhLuan = BinhLuan::create([
-            'ma_nguoi_dung'    => $request->user()->id, // Lấy ID người đang đăng nhập
+            'ma_nguoi_dung'    => $request->user()->ma_nguoi_dung, // Lấy ID người đang đăng nhập
 
             // 'ma_nguoi_dung'    => $request->input('ma_nguoi_dung'),//Test API
 

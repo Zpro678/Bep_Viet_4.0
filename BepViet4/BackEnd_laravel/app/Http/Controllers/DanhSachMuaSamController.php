@@ -11,9 +11,7 @@ class DanhSachMuaSamController extends Controller
     // 46. GET /shopping-list: Lấy danh sách cần mua
     public function index(Request $request)
     {
-        $userId = $request->user()->id;
-
-        // $userId = $request->query('user_id');//Test API
+        $userId = $request->user()->ma_nguoi_dung;
 
         // SỬ DỤNG JOIN
         $danhSach = DanhSachMuaSam::query()
@@ -49,7 +47,7 @@ class DanhSachMuaSamController extends Controller
         // Ở đây mình làm đơn giản là thêm dòng mới.
 
         $item = DanhSachMuaSam::create([
-            'ma_nguoi_dung'  => $request->user()->id,
+            'ma_nguoi_dung'  => $request->user()->ma_nguoi_dung,
             // 'ma_nguoi_dung'  => $request->input('ma_nguoi_dung'),//TestAPI
             'ma_nguyen_lieu' => $request->input('ma_nguyen_lieu'),
             'so_luong_can'   => $request->input('so_luong_can'),
@@ -77,7 +75,7 @@ class DanhSachMuaSamController extends Controller
         }
 
         // BẢO MẬT: Kiểm tra quyền sở hữu
-        if ($item->ma_nguoi_dung !== $request->user()->id) {
+        if ($item->ma_nguoi_dung !== $request->user()->ma_nguoi_dung) {
             return response()->json(['message' => 'Bạn không có quyền sửa mục này'], 403);
         }
 
@@ -101,7 +99,7 @@ class DanhSachMuaSamController extends Controller
         }
 
         // BẢO MẬT: Kiểm tra quyền sở hữu
-        if ($item->ma_nguoi_dung !== $request->user()->id) {
+        if ($item->ma_nguoi_dung !== $request->user()->ma_nguoi_dung) {
             return response()->json(['message' => 'Bạn không có quyền xóa mục này'], 403);
         }
 

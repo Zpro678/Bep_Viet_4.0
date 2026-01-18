@@ -16,10 +16,12 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // Gọi các file theo thứ tự tạo dữ liệu để tránh lỗi khóa ngoại
+        $this->call([
+            MasterDataSeeder::class, 
+            ContentSeeder::class,    
+            DetailSeeder::class,     
+            InteractionSeeder::class 
         ]);
     }
 }

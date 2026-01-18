@@ -11,8 +11,7 @@ class ThucDonController extends Controller
     // 43. GET /meal-plans: Xem lịch ăn uống (có lọc theo ngày)
     public function index(Request $request)
     {
-        $userId = $request->user()->id;
-        // $userId = $request->query('user_id'); TestAPI
+        $userId = $request->user()->ma_nguoi_dung;
 
         // SỬ DỤNG JOIN
         $query = ThucDon::query()
@@ -53,7 +52,7 @@ class ThucDonController extends Controller
 
         // Tạo mới bản ghi
         $thucDon = ThucDon::create([
-            'ma_nguoi_dung' => $request->user()->id, // Tự động lấy ID người đang login
+            'ma_nguoi_dung' => $request->user()->ma_nguoi_dung, // Tự động lấy ID người đang login
             // 'ma_nguoi_dung' => $request->input('ma_nguoi_dung'), TestAPI
             'ma_cong_thuc'  => $request->input('ma_cong_thuc'),
             'ngay_an'       => $request->input('ngay_an'),
@@ -78,7 +77,7 @@ class ThucDonController extends Controller
 
         // BẢO MẬT: Kiểm tra xem món này có phải của người đang login không?
         // Tránh trường hợp ông A xóa lịch ăn của ông B
-        if ($thucDon->ma_nguoi_dung !== $request->user()->id) {
+        if ($thucDon->ma_nguoi_dung !== $request->user()->ma_nguoi_dung) {
             return response()->json(['message' => 'Bạn không có quyền xóa mục này'], 403);
         }
 

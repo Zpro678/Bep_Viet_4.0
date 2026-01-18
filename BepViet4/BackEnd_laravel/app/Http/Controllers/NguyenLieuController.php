@@ -10,22 +10,34 @@ class NguyenLieuController extends Controller
     // 1. Cập nhật thông tin nguyên liệu
     public function update(Request $request, $id)
     {
-        //Tìm nguyên liệu theo khóa chính (ma_nguyen_lieu)
+        // Lấy user đang đăng nhập (Sanctum)
+        $user = $request->user();
+
+        // Check vai trò admin
+        if ($user->vai_tro !== 'Admin') {
+            return response()->json([
+                'message' => 'Chỉ admin mới có quyền cập nhật nguyên liệu'
+            ], 403);
+        }
+
+        // Tìm nguyên liệu theo khóa chính
         $nguyenLieu = NguyenLieu::find($id);
 
         if (!$nguyenLieu) {
-            return response()->json(['message' => 'Không tìm thấy nguyên liệu'], 404);
+            return response()->json([
+                'message' => 'Không tìm thấy nguyên liệu'
+            ], 404);
         }
 
-        // Validate dữ liệu đầu vào
-        $request->validate([
-            'ten_nguyen_lieu' => 'string|max:255',
-            'loai_nguyen_lieu' => 'string|max:255',
-            'hinh_anh' => 'nullable|string', // Giả sử gửi lên link ảnh hoặc tên file
+        // Validate
+        $validated = $request->validate([
+            'ten_nguyen_lieu' => 'sometimes|string|max:255',
+            'loai_nguyen_lieu' => 'sometimes|string|max:255',
+            'hinh_anh' => 'nullable|string',
         ]);
 
-        // Cập nhật dữ liệu
-        $nguyenLieu->update($request->all());
+        // Update
+        $nguyenLieu->update($validated);
 
         return response()->json([
             'message' => 'Cập nhật nguyên liệu thành công',
