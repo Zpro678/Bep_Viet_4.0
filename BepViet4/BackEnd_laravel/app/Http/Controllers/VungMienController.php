@@ -27,7 +27,7 @@ class VungMienController extends Controller
             return response()->json(['message' => 'Không tìm thấy vùng miền'], 404);
         }
 
-        // SỬA LẠI ĐOẠN NÀY CHO KHỚP VỚI DB CỦA BẠN
+       
         $danhSachMonAn = CongThuc::query()
             // 1. Chọn cột hiển thị (đổi users.name thành nguoi_dung.ho_ten)
             ->select('cong_thuc.*', 'nguoi_dung.ho_ten as ten_nguoi_tao')
