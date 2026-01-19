@@ -20,4 +20,17 @@ class HinhAnhCongThuc extends Model {
     {
         return $this->belongsTo(CongThuc::class, 'ma_cong_thuc');
     }
+
+    public function index($r)
+    {
+        return CongThuc::danhSach($r->all());
+    }
+
+    public function store($r)
+    {
+        return CongThuc::tao(
+            $r->user()->ma_nguoi_dung,
+            $r->only('ten_mon','mo_ta','thoi_gian_nau','khau_phan','do_kho')
+        );
+    }
 }
