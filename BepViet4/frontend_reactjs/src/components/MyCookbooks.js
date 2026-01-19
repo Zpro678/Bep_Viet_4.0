@@ -11,38 +11,78 @@ const MyCookbooks = () => {
 
   // --- 1. LOAD DATA ---
   useEffect(() => {
-    fetchCookbooks();
+    // Lần đầu vào trang thì load bình thường (hiện loading)
+    fetchCookbooks(false);
   }, []);
 
-  const fetchCookbooks = async () => {
+  // SỬA: Thêm tham số isBackground (mặc định là false)
+  const fetchCookbooks = async (isBackground = false) => {
     try {
-      setLoading(true);
+      // Chỉ hiện spinner khi KHÔNG PHẢI là chạy ngầm
+      if (!isBackground) {
+        setLoading(true); 
+      }
+
       const data = await cookbookService.getAll();
       setCookbooks(data);
     } catch (error) {
       console.error("Lỗi tải dữ liệu:", error);
     } finally {
-      setLoading(false);
+      // Chỉ tắt spinner nếu trước đó đã bật
+      if (!isBackground) {
+        setLoading(false);
+      }
     }
   };
 
   // --- 2. XỬ LÝ SỰ KIỆN ---
+  
+  // 2.1 Tạo mới
   const handleCreateNew = async () => {
     const name = prompt("Nhập tên bộ sưu tập mới:");
     if (name) {
-      const newItem = await cookbookService.create({ 
-        title: name, 
-        description: 'Mô tả ngắn về bộ sưu tập này...' 
-      });
-      setCookbooks([newItem, ...cookbooks]);
-      alert("Đã tạo thành công!");
+      try {
+        await cookbookService.create(name); 
+        // Tạo xong reload lại danh sách (có thể để true nếu muốn silent, hoặc false để nháy 1 cái báo hiệu)
+        await fetchCookbooks(true); 
+        alert("Đã tạo thành công!");
+      } catch (error) {
+        alert("Lỗi khi tạo: " + (error.response?.data?.message || "Lỗi server"));
+      }
     }
   };
 
+  // 2.2 Xóa
   const handleDelete = async (id) => {
     if (window.confirm("Bạn có chắc muốn xóa bộ sưu tập này?")) {
-      await cookbookService.delete(id);
-      setCookbooks(cookbooks.filter(item => item.id !== id));
+      try {
+        await cookbookService.delete(id);
+        // Xóa xong reload ngầm
+        await fetchCookbooks(true);
+      } catch (error) {
+        alert("Không thể xóa bộ sưu tập này.");
+      }
+    }
+  };
+
+  // 2.3 Đổi tên (ĐÃ TỐI ƯU UX)
+  const handleRename = async (id, currentName) => {
+    const newName = prompt("Nhập tên mới cho bộ sưu tập:", currentName);
+
+    // Kiểm tra hợp lệ
+    if (newName && newName.trim() !== "" && newName !== currentName) {
+      try {
+        // 1. Gọi API cập nhật
+        await cookbookService.update(id, newName);
+
+        // 2. QUAN TRỌNG: Gọi fetch với tham số TRUE (Chạy ngầm)
+        // Giao diện sẽ tự đổi tên ngay lập tức mà không hiện Loading
+        await fetchCookbooks(true);
+
+      } catch (error) {
+        console.error(error);
+        alert("Lỗi khi đổi tên: " + (error.response?.data?.message || "Vui lòng thử lại"));
+      }
     }
   };
 
@@ -72,40 +112,47 @@ const MyCookbooks = () => {
       ) : (
         <div className="collection-grid">
           {cookbooks.map((book) => (
-            <div key={book.id} className="collection-card">
-              {/* Hình ảnh */}
+            <div key={book.ma_bo_suu_tap} className="collection-card">
+              
               <div className="card-image-wrapper">
-                {/* SỬA 1: Dữ liệu service trả về là 'image', không phải 'thumbnail' */}
+                {/* Ảnh placeholder hoặc ảnh thật nếu có */}
                 <img 
-                  src={book.image || 'https://via.placeholder.com/300'} 
-                  alt={book.title} 
+                  src={'https://via.placeholder.com/300?text=Cookbook'} 
+                  alt={book.ten_bo_suu_tap} 
                 />
                 <div className="card-overlay">
-                  {/* SỬA 2: Sửa đường dẫn từ 'collection' thành 'cookbook' để khớp với Router */}
-                  <Link to={`/cookbook/${book.id}`} className="btn-view">
+                  <Link to={`/cookbook/${book.ma_bo_suu_tap}`} className="btn-view">
                     Xem chi tiết
                   </Link>
                 </div>
               </div>
 
-              {/* Nội dung */}
               <div className="card-body">
                 <div className="card-meta">
-                  <span className="recipe-count">{book.recipes_count || 0} công thức</span>
-                  <span className="date-create">{book.created_at}</span>
+                  <span className="recipe-count">
+                    {book.cong_thucs_count || 0} công thức
+                  </span>
+                  <span className="date-create">
+                    {new Date(book.created_at).toLocaleDateString('vi-VN')}
+                  </span>
                 </div>
-                <h3 className="card-title">{book.title}</h3>
-                <p className="card-desc">{book.description}</p>
                 
-                {/* Actions */}
+                <h3 className="card-title">{book.ten_bo_suu_tap}</h3>
+                <p className="card-desc">Danh sách các món ăn yêu thích</p>
+                
                 <div className="card-actions">
-                  <button className="action-btn edit" title="Chỉnh sửa">
+                  <button 
+                    className="action-btn edit" 
+                    title="Chỉnh sửa tên"
+                    onClick={() => handleRename(book.ma_bo_suu_tap, book.ten_bo_suu_tap)}
+                  >
                     <FaEdit />
                   </button>
+                  
                   <button 
                     className="action-btn delete" 
                     title="Xóa"
-                    onClick={() => handleDelete(book.id)}
+                    onClick={() => handleDelete(book.ma_bo_suu_tap)}
                   >
                     <FaTrash />
                   </button>
