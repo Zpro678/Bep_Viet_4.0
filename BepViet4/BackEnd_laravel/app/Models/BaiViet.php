@@ -19,7 +19,6 @@ class BaiViet extends Model {
     public function nguoiDung() { return $this->belongsTo(NguoiDung::class, 'ma_nguoi_dung'); }
     public function binhLuan() { return $this->hasMany(BinhLuanBaiViet::class, 'ma_bai_viet'); }
     public function hinhAnh() { return $this->hasMany(HinhAnhBaiViet::class, 'ma_bai_viet'); }
-<<<<<<< HEAD
 
     public function nguoiTao()
     {
@@ -29,6 +28,5 @@ class BaiViet extends Model {
     {
         return $this->morphMany(LuotThich::class, 'thich');
     }
-=======
->>>>>>> 2a0fd928dbc5662ec43f263e0739c16ae8294922
+
 }
