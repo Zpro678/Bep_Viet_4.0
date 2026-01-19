@@ -23,5 +23,14 @@ class BoSuuTap extends Model
         return $this->belongsTo(NguoiDung::class, 'ma_nguoi_dung', 'ma_nguoi_dung');
     }
 
+    public function congThucs()
+    {
+        return $this->belongsToMany(
+            CongThuc::class, 
+            'chi_tiet_bo_suu_tap', 
+            'ma_bo_suu_tap',       
+            'ma_cong_thuc'         
+        )->withPivot('ngay_them', 'ghi_chu'); 
+    }
 
 }
