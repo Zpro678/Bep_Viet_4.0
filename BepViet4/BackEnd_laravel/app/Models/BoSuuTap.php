@@ -23,6 +23,7 @@ class BoSuuTap extends Model
         return $this->belongsTo(NguoiDung::class, 'ma_nguoi_dung', 'ma_nguoi_dung');
     }
 
+<<<<<<< HEAD
     public function congThucs()
     {
         return $this->belongsToMany(
@@ -32,5 +33,7 @@ class BoSuuTap extends Model
             'ma_cong_thuc'         
         )->withPivot('ngay_them', 'ghi_chu'); 
     }
+=======
+>>>>>>> 2a0fd928dbc5662ec43f263e0739c16ae8294922
 
 }

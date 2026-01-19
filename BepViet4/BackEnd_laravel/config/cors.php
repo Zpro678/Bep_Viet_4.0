@@ -19,7 +19,17 @@ return [
 
     'allowed_methods' => ['*'],
 
+<<<<<<< HEAD
     'allowed_origins' => ['http://localhost:3000'],
+=======
+    'allowed_origins' => [
+
+    'http://localhost:3000', // Nếu dùng Create React App
+
+    'http://localhost:5173', // Nếu dùng Vite (khuyên dùng cái này)
+
+],
+>>>>>>> 2a0fd928dbc5662ec43f263e0739c16ae8294922
 
     'allowed_origins_patterns' => [],
 
@@ -29,6 +39,10 @@ return [
 
     'max_age' => 0,
 
+<<<<<<< HEAD
     'supports_credentials' => true,
+=======
+    'supports_credentials' => false,
+>>>>>>> 2a0fd928dbc5662ec43f263e0739c16ae8294922
 
 ];

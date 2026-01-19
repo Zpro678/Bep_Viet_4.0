@@ -17,7 +17,11 @@ class TheoDoi extends Model
         'ma_nguoi_theo_doi',
         'ma_nguoi_duoc_theo_doi',
         'ngay_theo_doi',
+<<<<<<< HEAD
         'trang_thai' 
+=======
+        'trang_thai' // 0: Đang theo dõi, 1: Chặn (tùy nghiệp vụ)
+>>>>>>> 2a0fd928dbc5662ec43f263e0739c16ae8294922
     ];
 
     

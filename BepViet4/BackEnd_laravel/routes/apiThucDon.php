@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Http\Request;
+<<<<<<< HEAD
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ThucDonController;
 
@@ -12,3 +13,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::delete('/meal-plans/{id}', [ThucDonController::class, 'destroy']);
 });
+=======
+use Illuminate\Support\Facades\Route;
+>>>>>>> 2a0fd928dbc5662ec43f263e0739c16ae8294922
