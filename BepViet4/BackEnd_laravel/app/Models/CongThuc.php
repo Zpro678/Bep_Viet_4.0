@@ -12,8 +12,15 @@ class CongThuc extends Model
     public $timestamps = false; // Xử lý thủ công cột 'ngay_tao'
 
     protected $fillable = [
-        'ma_nguoi_dung', 'ma_danh_muc', 'ma_vung_mien', 
-        'ten_mon', 'mo_ta', 'thoi_gian_nau', 'khau_phan', 'do_kho', 'ngay_tao'
+        'ma_nguoi_dung',
+        'ma_danh_muc',
+        'ma_vung_mien',
+        'ten_mon',
+        'mo_ta',
+        'thoi_gian_nau',
+        'khau_phan',
+        'do_kho',
+        'ngay_tao'
     ];
     public function luotThich()
     {
@@ -50,6 +57,7 @@ class CongThuc extends Model
     {
         return $this->belongsToMany(NguyenLieu::class, 'cong_thuc_nguyen_lieu', 'ma_cong_thuc', 'ma_nguyen_lieu')
                     ->withPivot('dinh_luong', 'don_vi_tinh'); 
+
     }
 
     // Many-to-Many: Thẻ/Tags (qua bảng trung gian CongThuc_The) [cite: 314]
@@ -66,11 +74,34 @@ class CongThuc extends Model
     {
         return $this->hasMany(HinhAnhCongThuc::class, 'ma_cong_thuc', 'ma_cong_thuc');
     }
-    
-    // HasMany: Video 
-
     public function video()
     {
         return $this->hasMany(VideoHuongDan::class, 'ma_cong_thuc', 'ma_cong_thuc');
+    }
+
+    // Tạo công thức
+    public static function taoCongThuc($userId, $data)
+    {
+        $data['ma_nguoi_dung'] = $userId;
+        $data['ngay_tao'] = now();
+
+        return self::create($data);
+    }
+
+    // Danh sách + lọc
+    public static function danhSach($filter)
+    {
+        return self::when(
+            $filter['ten'] ?? null,
+            fn($q, $v) =>
+            $q->where('ten_mon', 'like', "%$v%")
+        )
+            ->when(
+                $filter['do_kho'] ?? null,
+                fn($q, $v) =>
+                $q->where('do_kho', $v)
+            )
+            ->orderByDesc('ngay_tao')
+            ->paginate(10);
     }
 }

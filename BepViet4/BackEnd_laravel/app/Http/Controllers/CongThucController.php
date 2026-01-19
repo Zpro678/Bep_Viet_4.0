@@ -1,13 +1,13 @@
 <?php
 
 namespace App\Http\Controllers;
-
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\NguoiDung;
 use App\Models\CongThuc;
 use Illuminate\Support\Facades\DB;
 use App\Models\BaiViet;
+use Illuminate\Validation\Validator;
 
 class CongThucController extends Controller
 {
@@ -123,4 +123,35 @@ class CongThucController extends Controller
             'data' => $paginatedFeed
         ]);
 }
+
+    // DS
+    public function index(Request $request)
+    {
+         $filter = [
+            'ten'     => $request->query('ten'),      // tên món
+            'do_kho'  => $request->query('do_kho'),   // độ khó
+        ];
+
+        $recipes = CongThuc::with([
+                'tacGia:ma_nguoi_dung,ten_nguoi_dung',
+                'danhMuc:ma_danh_muc,ten_danh_muc',
+                'vungMien:ma_vung_mien,ten_vung_mien'
+            ])
+            ->when($filter['ten'], function ($q, $v) {
+                $q->where('ten_mon', 'like', "%$v%");
+            })
+            ->when($filter['do_kho'], function ($q, $v) {
+                $q->where('do_kho', $v);
+            })
+            ->orderByDesc('ngay_tao')
+            ->paginate(10);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Danh sách công thức',
+            'data' => $recipes
+        ]);
+    }
+
+
 }

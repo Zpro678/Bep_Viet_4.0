@@ -30,4 +30,24 @@ class TheoDoi extends Model
     {
         return $this->belongsTo(NguoiDung::class, 'ma_nguoi_duoc_theo_doi', 'ma_nguoi_dung');
     }
+
+    //
+     public static function theoDoi($from, $to)
+    {
+        return self::firstOrCreate([
+            'ma_nguoi_theo_doi' => $from,
+            'ma_nguoi_duoc_theo_doi' => $to
+        ], [
+            'ngay_theo_doi' => now(),
+            'trang_thai' => 0
+        ]);
+    }
+
+    public static function huyTheoDoi($from, $to)
+    {
+        return self::where([
+            'ma_nguoi_theo_doi' => $from,
+            'ma_nguoi_duoc_theo_doi' => $to
+        ])->delete();
+    }
 }
