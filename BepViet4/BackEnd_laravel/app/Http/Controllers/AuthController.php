@@ -104,9 +104,7 @@ class AuthController extends Controller
             ]
         ], 200);
     }
-    /**
-     * API Đăng xuất (POST /auth/logout)
-     */
+    
     public function logout(Request $request)
     {
 

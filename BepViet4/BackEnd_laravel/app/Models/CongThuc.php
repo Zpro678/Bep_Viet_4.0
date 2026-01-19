@@ -16,8 +16,13 @@ class CongThuc extends Model
         'ten_mon', 'mo_ta', 'thoi_gian_nau', 'khau_phan', 'do_kho', 'ngay_tao'
     ];
 
+    public function luotThich()
+    {
+        return $this->morphMany(LuotThich::class, 'thich');
+    }
+
     // BelongsTo: Thuộc về 1 Người dùng 
-    public function tacGia()
+    public function nguoiTao()
     {
         return $this->belongsTo(NguoiDung::class, 'ma_nguoi_dung', 'ma_nguoi_dung');
     }
@@ -40,26 +45,26 @@ class CongThuc extends Model
         return $this->hasMany(BuocThucHien::class, 'ma_cong_thuc', 'ma_cong_thuc')->orderBy('so_thu_tu');
     }
 
-    // Many-to-Many: Nguyên liệu (qua bảng trung gian CongThuc_NguyenLieu) [cite: 310, 312]
+    // Many-to-Many: Nguyên liệu (qua bảng trung gian CongThuc_NguyenLieu) 
     public function nguyenLieu()
     {
         return $this->belongsToMany(NguyenLieu::class, 'cong_thuc_nguyen_lieu', 'ma_cong_thuc', 'ma_nguyen_lieu')
-                    ->withPivot('dinh_luong', 'don_vi_tinh'); // [cite: 313]
+                    ->withPivot('dinh_luong', 'don_vi_tinh'); 
     }
 
-    // Many-to-Many: Thẻ/Tags (qua bảng trung gian CongThuc_The) [cite: 314]
+    // Many-to-Many: Thẻ/Tags (qua bảng trung gian CongThuc_The) 
     public function the()
     {
         return $this->belongsToMany(The::class, 'cong_thuc_the', 'ma_cong_thuc', 'ma_the');
     }
 
-    // HasMany: Hình ảnh [cite: 388]
+    // HasMany: Hình ảnh 
     public function hinhAnh()
     {
         return $this->hasMany(HinhAnhCongThuc::class, 'ma_cong_thuc', 'ma_cong_thuc');
     }
     
-    // HasMany: Video [cite: 392]
+    // HasMany: Video 
     public function video()
     {
         return $this->hasMany(VideoHuongDan::class, 'ma_cong_thuc', 'ma_cong_thuc');
