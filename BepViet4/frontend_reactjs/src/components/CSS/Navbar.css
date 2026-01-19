@@ -1,0 +1,270 @@
+/* =========================================
+   1. NAVBAR CONTAINER & LOGO
+   ========================================= */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px; /* Padding cố định rộng rãi cho màn hình desktop */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  z-index: 1000;
+}
+
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: #333;
+  min-width: 200px; /* Đảm bảo logo không bị co lại trên màn hình nhỏ */
+}
+
+.logo-icon { color: #f97316; font-size: 24px; }
+.navbar-logo h1 { font-size: 24px; font-weight: bold; }
+
+/* =========================================
+   2. SEARCH BAR & FILTER
+   ========================================= */
+.navbar-search-container {
+  position: relative;
+  flex-grow: 1;
+  max-width: 600px; /* Giới hạn chiều rộng để search bar không quá dài trên màn hình rộng */
+  margin: 0 40px;   /* Căn lề rộng hơn chút cho thoáng */
+}
+
+.search-bar {
+  display: flex;
+  background: #f0f2f5;
+  border-radius: 50px;
+  padding: 5px 15px;
+  align-items: center;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.search-bar:focus-within {
+  border-color: #f97316;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+}
+
+.search-bar input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px;
+  outline: none;
+  font-size: 15px;
+  color: #333;
+}
+
+/* Nút Icon bên trong thanh search */
+.btn-filter-toggle, .btn-search-submit {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  color: #666;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+  border-radius: 50%;
+}
+
+.btn-filter-toggle:hover {
+  background-color: #e4e6eb;
+  color: #333;
+}
+
+.btn-search-submit {
+  color: #f97316;
+}
+
+.btn-search-submit:hover {
+  background-color: #ffedd5;
+}
+
+/* --- FILTER PANEL (BẢNG BỘ LỌC) --- */
+.filter-panel {
+  position: absolute;
+  top: 130%; /* Đẩy xa hơn một chút để tách biệt rõ ràng */
+  left: 0;
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  padding: 24px; /* Tăng padding vì desktop có nhiều không gian */
+  border: 1px solid #eee;
+  z-index: 1000;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 15px;
+}
+
+.filter-header h3 { margin: 0; font-size: 16px; color: #333; font-weight: 700; }
+.close-icon { cursor: pointer; color: #999; transition: color 0.2s; }
+.close-icon:hover { color: #f97316; }
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px; /* Tăng khoảng cách giữa các cột */
+}
+
+.filter-group { display: flex; flex-direction: column; gap: 8px; }
+.filter-group label { font-size: 13px; font-weight: 600; color: #555; }
+
+.filter-group select {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  outline: none;
+  font-size: 14px;
+  transition: border 0.2s;
+  cursor: pointer; /* Thêm con trỏ chuột */
+}
+
+.filter-group select:focus { border-color: #f97316; }
+
+.filter-actions { margin-top: 25px; text-align: right; }
+
+.btn-apply {
+  background-color: #f97316;
+  color: white;
+  border: none;
+  padding: 10px 30px; /* Nút to hơn cho desktop dễ bấm */
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.btn-apply:hover { background-color: #ea580c; }
+
+/* =========================================
+   3. USER PROFILE & DROPDOWN (Đã sửa lỗi)
+   ========================================= */
+.navbar-user {
+  position: relative; /* QUAN TRỌNG: Để dropdown bám theo div này */
+  height: 100%;       /* Đảm bảo chiều cao bằng navbar */
+  display: flex;
+  align-items: center;
+}
+
+.user-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.user-btn:hover {
+  background-color: #f5f5f5;
+}
+
+.user-name { font-weight: 600; font-size: 16px; color: #333; }
+.user-avatar { font-size: 32px; color: #666; transition: color 0.2s; }
+.user-btn:hover .user-avatar { color: #f97316; }
+
+/* Dropdown Menu - Phiên bản Căn Giữa */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  
+  /* CÔNG THỨC CĂN GIỮA */
+  left: 50%; 
+  right: auto;
+  transform: translateX(-50%); /* Dịch ngược lại 50% độ rộng của chính nó */
+  
+  width: 220px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+  padding: 8px 0;
+  border: 1px solid #f0f0f0;
+  z-index: 1100;
+  display: block; 
+  margin-top: 14px;
+}
+
+/* Mũi tên trỏ ở giữa */
+.dropdown-menu::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%; /* Mũi tên nằm giữa */
+  transform: translateX(-50%) rotate(45deg); /* Xoay và căn giữa */
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-top: 1px solid #f0f0f0;
+  border-left: 1px solid #f0f0f0;
+}
+
+/* Các item trong menu */
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  text-decoration: none;
+  color: #333;
+  font-size: 15px;
+  transition: background 0.2s;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background-color: #fff7ed;
+  color: #f97316;
+}
+
+/* CSS bổ sung cho code React của bạn */
+.dropdown-divider {
+  height: 1px;
+  background-color: #eee;
+  margin: 8px 0;
+}
+
+.text-red {
+  color: #dc2626 !important; /* Màu đỏ cho nút đăng xuất */
+}
+
+.text-red:hover {
+  background-color: #fef2f2 !important;
+  color: #dc2626 !important;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
