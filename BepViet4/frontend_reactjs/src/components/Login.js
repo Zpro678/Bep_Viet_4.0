@@ -1,20 +1,47 @@
 import React, { useState } from 'react';
 import './CSS/Login.css'; 
 import './CSS/Auth.css';
+import authApi from '../api/authApi';
+
 
 const Login = ({ onLogin, onSwitchToRegister, onSwitchToForgotPassword }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [ten_dang_nhap, setTen_dang_nhap] = useState('');
+  const [mat_khau, setMatkhau] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (email === 'admin' && password === '123456') {
+    setError(''); // Reset lỗi cũ trước khi gửi yêu cầu mới
+  
+    try {
+      const res = await authApi.login({ ten_dang_nhap, mat_khau });
+
+      const { access_token, user } = res.data;
+  
+      localStorage.setItem('ACCESS_TOKEN', access_token);
+      localStorage.setItem('USER', JSON.stringify(user));
       onLogin();
-    } else {
-      setError('Sai thông tin rồi! Thử: admin / 123456');
+  
+    } catch (err) {
+   
+      console.error("Lỗi đăng nhập:", err); // In lỗi ra console để dev kiểm tra
+
+      // 1. Kiểm tra nếu Server có trả về tin nhắn lỗi cụ thể
+      if (err.response && err.response.data && err.response.data.message) {
+          // Hiển thị chính xác câu server nói (VD: "Tài khoản chưa kích hoạt")
+          setError(err.response.data.message);
+      } 
+      // 2. Kiểm tra lỗi mất kết nối (Server không phản hồi)
+      else if (!err.response) {
+          setError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng.');
+      }
+      // 3. Các lỗi khác không xác định
+      else {
+          setError('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
+      }
     }
   };
+  
 
   return (
     <div className="login-container">
@@ -27,12 +54,12 @@ const Login = ({ onLogin, onSwitchToRegister, onSwitchToForgotPassword }) => {
 
         <form onSubmit={handleSubmit} className="login-form">
             <div className="form-group">
-                <label>Tên đăng nhập / Email</label>
-                <input type="text" placeholder="Nhập: admin" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <label>Tên đăng nhập</label>
+                <input type="text" placeholder="Nhập: admin" value={ten_dang_nhap} onChange={(e) => setTen_dang_nhap(e.target.value)} />
             </div>
             <div className="form-group">
                 <label>Mật khẩu</label>
-                <input type="password" placeholder="Nhập: 123456" value={password} onChange={(e) => setPassword(e.target.value)} />
+                <input type="password" placeholder="Nhập: 123456" value={mat_khau} onChange={(e) => setMatkhau(e.target.value)} />
             </div>
 
             {/* ĐÃ XOÁ PHẦN QUÊN MẬT KHẨU Ở ĐÂY */}

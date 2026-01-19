@@ -10,7 +10,8 @@ const userApi = {
     // 2. Cập nhật thông tin (Controller: updateProfile)
     // Data gửi lên gồm: { ho_ten, email, mat_khau (nếu có) }
     updateProfile: (data) => {
-        return axiosClient.put('/users/UpdateProfile', data);
+        return axiosClient.put('/users/UpdateProfile', data/* The `)` in the code snippet is used to close the parameter list of a function. In JavaScript, functions are defined using the `function` keyword followed by the function name, parameters enclosed in parentheses, and the function body enclosed in curly braces. */
+        );
     },
 
     // 3. Thống kê của bản thân (Controller: meOverview)
