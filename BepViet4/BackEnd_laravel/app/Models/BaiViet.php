@@ -27,6 +27,6 @@ class BaiViet extends Model {
     public function luotThich()
     {
         return $this->morphMany(LuotThich::class, 'thich');
-            }
+    }
 
 }
