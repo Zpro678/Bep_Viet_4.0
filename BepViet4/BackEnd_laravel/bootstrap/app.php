@@ -15,9 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         //
+        
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-       
         $exceptions->render(function (AuthenticationException $e, Request $request) {
             
             if ($request->is('api/*')) {

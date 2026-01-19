@@ -3,10 +3,6 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-// Route::get('/user', function (Request $request) {
-//     return $request->user();
-// })->middleware('auth:sanctum');
-
 require __DIR__ . '/apiNguoiDung.php';
 
 require __DIR__ . '/apiCongThuc.php';
@@ -32,3 +28,5 @@ require __DIR__ . '/apiVideo.php';
 require __DIR__ . '/apiBoSuuTap_ChiTietBoSuuTap.php';
 
 require __DIR__ . '/apiNguyenLieu.php';
+
+
