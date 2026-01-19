@@ -12,7 +12,6 @@ const CookbookDetail = () => {
   const [cookbook, setCookbook] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // --- 1. LOAD DỮ LIỆU ---
   const fetchDetail = useCallback(async (isBackground = false) => {
     try {
       if (!isBackground) setLoading(true);
@@ -21,16 +20,27 @@ const CookbookDetail = () => {
       setCookbook(data);
     } catch (error) {
       console.error("Lỗi:", error);
+      if (error.response && error.response.status === 401) {
+          alert("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
+          localStorage.removeItem('ACCESS_TOKEN');
+          navigate('/login');
+      }
     } finally {
       if (!isBackground) setLoading(false);
     }
-  }, [id]);
+  }, [id, navigate]);
 
   useEffect(() => {
-    fetchDetail(false);
-  }, [fetchDetail]);
+    const token = localStorage.getItem('ACCESS_TOKEN');
+    if (!token) {
+        alert("Vui lòng đăng nhập để xem chi tiết!");
+        navigate('/login');
+        return;
+    }
 
-  // --- 2. XỬ LÝ THÊM MÓN MỚI ---
+    fetchDetail(false);
+  }, [fetchDetail, navigate]);
+
   const handleAddRecipe = async () => {
     const recipeId = prompt("Nhập ID món ăn muốn thêm:");
     const note = prompt("Ghi chú (tùy chọn):", "");
@@ -41,25 +51,31 @@ const CookbookDetail = () => {
         alert("Đã thêm món ăn thành công!");
         await fetchDetail(true); 
       } catch (error) {
+        if (error.response && error.response.status === 401) {
+            navigate('/login');
+            return;
+        }
         const msg = error.response?.data?.message || error.message;
         alert("Lỗi: " + msg);
       }
     }
   };
 
-  // --- 3. XỬ LÝ XÓA MÓN ---
   const handleRemoveRecipe = async (recipeId) => {
     if (window.confirm("Bạn muốn xóa món này khỏi Cookbook?")) {
       try {
         await cookbookService.removeRecipe(id, recipeId);
         await fetchDetail(true);
       } catch (error) {
+        if (error.response && error.response.status === 401) {
+            navigate('/login');
+            return;
+        }
         alert("Lỗi khi xóa món: " + error.message);
       }
     }
   };
 
-  // --- 4. HELPER ---
   const getRecipes = () => {
     if (!cookbook) return [];
     return cookbook.cong_thucs || cookbook.congThucs || []; 
@@ -72,7 +88,6 @@ const CookbookDetail = () => {
 
   return (
     <div className="cookbook-detail-container">
-      {/* HEADER */}
       <div className="detail-header">
         <button className="btn-back" onClick={() => navigate('/my-cookbooks')}>
           <FaArrowLeft /> Quay lại
@@ -89,7 +104,6 @@ const CookbookDetail = () => {
             <span>🍲 Số lượng món: {recipeList.length}</span>
           </div>
 
-          {/* SỬA: Chỉ hiện nút ở Header nếu danh sách KHÔNG rỗng */}
           {recipeList.length > 0 && (
             <div className="header-actions" style={{ marginTop: '15px' }}>
                <button className="btn-add-recipe" onClick={handleAddRecipe} style={{
@@ -112,7 +126,6 @@ const CookbookDetail = () => {
         </div>
       </div>
 
-      {/* DANH SÁCH MÓN ĂN */}
       <div className="recipes-grid">
         {recipeList.length > 0 ? (
           recipeList.map((recipe) => (
@@ -160,7 +173,6 @@ const CookbookDetail = () => {
             </div>
           ))
         ) : (
-          /* SỬA: Hiện nút Thêm món ở đây khi danh sách rỗng */
           <div className="empty-recipes">
             <p>Cookbook này chưa có món ăn nào.</p>
             <button onClick={handleAddRecipe} className="btn-explore">Thêm món ngay</button>
