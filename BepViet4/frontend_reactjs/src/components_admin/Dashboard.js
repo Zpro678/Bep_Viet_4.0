@@ -9,7 +9,7 @@ import {
 } from 'react-icons/fa';
 import './CSS/Dashboard.css';
 
-// --- DỮ LIỆU MẪU ---
+
 const STATS = [
   {
     label: 'Tổng người dùng',

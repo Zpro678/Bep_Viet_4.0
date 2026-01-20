@@ -4,7 +4,7 @@ import './CSS/AdminLayout.css';
 
 const SIDEBAR_ITEMS = [
   { label: 'Tổng quan', path: '/admin/dashboard', icon: 'dashboard' },
-  { label: 'Duyệt công thức', path: '/admin/DuyetCongThuc', icon: 'rate_review', badge: 12 },
+  { label: 'Duyệt công thức', path: '/admin/DuyetCongThuc', icon: 'rate_review' },
   { label: 'Quản lý người dùng', path: '/admin/users', icon: 'people' },
 ];
 
