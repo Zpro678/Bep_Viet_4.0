@@ -122,4 +122,18 @@ class BaiViet extends Model
 
         $baiViet->delete();
     }
+    
+    // public function nguoiDung() { return $this->belongsTo(NguoiDung::class, 'ma_nguoi_dung'); }
+    // public function binhLuan() { return $this->hasMany(BinhLuanBaiViet::class, 'ma_bai_viet'); }
+    // public function hinhAnh() { return $this->hasMany(HinhAnhBaiViet::class, 'ma_bai_viet'); }
+
+    public function nguoiTao()
+    {
+        return $this->belongsTo(NguoiDung::class, 'ma_nguoi_dung', 'ma_nguoi_dung');
+    }
+    public function luotThich()
+    {
+        return $this->morphMany(LuotThich::class, 'thich');
+    }
+
 }

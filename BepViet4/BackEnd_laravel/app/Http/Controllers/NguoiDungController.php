@@ -2,65 +2,172 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 use App\Models\NguoiDung;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use App\Models\CongThuc;
 
 class NguoiDungController extends Controller
 {
-    // THÔNG TIN CÁ NHÂN USER
-    public function profile(Request $r)
+    public function profile(Request $request)
     {
-        return $r->user();
+        // middleware 'auth:sanctum' -> Laravel tự tìm đến user và gắn vào $request
+        $user = $request->user();
+       
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Lấy thông tin thành công.',
+            'data' => $user
+        ], 200);
     }
-
-    // CẬP NHẬT HỒ SƠ
-    public function update(Request $request)
+    // ================================== Cập nhật thông tin người dùng ===================================
+    public function updateProfile(Request $request)
     {
-        $request->user()->capNhatHoSo(
-            $request->only('ho_ten', 'ngay_sinh', 'gioi_tinh')
-        );
+        $user = $request->user(); // Lấy user hiện tại từ Token
+
+        $validator = Validator::make($request->all(), [
+            'ho_ten' => 'required|string|max:255',
+           
+            'email' => [
+                'required', 
+                'email', 
+                Rule::unique(NguoiDung::class)->ignore($user->id) // Email phải là duy nhất, nhưng trừ user hiện tại
+            ],
+            'mat_khau' => 'nullable|string|min:6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user->ho_ten = $request->ho_ten;
+        $user->email = $request->email;
+
+        if ($request->filled('mat_khau')) {
+            $user->mat_khau = Hash::make($request->mat_khau);
+        }
+
+        $user->save();
 
         return response()->json([
-            'message' => 'Cập nhật thành công'
-        ]);
+            'status' => 'success',
+            'message' => 'Cập nhật thông tin thành công.',
+            'data' => $user
+        ], 200);
     }
 
-    // PROFILE 
+    // ================================== Lấy thông tin người dùng ===================================
     public function show($id)
     {
-        return NguoiDung::select(
-            'ma_nguoi_dung', 'ho_ten', 'gioi_tinh', 'ngay_sinh'
-        )->findOrFail($id);
-    }
 
-    // CT CỦA USER 
-    public function recipes($id)
-    {
-        return CongThuc::where('ma_nguoi_dung', $id)
-            ->orderByDesc('ngay_tao')
-            ->paginate(10); // số bản ghi theo mỗi trang(phân trang + có tổng số trang)
-    }
+        $user = NguoiDung::select('ma_nguoi_dung', 'ho_ten', 'created_at')
+                        ->where('ma_nguoi_dung', $id)
+                        ->first();
 
-    // TỔNG QUAN NGƯỜI DÙNG
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Người dùng không tồn tại.'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $user
+        ], 200);
+    }
+    
+    // ================================== Thống kê tổng quan người dùng ===================================
     public function overview($id)
     {
-        $overview = NguoiDung::getOverviewById($id);
+        
+        $user = NguoiDung::withCount([
+            'congThuc',      
+            'baiViet',      
+            'boSuuTap',     
+            'nguoiTheoDoi',   
+            'dangTheoDoi'     
+        ])->find($id);
 
-        if (!$overview) {
+      
+        if (!$user) {
             return response()->json([
+                'status' => 'error',
                 'message' => 'Người dùng không tồn tại'
             ], 404);
         }
 
-        return response()->json($overview);
+        $totalLikes = $user->baiViet()->sum('luot_yeu_thich');
+
+        $responseData = [
+            'id' => $user->ma_nguoi_dung, 
+            'ten_dang_nhap' => $user->ten_dang_nhap, 
+            'ho_ten' => $user->ho_ten, 
+            // 'avatar' => $user->anh_dai_dien ?? null, 
+            'vai_tro' => $user->vai_tro,
+            'ThongKe' => [
+                'tong_cong_thuc' => $user->cong_thucs_count, 
+                'tong_bai_viet' => $user->bai_viets_count,
+                'tong_bo_suu_tap' => $user->bo_suu_taps_count,
+                'tong_nguoi_theo_doi' => $user->nguoi_theo_doi_count,
+                'tong_nguoi_dang_theo_doi' => $user->dang_theo_doi_count,
+                'tong_luot_yeu_thich' => (int) $totalLikes
+            ]
+        ];
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $responseData
+        ], 200);
+    }
+    // ================================== Thống kê tổng quan người dùng hiện tại ===================================
+    public function meOverview(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Người dùng không tồn tại'
+            ], 404);
+        }
+         $user->loadCount([
+            'congThuc',      
+            'baiViet',      
+            'boSuuTap',     
+            'nguoiTheoDoi',   
+            'dangTheoDoi'     
+        ]);
+
+        $totalLikes = $user->baiViet()->sum('luot_yeu_thich');
+
+        $responseData = [
+            'id' => $user->ma_nguoi_dung, 
+            'ten_dang_nhap' => $user->ten_dang_nhap, 
+            'ho_ten' => $user->ho_ten, 
+            // 'avatar' => $user->anh_dai_dien ?? null, 
+            'vai_tro' => $user->vai_tro,
+            'ThongKe' => [
+                'tong_cong_thuc' => $user->cong_thucs_count, 
+                'tong_bai_viet' => $user->bai_viets_count,
+                'tong_bo_suu_tap' => $user->bo_suu_taps_count,
+                'tong_nguoi_theo_doi' => $user->nguoi_theo_doi_count,
+                'tong_nguoi_dang_theo_doi' => $user->dang_theo_doi_count,
+                'tong_luot_yeu_thich' => (int) $totalLikes
+            ]
+        ];
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $responseData
+        ], 200);
     }
 
-    // FEED
-    public function feed(Request $request)
-    {
-        return response()->json(
-            $request->user()->feed()
-        );
-    }
+
 }

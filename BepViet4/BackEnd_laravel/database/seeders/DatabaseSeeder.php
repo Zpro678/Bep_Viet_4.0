@@ -17,15 +17,12 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // User::factory(10)->create();
-
-        NguoiDung::create([
-            'ten_dang_nhap' => 'admin_test',
-            'mat_khau'      => Hash::make('123456'), // Mã hóa mật khẩu
-            'email'         => 'test@example.com',
-            'ho_ten'        => 'Người Dùng Thử Nghiệm',
-            'ngay_sinh'     => '1995-01-01',
-            'gioi_tinh'     => 'Nam',
-            'vai_tro'       => 'admin',
+        // Gọi các file theo thứ tự tạo dữ liệu để tránh lỗi khóa ngoại
+        $this->call([
+            MasterDataSeeder::class, 
+            ContentSeeder::class,    
+            DetailSeeder::class,     
+            InteractionSeeder::class 
         ]);
     }
 }

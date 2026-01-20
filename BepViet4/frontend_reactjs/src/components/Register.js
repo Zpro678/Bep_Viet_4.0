@@ -1,0 +1,227 @@
+// src/components/Register.js
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; 
+import authApi from '../api/authApi';
+import './CSS/Register.css';
+import './CSS/Auth.css';
+
+const Register = ({ onSwitchToLogin }) => {
+  const [formData, setFormData] = useState({
+    ten_dang_nhap: '',
+    email: '',
+    mat_khau: '',
+    confirm_mat_khau: '',
+    ho_ten: '',
+    ngay_sinh: '',
+    gioi_tinh: 'Nam'
+  });
+
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  // Hàm kiểm tra email hợp lệ
+  const isValidEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    // --- 1. KIỂM TRA RỖNG ---
+    if (!formData.ten_dang_nhap || !formData.email || !formData.ho_ten || !formData.mat_khau || !formData.confirm_mat_khau || !formData.ngay_sinh) {
+        setError('Vui lòng điền đầy đủ thông tin!');
+        return; 
+    }
+
+    // --- 2. KIỂM TRA EMAIL HỢP LỆ ---
+    if (!isValidEmail(formData.email)) {
+        setError('Địa chỉ Email không đúng định dạng!');
+        return;
+    }
+
+    // --- 3. KIỂM TRA NGÀY SINH (MỚI THÊM) ---
+    // Lấy ngày hiện tại
+    const today = new Date();
+    // Lấy ngày người dùng chọn
+    const birthDate = new Date(formData.ngay_sinh);
+
+    // Nếu ngày sinh lớn hơn hoặc bằng ngày hôm nay -> Lỗi
+    if (birthDate >= today) {
+        setError('Ngày sinh không hợp lệ (phải trước ngày hôm nay)!');
+        return;
+    }
+
+    // --- 4. KIỂM TRA MẬT KHẨU ---
+    if (formData.mat_khau !== formData.confirm_mat_khau) {
+      setError('Mật khẩu nhập lại không khớp!');
+      return;
+    }
+
+    if (formData.mat_khau.length < 6) {
+        setError('Mật khẩu phải có ít nhất 6 ký tự!');
+        return;
+    }
+
+    // --- 5. GỌI API ---
+    setLoading(true);
+
+    try {
+      const payload = {
+        ten_dang_nhap: formData.ten_dang_nhap,
+        email: formData.email,
+        mat_khau: formData.mat_khau,
+        ho_ten: formData.ho_ten,
+        ngay_sinh: formData.ngay_sinh,
+        gioi_tinh: formData.gioi_tinh
+      };
+
+      const response = await authApi.register(payload);
+
+      if (response.status === 'success' || response.access_token) {
+        const { access_token, user } = response.data ? response.data : response;
+
+        localStorage.setItem('ACCESS_TOKEN', access_token);
+        localStorage.setItem('USER_INFO', JSON.stringify(user));
+
+        alert(`Đăng ký thành công, Vui lòng đăng nhập !`);
+        navigate('/');
+      }
+
+    } catch (err) {
+      console.error("Lỗi đăng ký:", err);
+      if (err.response && err.response.data && err.response.data.errors) {
+        const errorList = err.response.data.errors;
+        const firstErrorKey = Object.keys(errorList)[0];
+        
+        // --- Xử lý riêng lỗi ngày sinh nếu lỡ Server vẫn trả về ---
+        if (firstErrorKey === 'ngay_sinh') {
+            setError('Ngày sinh không hợp lệ!');
+        } else {
+            setError(errorList[firstErrorKey][0]); 
+        }
+
+      } else {
+        setError(err.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="login-container">
+      <div className="login-box" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+        <div className="login-header">
+          <span className="login-icon">🍳</span>
+          <h2>Bếp Việt 4.0</h2>
+          <p>Tạo tài khoản mới</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="login-form" noValidate>
+          
+          <div className="form-group">
+            <label>Tên đăng nhập (*)</label>
+            <input 
+              type="text" 
+              name="ten_dang_nhap"
+              placeholder="VD: user123" 
+              value={formData.ten_dang_nhap}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Họ và tên (*)</label>
+            <input 
+              type="text" 
+              name="ho_ten"
+              placeholder="VD: Nguyễn Văn A" 
+              value={formData.ho_ten}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Email (*)</label>
+            <input 
+              type="email" 
+              name="email"
+              placeholder="email@example.com" 
+              value={formData.email}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label>Ngày sinh (*)</label>
+              <input 
+                type="date" 
+                name="ngay_sinh"
+                value={formData.ngay_sinh}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label>Giới tính</label>
+              <select 
+                name="gioi_tinh" 
+                value={formData.gioi_tinh} 
+                onChange={handleChange}
+                style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ddd' }}
+              >
+                <option value="Nam">Nam</option>
+                <option value="Nữ">Nữ</option>
+                <option value="Khác">Khác</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Mật khẩu (*)</label>
+            <input 
+              type="password" 
+              name="mat_khau"
+              placeholder="Tối thiểu 6 ký tự"
+              value={formData.mat_khau}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Xác nhận mật khẩu (*)</label>
+            <input 
+              type="password" 
+              name="confirm_mat_khau"
+              placeholder="Nhập lại mật khẩu" 
+              value={formData.confirm_mat_khau}
+              onChange={handleChange}
+            />
+          </div>
+
+          {/* Sửa style: Bỏ in đậm, giữ màu đỏ */}
+          {error && <p className="error-message" style={{ color: 'red', textAlign: 'center', margin: '10px 0', fontSize: '14px' }}>{error}</p>}
+
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? 'Đang xử lý...' : 'Đăng Ký Ngay'}
+          </button>
+        </form>
+
+        <div className="login-footer">
+          <p>Đã có tài khoản? <span className="link" onClick={onSwitchToLogin}>Đăng nhập</span></p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Register;

@@ -1,38 +1,30 @@
 <?php
 
 namespace App\Models;
-
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\CongThuc;
 use App\Models\BaiViet;
 use App\Models\BoSuuTap;
 use App\Models\The;
-
 class NguoiDung extends Authenticatable
 {
-    use HasApiTokens, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $table = 'nguoi_dung';
     protected $primaryKey = 'ma_nguoi_dung';
-    public $timestamps = false; // Tài liệu dùng ngay_tao, không dùng created_at/updated_at chuẩn
+    public $timestamps = false; 
 
     protected $fillable = [
-        'ten_dang_nhap',
-        'email',
-        'ho_ten',
-        'mat_khau',
-        'ngay_sinh',
-        'gioi_tinh',
-        'vai_tro'
+        'ten_dang_nhap', 'email','mat_khau', 'ho_ten', 'ngay_sinh', 'gioi_tinh', 'vai_tro'
     ];
 
     protected $hidden = [
-        'mat_khau', // [cite: 359]
+        'mat_khau',
     ];
 
-    // Password field mặc định của Laravel là 'password', cần override nếu dùng 'mat_khau'
     public function getAuthPassword()
     {
         return $this->mat_khau;
@@ -45,6 +37,7 @@ class NguoiDung extends Authenticatable
     }
 
     // Quan hệ 1-N: Người dùng có nhiều Bài viết [cite: 304]
+
     public function baiViet()
     {
         return $this->hasMany(BaiViet::class, 'ma_nguoi_dung', 'ma_nguoi_dung');
@@ -77,84 +70,24 @@ class NguoiDung extends Authenticatable
     }
 
     // Người đang theo dõi user này
-    public function followers()
+    // public function followers()
+    public function nguoiTheoDoi()
     {
         return $this->belongsToMany(
-            NguoiDung::class,
-            'theo_doi',
-            'ma_nguoi_duoc_theo_doi',
-            'ma_nguoi_theo_doi'
-        );
+            NguoiDung::class, 
+            'theo_doi', 
+            'ma_nguoi_duoc_theo_doi', // Khóa ngoại của người dùng hiện tại
+            'ma_nguoi_theo_doi'       // Khóa ngoại của người đang follow mình
+        )->wherePivot('trang_thai', 1); // 
     }
-
-    // User đang theo dõi ai
-    public function following()
+    public function dangTheoDoi()
     {
         return $this->belongsToMany(
-            NguoiDung::class,
-            'theo_doi',
-            'ma_nguoi_theo_doi',
-            'ma_nguoi_duoc_theo_doi'
-        );
+            NguoiDung::class, 
+            'theo_doi', 
+            'ma_nguoi_theo_doi',      // Mình là người đi follow
+            'ma_nguoi_duoc_theo_doi'  // Người mình follow
+        )->wherePivot('trang_thai', 1); 
     }
 
-    ///////////////////////////////////
-    // đăng ký
-    public static function dangKy($data)
-    {
-        return self::create([
-            'ten_dang_nhap' => $data['ten_dang_nhap'],
-            'email'        => $data['email'],
-            'ho_ten'       => $data['ho_ten'],
-            'mat_khau'     => bcrypt($data['mat_khau']),
-            'vai_tro'      => 'member'
-        ]);
-    }
-
-    // TOKEN
-    public function taoToken()
-    {
-        return $this->createToken('api-token')->plainTextToken;
-    }
-
-    // CẬP NHẬT HỒ SƠ
-    public function capNhatHoSo($data)
-    {
-        return $this->update($data);
-    }
-
-    // FEED
-    public function feed()
-    {
-        $ids = TheoDoi::where('ma_nguoi_theo_doi', $this->ma_nguoi_dung)
-            ->pluck('ma_nguoi_duoc_theo_doi');
-
-        return CongThuc::whereIn('ma_nguoi_dung', $ids)
-            ->with([
-                'tacGia:ma_nguoi_dung,ho_ten',
-                'danhMuc:ma_danh_muc,ten_danh_muc',
-                'vungMien:ma_vung_mien,ten_vung_mien'
-            ])
-            ->orderByDesc('ngay_tao')
-            ->paginate(10);
-    }
-
-    // Tổng quan
-    public static function getOverviewById(int $id): ?array
-    {
-        $user = self::find($id);
-
-        if (!$user) {
-            return null;
-        }
-
-        return [
-            'user_id' => $user->ma_nguoi_dung,
-            'recipes_count' => $user->recipes()->count(),
-            'followers_count' => $user->followers()->count(),
-            'following_count' => $user->following()->count(),
-            'joined_at' => $user->created_at?->format('Y-m-d'),
-            'role' => $user->vai_tro ?? 'member'
-        ];
-    }
 }

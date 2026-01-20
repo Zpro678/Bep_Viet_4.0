@@ -2,90 +2,138 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\TheoDoi;
 use App\Models\NguoiDung;
 
 class TheoDoiController extends Controller
 {
-    // THEO DÕI NGƯỜI DÙNG
-    public function follow($id, Request $request)
+
+    
+    public function follow(Request $request, $id)
     {
-        $authUser = $request->user(); // user đang đăng nhập (token)
-
-        // không cho follow chính mình
-        if ($authUser->ma_nguoi_dung == $id) {
-            return response()->json([
-                'message' => 'Không thể theo dõi chính mình'
-            ], 400);
+        $currentUser = $request->user();
+        
+        if ($currentUser->ma_nguoi_dung == $id) {
+            return response()->json(['message' => 'Không thể theo dõi chính mình'], 400);
         }
-
+        
         $targetUser = NguoiDung::find($id);
-
         if (!$targetUser) {
-            return response()->json([
-                'message' => 'Người dùng không tồn tại'
-            ], 404);
+            return response()->json(['message' => 'Người dùng không tồn tại'], 404);
         }
 
-        // Thêm follow
-        $follow = TheoDoi::theoDoi($authUser->ma_nguoi_dung, $id);
-
-        if (!$follow->wasRecentlyCreated) {
-            return response()->json([
-                'message' => 'Bạn đã theo dõi người này rồi'
-            ], 409);
-        }
+        $currentUser->dangTheoDoi()->syncWithoutDetaching([
+            $id => ['trang_thai' => 1]
+        ]);
 
         return response()->json([
-            'message' => 'Theo dõi thành công'
-        ], 201);
-    }
-
-    // BỎ THEO DÕI
-    public function unfollow($id, Request $request)
-    {
-        $userDangNhap = $request->user();
-
-        // Không thể unfollow chính mình
-        if ($userDangNhap->id == $id) {
-            return response()->json([
-                'message' => 'Không thể hủy theo dõi chính mình'
-            ], 400);
-        }
-
-        // Người dùng không tồn tại
-        if (!NguoiDung::find($id)) {
-            return response()->json([
-                'message' => 'Người dùng không tồn tại'
-            ], 404);
-        }
-
-       $deleted = TheoDoi::huyTheoDoi($userDangNhap->ma_nguoi_dung, $id);
-
-       if ($deleted === 0) {
-            return response()->json([
-                'message' => 'Bạn chưa theo dõi người này'
-            ], 409);
-        }
-
-        return response()->json([
-            'message' => 'Hủy theo dõi thành công'
+            'status' => 'success',
+            'message' => 'Đã theo dõi thành công.'
         ]);
     }
 
-    // XEM DS NGƯỜI THEO DÕI CỦA USER
-    public function followers($id)
+    public function unfollow(Request $request, $id)
     {
-        // User không tồn tại
-        if (!NguoiDung::find($id)) {
-            return response()->json([
-                'message' => 'Người dùng không tồn tại'
-            ], 404);
-        }
+        $currentUser = $request->user();
+    
+        $detached = $currentUser->dangTheoDoi()->detach($id);
 
-        return TheoDoi::where('ma_nguoi_duoc_theo_doi', $id)
-            ->with('nguoiTheoDoi')
-            ->get();
+        if ($detached > 0) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Đã hủy theo dõi.'
+            ]);
+        } else {
+            return response()->json([
+                'status' => 'success', 
+                'message' => 'Bạn chưa theo dõi người này nên không thể hủy.'
+            ]);
+        }
     }
+
+ 
+
+public function getFollowers(Request $request, $id)
+{
+    $user = NguoiDung::find($id);
+
+    if (!$user) {
+        return response()->json([
+            'status' => 'error', 
+            'message' => 'Người dùng không tồn tại'
+        ], 404);
+    }
+
+    $followers = $user->nguoiTheoDoi()
+        ->select('nguoi_dung.ma_nguoi_dung', 'nguoi_dung.ho_ten') 
+        ->paginate(10); 
+    
+    if ($currentUser = $request->user('sanctum')) {
+        $myFollowingIds = $currentUser->dangTheoDoi()->pluck('nguoi_dung.ma_nguoi_dung')->toArray();
+        
+        $followers->getCollection()->transform(
+  function ($follower) use ($myFollowingIds) 
+            {
+                $follower->is_following = in_array($follower->ma_nguoi_dung, $myFollowingIds);
+                return $follower;
+            });
+    }
+
+    return response()->json([
+        'status' => 'success',
+        'data' => $followers
+    ]);
+}
+
+    // public function followUser(Request $request, $id)
+    // {
+
+    //     $currentUser = $request->user(); // user hiện tại
+
+    //     $targetUser = NguoiDung::find($id); // Kiểm tra người được theo dõi tồn tại
+
+    //     if (!$targetUser) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'Người dùng không tồn tại.'
+    //         ], 404);
+    //     }
+    //     // kiểm tra: chặn việc theo dõi chính mình hoặc khi đang ở chính mình thì hiện nút khác
+    //     if ($currentUser->ma_nguoi_dung == $id) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'Bạn không thể tự theo dõi chính mình.'
+    //         ], 400);
+    //     }
+    //     // Kiểm tra đã theo dõi chưa
+    //     $isFollowing = $currentUser->dangTheoDoi()
+    //         ->where('ma_nguoi_duoc_theo_doi', $id)
+    //         ->exists();
+
+    //     if ($isFollowing) {
+
+    //         $currentUser->dangTheoDoi()->detach($id); // Nếu đã theo dõi thì unfollow
+    //         $message = 'Đã bỏ theo dõi.';
+    //         $status = 'unfollowed';
+    //     } else {
+    //         $currentUser->dangTheoDoi()->attach($id, [
+    //             'trang_thai' => 1,
+    //             'ngay_theo_doi' => now()
+    //         ]);
+    //         $message = 'Đã theo dõi thành công.';
+    //         $status = 'followed';
+    //     }
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'action' => $status, // frontend dùng để thay đổi nút theo dõi
+    //         'message' => $message,
+    //         'data' => [
+    //             'follower_id' => $currentUser->ma_nguoi_dung,
+    //             'following_id' => $targetUser->ma_nguoi_dung
+    //         ]
+    //     ]);
+    // }
+
+
 }

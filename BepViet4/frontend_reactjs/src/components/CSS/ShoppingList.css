@@ -1,0 +1,141 @@
+.shopping-container {
+  max-width: 600px; /* Nhỏ gọn giống list trên điện thoại */
+  margin: 30px auto;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  padding: 25px;
+}
+
+.shopping-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  border-bottom: 2px solid #f3f4f6;
+  padding-bottom: 15px;
+}
+
+.shopping-header h2 {
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.item-count {
+  background: #e5e7eb;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+/* FORM THÊM */
+.add-item-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.add-item-form input {
+  padding: 10px 15px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  outline: none;
+  font-family: inherit;
+}
+
+.add-item-form input:focus { border-color: #f97316; }
+
+.input-name { flex: 3; }
+.input-qty { flex: 1; min-width: 60px; }
+.input-unit { flex: 1; min-width: 70px; }
+
+.btn-add {
+  background: #f97316;
+  color: white;
+  border: none;
+  width: 42px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: 0.2s;
+}
+.btn-add:hover { background: #ea580c; }
+
+/* LIST ITEM */
+.shopping-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shopping-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  background: #fff;
+  border: 1px solid #f3f4f6;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none; /* Tránh bôi đen text khi click liên tục */
+}
+
+.shopping-item:hover {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+/* Custom Checkbox UI */
+.checkbox-custom {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  margin-right: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+/* Trạng thái đã mua */
+.shopping-item.bought {
+  background: #f9fafb;
+  opacity: 0.6;
+}
+
+.shopping-item.bought .checkbox-custom {
+  background: #10b981; /* Màu xanh lá */
+  border-color: #10b981;
+}
+
+.shopping-item.bought .item-name {
+  text-decoration: line-through;
+  color: #9ca3af;
+}
+
+.item-details { flex: 1; display: flex; flex-direction: column; }
+.item-name { font-weight: 600; font-size: 16px; color: #374151; }
+.item-meta { font-size: 13px; color: #6b7280; }
+
+.btn-delete {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  opacity: 0;
+  padding: 8px;
+  transition: 0.2s;
+}
+
+.shopping-item:hover .btn-delete { opacity: 1; }
+.btn-delete:hover { background: #fee2e2; border-radius: 6px; }
+
+.shopping-loading, .empty-msg { text-align: center; color: #6b7280; margin-top: 20px; }
