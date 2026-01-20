@@ -38,7 +38,7 @@ return new class extends Migration
             // Lưu ý: Dùng enum để giới hạn giá trị. File yêu cầu có dấu tiếng Việt (Nữ, Khác).
             $table->enum('gioi_tinh', ['Nam', 'Nữ', 'Khác'])->nullable();
 
-            $table->enum('vai_tro', ['admin', 'User', 'blogger'])->default('member');
+            $table->enum('vai_tro', ['admin', 'member', 'blogger'])->default('member');
 
             $table->timestamps(); // created_at và updated_at
         });

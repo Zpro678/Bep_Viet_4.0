@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import './CSS/Layout.css'; 
+import './CSS/AdminLayout.css'; 
 
 const SIDEBAR_ITEMS = [
   { label: 'Tổng quan', path: '/admin/dashboard', icon: 'dashboard' },
-  { label: 'Duyệt công thức', path: '/admin/approval', icon: 'rate_review', badge: 12 },
+  { label: 'Duyệt công thức', path: '/admin/DuyetCongThuc', icon: 'rate_review', badge: 12 },
   { label: 'Quản lý người dùng', path: '/admin/users', icon: 'people' },
 ];
 
 const CATEGORY_ITEMS = [
-  { label: 'Loại món ăn', path: '/admin/categories/types', icon: 'restaurant' },
-  { label: 'Bữa ăn', path: '/admin/categories/meals', icon: 'schedule' },
-  { label: 'Chế độ ăn', path: '/admin/categories/diets', icon: 'spa' },
+  // { label: 'Loại món ăn', path: '/admin/categories/types', icon: 'restaurant' },
+  // { label: 'Bữa ăn', path: '/admin/categories/meals', icon: 'schedule' },
+  // { label: 'Chế độ ăn', path: '/admin/categories/diets', icon: 'spa' },
   { label: 'Nguyên liệu', path: '/admin/categories/ingredients', icon: 'egg' },
 ];
 

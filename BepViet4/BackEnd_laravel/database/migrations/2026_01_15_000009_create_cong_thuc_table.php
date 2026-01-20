@@ -32,7 +32,8 @@ return new class extends Migration
 
         // mo_ta: Text, Nullable
         $table->text('mo_ta')->nullable();
-
+        $table->enum('trang_thai', ['cho_duyet', 'cong_khai', 'tu_choi', 'nhap'])
+        ->default('cho_duyet');
         // 3. Thông số nấu nướng
         // thoi_gian_nau: Int, Nullable
         $table->integer('thoi_gian_nau')->nullable();
