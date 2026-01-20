@@ -1,6 +1,7 @@
 /* --- BIẾN MÀU SẮC & CẤU HÌNH CHUNG --- */
 :root {
   --primary-color: #f97316; /* Màu cam chủ đạo */
+  --primary-dark: #ea580c;
   --primary-light: #fff7ed;
   --text-dark: #1f2937;
   --text-gray: #6b7280;
@@ -10,6 +11,7 @@
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --success-color: #059669; /* Màu xanh lá cho nút Lưu thành công */
 }
 
 /* Container chính căn giữa trang */
@@ -20,14 +22,15 @@
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: var(--shadow-md);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif; /* Font hiện đại */
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  position: relative; /* Để modal căn theo nếu cần */
 }
 
 /* --- 1. HERO SECTION (ẢNH BÌA & TITLE) --- */
 .recipe-hero {
   position: relative;
   width: 100%;
-  height: 450px; /* Tăng chiều cao để ấn tượng hơn */
+  height: 450px;
 }
 
 .recipe-hero-img {
@@ -37,13 +40,12 @@
   display: block;
 }
 
-/* Lớp phủ gradient đen mờ dần để text dễ đọc */
 .recipe-overlay {
   position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 70%; /* Chỉ phủ 70% phía dưới */
+  height: 70%;
   background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
   display: flex;
   align-items: flex-end;
@@ -57,7 +59,7 @@
   color: var(--white);
 }
 
-/* Badges (Danh mục & Vùng miền) */
+/* Badges */
 .recipe-badges {
   display: flex;
   gap: 10px;
@@ -66,7 +68,7 @@
 
 .badge-cat, .badge-region {
   background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(5px); /* Hiệu ứng kính mờ */
+  backdrop-filter: blur(5px);
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 13px;
@@ -78,7 +80,7 @@
 }
 
 .recipe-title {
-  font-size: 42px; /* Chữ to hơn */
+  font-size: 42px;
   font-weight: 800;
   margin-bottom: 15px;
   line-height: 1.2;
@@ -108,7 +110,7 @@
 }
 
 .meta-rating {
-  color: #fbbf24; /* Màu vàng sao */
+  color: #fbbf24;
   font-weight: 700;
   background: rgba(0,0,0,0.4);
   padding: 4px 10px;
@@ -123,25 +125,25 @@
 }
 
 .recipe-main {
-  flex: 3; /* Cột trái chiếm 3 phần */
+  flex: 3;
 }
 
 .recipe-sidebar {
-  flex: 1; /* Cột phải chiếm 1 phần */
-  position: sticky; /* Sidebar trượt theo */
+  flex: 1;
+  position: sticky;
   top: 20px;
   height: fit-content;
 }
 
-/* --- 3. STATS BAR (THANH THÔNG TIN) --- */
+/* --- 3. STATS BAR --- */
 .recipe-stats-bar {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* Chia 3 cột đều nhau */
+  grid-template-columns: repeat(3, 1fr);
   background: var(--white);
   padding: 20px;
   border-radius: 12px;
   margin-bottom: 30px;
-  box-shadow: 0 0 0 1px #e5e7eb, var(--shadow-sm); /* Viền nhẹ + bóng */
+  box-shadow: 0 0 0 1px #e5e7eb, var(--shadow-sm);
   text-align: center;
 }
 
@@ -153,7 +155,6 @@
   position: relative;
 }
 
-/* Đường gạch ngăn cách giữa các item */
 .stat-item:not(:last-child)::after {
   content: "";
   position: absolute;
@@ -192,7 +193,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  color: #dc2626; /* Màu đỏ Youtube */
+  color: #dc2626;
   font-weight: 600;
   text-decoration: none;
   margin-bottom: 25px;
@@ -221,14 +222,13 @@
 
 .btn-save { background: #f3f4f6; color: var(--text-dark); }
 .btn-save:hover { background: #e5e7eb; }
-.btn-save.saved { background: #fee2e2; color: #ef4444; }
 
 .btn-menu { 
   background: var(--primary-color); 
   color: white; 
   box-shadow: 0 4px 6px rgba(249, 115, 22, 0.3);
 }
-.btn-menu:hover { background: #ea580c; transform: translateY(-2px); }
+.btn-menu:hover { background: var(--primary-dark); transform: translateY(-2px); }
 
 .divider {
   height: 1px;
@@ -244,7 +244,6 @@
   position: relative;
   padding-left: 15px;
 }
-/* Dấu gạch cam bên cạnh title */
 .section-title::before {
   content: "";
   position: absolute;
@@ -256,11 +255,11 @@
   border-radius: 4px;
 }
 
-/* --- 5. NGUYÊN LIỆU (DẠNG LƯỚI) --- */
+/* --- 5. NGUYÊN LIỆU --- */
 .ingredients-list {
-  background: #fff; /* Nền trắng */
+  background: #fff;
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* 2 cột */
+  grid-template-columns: repeat(2, 1fr);
   gap: 15px;
 }
 
@@ -346,7 +345,7 @@
 
 .step-image {
   width: 100%;
-  max-width: 100%; /* Full width của card */
+  max-width: 100%;
   height: auto;
   border-radius: 8px;
   object-fit: cover;
@@ -397,7 +396,7 @@
 .comment-body {
   background: #f9fafb;
   padding: 15px;
-  border-radius: 0 12px 12px 12px; /* Bo góc kiểu chat bubble */
+  border-radius: 0 12px 12px 12px;
   flex: 1;
   border: 1px solid #f3f4f6;
 }
@@ -412,6 +411,148 @@
 
 .comment-content { font-size: 15px; color: #4b5563; line-height: 1.5; margin-bottom: 8px; }
 .comment-date { font-size: 12px; color: #9ca3af; font-style: italic; }
+
+/* --- 8. MODAL POPUP (LƯU VÀO BỘ SƯU TẬP) --- */
+/* Màn đen mờ */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    backdrop-filter: blur(2px);
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* Hộp thoại chính */
+.modal-box-save {
+    background: var(--white);
+    width: 90%;
+    max-width: 400px;
+    border-radius: var(--radius);
+    padding: 25px;
+    position: relative;
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+    animation: slideUp 0.3s ease-out;
+}
+
+/* Nút đóng X */
+.btn-close-modal {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: var(--text-gray);
+    cursor: pointer;
+}
+.btn-close-modal:hover { color: var(--text-dark); }
+
+.modal-box-save h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: var(--text-dark);
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+/* Ảnh preview trong Modal */
+.modal-preview {
+    margin-bottom: 20px;
+}
+.modal-preview img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-bottom: 10px;
+    border: 3px solid var(--primary-light);
+}
+.modal-preview p {
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-dark);
+}
+
+/* Select Box */
+.modal-form label {
+    display: block;
+    text-align: left;
+    font-size: 0.9rem;
+    color: var(--text-gray);
+    margin-bottom: 5px;
+    margin-left: 5px;
+    font-weight: 500;
+}
+
+.cookbook-select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: #f9fafb;
+    outline: none;
+    cursor: pointer;
+    margin-bottom: 15px;
+    color: var(--text-dark);
+}
+.cookbook-select:focus {
+    border-color: var(--primary-color);
+    background-color: white;
+}
+
+/* Link tạo mới */
+.modal-actions-link {
+    text-align: left;
+    margin-bottom: 25px;
+}
+.link-create-new {
+    color: var(--primary-color);
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 600;
+}
+.link-create-new:hover { text-decoration: underline; }
+
+/* Nút xác nhận Lưu */
+.btn-confirm-save {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--success-color); /* Dùng màu xanh giống Kitchen Stories hoặc đổi sang cam nếu thích */
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+.btn-confirm-save:hover {
+    filter: brightness(0.9);
+    transform: scale(1.02);
+}
+.btn-confirm-save:disabled {
+    background-color: #d1d5db;
+    cursor: not-allowed;
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
 
 /* --- RESPONSIVE MOBILE --- */
 @media (max-width: 768px) {

@@ -12,6 +12,7 @@ const CookbookDetail = () => {
   const [cookbook, setCookbook] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // --- 1. FETCH DỮ LIỆU ---
   const fetchDetail = useCallback(async (isBackground = false) => {
     try {
       if (!isBackground) setLoading(true);
@@ -41,31 +42,17 @@ const CookbookDetail = () => {
     fetchDetail(false);
   }, [fetchDetail, navigate]);
 
-  const handleAddRecipe = async () => {
-    const recipeId = prompt("Nhập ID món ăn muốn thêm:");
-    const note = prompt("Ghi chú (tùy chọn):", "");
-
-    if (recipeId) {
-      try {
-        await cookbookService.addRecipe(id, recipeId, note);
-        alert("Đã thêm món ăn thành công!");
-        await fetchDetail(true); 
-      } catch (error) {
-        if (error.response && error.response.status === 401) {
-            navigate('/login');
-            return;
-        }
-        const msg = error.response?.data?.message || error.message;
-        alert("Lỗi: " + msg);
-      }
-    }
+  // --- 2. CHUYỂN HƯỚNG SANG TRANG KHÁM PHÁ ---
+  const handleAddRecipe = () => {
+    navigate('/explore');
   };
 
+  // --- 3. XÓA MÓN KHỎI COOKBOOK ---
   const handleRemoveRecipe = async (recipeId) => {
     if (window.confirm("Bạn muốn xóa món này khỏi Cookbook?")) {
       try {
         await cookbookService.removeRecipe(id, recipeId);
-        await fetchDetail(true);
+        await fetchDetail(true); // Load lại ngầm
       } catch (error) {
         if (error.response && error.response.status === 401) {
             navigate('/login');
@@ -104,21 +91,24 @@ const CookbookDetail = () => {
             <span>🍲 Số lượng món: {recipeList.length}</span>
           </div>
 
+          {/* CHỈ HIỆN NÚT Ở HEADER NẾU ĐÃ CÓ MÓN ĂN (recipeList.length > 0) */}
           {recipeList.length > 0 && (
             <div className="header-actions" style={{ marginTop: '15px' }}>
                <button className="btn-add-recipe" onClick={handleAddRecipe} style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#28a745',
+                  padding: '10px 20px',
+                  backgroundColor: '#f97316', 
                   color: 'white',
                   border: 'none',
-                  borderRadius: '4px',
+                  borderRadius: '30px',
                   cursor: 'pointer',
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   gap: '8px',
-                  fontSize: '1rem'
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  boxShadow: '0 4px 6px rgba(249, 115, 22, 0.3)'
                }}>
-                  <FaPlus /> Thêm món ăn
+                  <FaPlus /> Thêm món mới 
                </button>
             </div>
           )}
@@ -132,8 +122,8 @@ const CookbookDetail = () => {
             <div key={recipe.ma_cong_thuc} className="recipe-card-horizontal">
               <div className="recipe-img">
                 <img 
-                    src={recipe.hinh_anh || 'https://via.placeholder.com/300?text=Food'} 
-                    alt={recipe.ten_mon} 
+                   src={recipe.hinh_anh || 'https://via.placeholder.com/300?text=Food'} 
+                   alt={recipe.ten_mon} 
                 />
                 <div className="play-overlay">
                    <Link to={`/recipe/${recipe.ma_cong_thuc}`}><FaPlayCircle /></Link>
@@ -173,9 +163,10 @@ const CookbookDetail = () => {
             </div>
           ))
         ) : (
+          /* TRẠNG THÁI TRỐNG: Hiện nút to ở giữa */
           <div className="empty-recipes">
             <p>Cookbook này chưa có món ăn nào.</p>
-            <button onClick={handleAddRecipe} className="btn-explore">Thêm món ngay</button>
+            <button onClick={handleAddRecipe} className="btn-explore">Tìm món ngay</button>
           </div>
         )}
       </div>

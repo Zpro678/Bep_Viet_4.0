@@ -1,5 +1,5 @@
 // src/components/MyCookbooks.js
-import React, { useState, useEffect, useCallback } from 'react'; // 1. Import useCallback
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaPlus, FaTrash, FaEdit, FaBookOpen } from 'react-icons/fa';
 import { cookbookService } from '../services/cookbookService'; 
@@ -11,7 +11,6 @@ const MyCookbooks = () => {
   
   const navigate = useNavigate();
 
-  // 2. Dùng useCallback để "đóng băng" hàm này, giúp nó không bị tạo lại mỗi lần render
   const fetchCookbooks = useCallback(async (isBackground = false) => {
     try {
       if (!isBackground) setLoading(true); 
@@ -29,9 +28,8 @@ const MyCookbooks = () => {
     } finally {
       if (!isBackground) setLoading(false);
     }
-  }, [navigate]); // Hàm này phụ thuộc vào navigate
+  }, [navigate]);
 
-  // --- 1. LOAD DATA ---
   useEffect(() => {
     const token = localStorage.getItem('ACCESS_TOKEN');
     if (!token) {
@@ -41,10 +39,9 @@ const MyCookbooks = () => {
     }
 
     fetchCookbooks(false);
-  }, [navigate, fetchCookbooks]); // 3. Thêm fetchCookbooks vào dependency array
+  }, [navigate, fetchCookbooks]);
 
-  // --- 2. XỬ LÝ SỰ KIỆN ---
-  
+  // --- XỬ LÝ SỰ KIỆN ---
   const handleCreateNew = async () => {
     const name = prompt("Nhập tên bộ sưu tập mới:");
     if (name) {
@@ -122,10 +119,20 @@ const MyCookbooks = () => {
             <div key={book.ma_bo_suu_tap} className="collection-card">
               
               <div className="card-image-wrapper">
+                {/* CẬP NHẬT PHẦN NÀY:
+                   1. Kiểm tra book.hinh_anh_bia từ backend.
+                   2. Nếu không có thì dùng placeholder.
+                   3. Thêm onError để xử lý trường hợp link ảnh bị hỏng (404).
+                */}
                 <img 
-                  src={'https://via.placeholder.com/300?text=Cookbook'} 
+                  src={book.hinh_anh_bia ? book.hinh_anh_bia : 'https://via.placeholder.com/300?text=No+Image'} 
                   alt={book.ten_bo_suu_tap} 
+                  onError={(e) => {
+                    e.target.onerror = null; 
+                    e.target.src = 'https://via.placeholder.com/300?text=Cookbook';
+                  }}
                 />
+                
                 <div className="card-overlay">
                   <Link to={`/cookbook/${book.ma_bo_suu_tap}`} className="btn-view">
                     Xem chi tiết
