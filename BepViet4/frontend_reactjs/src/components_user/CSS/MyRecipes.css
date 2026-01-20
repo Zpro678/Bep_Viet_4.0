@@ -1,0 +1,150 @@
+.my-recipes-container {
+  padding: 30px;
+  background-color: #f8f9fa; /* Màu nền nhẹ */
+  min-height: 100vh;
+}
+
+.my-recipes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.my-recipes-header h2 {
+  font-size: 24px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-add-new {
+  background-color: #f97316;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.btn-add-new:hover {
+  background-color: #ea580c;
+  transform: translateY(-2px);
+}
+
+/* Row Style */
+.recipe-row {
+  display: flex;
+  background: white;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  transition: box-shadow 0.2s;
+  align-items: center;
+}
+
+.recipe-row:hover {
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.recipe-row-img {
+  width: 120px;
+  height: 90px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin-right: 20px;
+}
+
+.recipe-row-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.recipe-row-info {
+  flex: 1; /* Chiếm phần lớn diện tích */
+}
+
+.recipe-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  text-decoration: none;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.recipe-name:hover {
+  color: #ff6b6b;
+}
+
+.recipe-meta {
+  font-size: 13px;
+  color: #777;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.recipe-desc {
+  font-size: 14px;
+  color: #555;
+  display: -webkit-box;
+  -webkit-line-clamp: 1; /* Cắt dòng nếu dài quá 1 dòng */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.recipe-row-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-left: 20px;
+  min-width: 100px;
+}
+
+.btn-action {
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.2s;
+}
+
+.btn-action.edit {
+  background-color: #e9ecef;
+  color: #333;
+}
+.btn-action.edit:hover {
+  background-color: #dee2e6;
+  color: #000;
+}
+
+.btn-action.delete {
+  background-color: #ffeaea;
+  color: #dc3545;
+}
+.btn-action.delete:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+.loading-spinner, .empty-state {
+  text-align: center;
+  padding: 50px;
+  color: #666;
+}
