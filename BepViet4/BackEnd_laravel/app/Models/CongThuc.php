@@ -29,6 +29,14 @@ class CongThuc extends Model
         return $this->morphMany(LuotThich::class, 'thich');
     }
 
+    public function cacBuoc()
+    {
+        return $this->hasMany(
+            BuocThucHien::class,
+            'ma_cong_thuc',   // FK ở bảng buoc_thuc_hien
+            'ma_cong_thuc'    // PK ở bảng cong_thuc
+        )->orderBy('so_thu_tu');
+    }
     // BelongsTo: Thuộc về 1 Người dùng 
     public function nguoiTao()
     {

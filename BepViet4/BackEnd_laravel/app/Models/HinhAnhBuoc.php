@@ -9,4 +9,13 @@ class HinhAnhBuoc extends Model {
     protected $primaryKey = 'ma_hinh_anh';
     public $timestamps = false;
     protected $fillable = ['ma_buoc', 'duong_dan', 'mo_ta'];
+
+    public function buocThucHien()
+    {
+        return $this->belongsTo(
+            BuocThucHien::class,
+            'ma_buoc',
+            'ma_buoc'
+        );
+    }
 }

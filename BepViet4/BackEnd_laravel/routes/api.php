@@ -21,12 +21,11 @@ require __DIR__ . '/apiBinhLuan_DanhGia.php';
 require __DIR__ . '/apiHinhAnh.php';
 
 require __DIR__ . '/apiTheoDoi.php';
+
 require __DIR__ . '/apiBaiViet.php';
+
 require __DIR__ . '/apiBoSuuTap.php';
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
 require __DIR__ . '/apiThucDon.php';
 
 require __DIR__ . '/apiVideo.php';
