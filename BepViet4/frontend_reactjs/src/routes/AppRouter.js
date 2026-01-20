@@ -17,7 +17,8 @@ import CookbookDetail from '../components/CookbookDetail';
 import MealPlanner from '../components/MealPlanner'; 
 import ShoppingList from '../components/ShoppingList';
 import CreateRecipe from '../components/CreateRecipe';
-
+import Dashboard from '../components_admin/Dashboard';
+import MyRecipes from '../components/MyRecipes';
 // --- 1. SỬA PROTECTED ROUTE ĐỂ NHẬN onLogout ---
 // Nhận prop onLogout từ AppRouter truyền xuống
 const ProtectedRoute = ({ children, isLoggedIn, onLogout }) => {
