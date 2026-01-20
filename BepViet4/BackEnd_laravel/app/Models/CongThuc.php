@@ -131,7 +131,7 @@ class CongThuc extends Model
     public static function getDetailBasic(int $id): self
     {
         return self::with([
-            'tacGia:ma_nguoi_dung,ho_ten',
+            'nguoiTao:ma_nguoi_dung,ho_ten',
             'danhMuc:ma_danh_muc,ten_danh_muc',
             'vungMien:ma_vung_mien,ten_vung_mien'
         ])->findOrFail($id);
@@ -141,7 +141,7 @@ class CongThuc extends Model
     public static function getDetailFull(int $id): self
     {
         return self::with([
-            'tacGia',
+            'nguoiTao',
             'danhMuc',
             'vungMien',
             'nguyenLieu',
@@ -187,7 +187,7 @@ class CongThuc extends Model
                 $q->where('do_kho', $v)
             )
             ->with([
-                'tacGia:ma_nguoi_dung,ho_ten',
+                'nguoiTao:ma_nguoi_dung,ho_ten',
                 'danhMuc:ma_danh_muc,ten_danh_muc',
                 'vungMien:ma_vung_mien,ten_vung_mien'
             ])
