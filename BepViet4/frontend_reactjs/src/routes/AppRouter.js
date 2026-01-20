@@ -1,39 +1,75 @@
 import React from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 
-// Import Layout
+// Import Layouts
 import MainLayout from '../layouts/MainLayout';
+import AdminLayout from '../layouts/AdminLayout'; // Đảm bảo bạn đã import AdminLayout
 
 // Import Pages
-import Home from '../components/Home';
-import Explore from '../components/Explore';
-import RecipeDetail from '../components/RecipeDetail';
-import Login from '../components/Login';
-import Register from '../components/Register';
-import ForgotPassword from '../components/ForgotPassword';
-import UserProfile from '../components/UserProfile';
-import MyCookbooks from '../components/MyCookbooks';
-import CookbookDetail from '../components/CookbookDetail';
-import MealPlanner from '../components/MealPlanner'; 
-import ShoppingList from '../components/ShoppingList';
-import CreateRecipe from '../components/CreateRecipe';
+import Home from '../components_user/Home';
+import Explore from '../components_user/Explore';
+import RecipeDetail from '../components_user/RecipeDetail';
+import Login from '../components_user/Login';
+import Register from '../components_user/Register';
+import ForgotPassword from '../components_user/ForgotPassword';
+import UserProfile from '../components_user/UserProfile';
+import MyCookbooks from '../components_user/MyCookbooks';
+import CookbookDetail from '../components_user/CookbookDetail';
+import MealPlanner from '../components_user/MealPlanner'; 
+import ShoppingList from '../components_user/ShoppingList';
+import CreateRecipe from '../components_user/CreateRecipe';
+import MyRecipes from '../components_user/MyRecipes';
+
+// Import Admin Pages
 import Dashboard from '../components_admin/Dashboard';
-import MyRecipes from '../components/MyRecipes';
-// --- 1. SỬA PROTECTED ROUTE ĐỂ NHẬN onLogout ---
-// Nhận prop onLogout từ AppRouter truyền xuống
+
+// --- 1. COMPONENT BẢO VỆ CHO USER (Dùng MainLayout) ---
 const ProtectedRoute = ({ children, isLoggedIn, onLogout }) => {
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />;
   }
-  // QUAN TRỌNG: Truyền onLogout (hàm xịn có xóa localStorage) vào MainLayout
   return <MainLayout onLogout={onLogout}>{children}</MainLayout>;
 };
 
+// --- 2. COMPONENT BẢO VỆ RIÊNG CHO ADMIN (QUAN TRỌNG) ---
+// Chặn User thường vào Dashboard. Nếu không phải Admin -> đá về trang chủ
+const AdminGuard = ({ children, isLoggedIn, onLogout }) => {
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Lấy User từ localStorage để check quyền
+  const user = JSON.parse(localStorage.getItem('USER') || '{}');
+  const role = user.vai_tro ? user.vai_tro.toUpperCase() : '';
+
+  if (role !== 'ADMIN') {
+    alert("Bạn không có quyền truy cập trang quản trị!");
+    return <Navigate to="/" replace />;
+  }
+
+  // Nếu là Admin, dùng AdminLayout (khác với MainLayout của user)
+  return <AdminLayout onLogout={onLogout}>{children}</AdminLayout>;
+};
+
+// --- 3. XỬ LÝ LOGIN & CHUYỂN HƯỚNG ---
 const LoginWrapper = ({ setIsLoggedIn }) => {
   const navigate = useNavigate();
+
+  // Hàm này nhận 'role' từ Login.js gửi lên
+  const handleLoginSuccess = (role) => {
+    setIsLoggedIn(true);
+    
+    // LOGIC ĐIỀU HƯỚNG:
+    if (role && role === 'ADMIN') {
+        navigate('/admin/dashboard'); // Admin vào Dashboard
+    } else {
+        navigate('/'); // User thường vào Trang chủ
+    }
+  };
+
   return (
     <Login 
-      onLogin={() => { setIsLoggedIn(true); navigate('/'); }} 
+      onLogin={handleLoginSuccess} 
       onSwitchToRegister={() => navigate('/register')} 
       onSwitchToForgotPassword={() => navigate('/forgot-password')} 
     />
@@ -50,7 +86,7 @@ const ForgotPasswordWrapper = () => {
   return <ForgotPassword onSwitchToLogin={() => navigate('/login')} />;
 };
 
-// --- 2. SỬA APPROUTER ĐỂ NHẬN PROPS onLogout ---
+// --- 4. APP ROUTER CHÍNH ---
 const AppRouter = ({ isLoggedIn, setIsLoggedIn, onLogout }) => {
   return (
     <Routes>
@@ -68,9 +104,16 @@ const AppRouter = ({ isLoggedIn, setIsLoggedIn, onLogout }) => {
         element={!isLoggedIn ? <ForgotPasswordWrapper /> : <Navigate to="/" replace />} 
       />
 
-      {/* --- PRIVATE ROUTES --- */}
-      {/* 3. TRUYỀN onLogout VÀO TẤT CẢ PROTECTED ROUTE */}
-      
+      {/* --- ADMIN ROUTES (Được bảo vệ bởi AdminGuard) --- */}
+      {/* Tôi đổi path thành /admin/dashboard cho chuyên nghiệp và dễ quản lý */}
+      <Route path="/admin/dashboard" element={
+        <AdminGuard isLoggedIn={isLoggedIn} onLogout={onLogout}>
+          <Dashboard />
+        </AdminGuard>
+      } />
+
+
+      {/* --- USER PRIVATE ROUTES (Dùng ProtectedRoute + MainLayout) --- */}
       <Route path="/" element={
         <ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}>
           <Home />
@@ -131,12 +174,6 @@ const AppRouter = ({ isLoggedIn, setIsLoggedIn, onLogout }) => {
         </ProtectedRoute>
       } />
 
-      <Route path="/dashboard" element={
-        <ProtectedRoute isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn}>
-          <Dashboard />
-        </ProtectedRoute>
-      } />
-
       <Route path="/user/:id" element={
         <ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}>
            <div className="placeholder-page">
@@ -145,6 +182,7 @@ const AppRouter = ({ isLoggedIn, setIsLoggedIn, onLogout }) => {
         </ProtectedRoute>
       } />
 
+      {/* Route mặc định: Nếu nhập linh tinh thì về trang chủ */}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
