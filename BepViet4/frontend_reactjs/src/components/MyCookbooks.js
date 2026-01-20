@@ -1,6 +1,6 @@
 // src/components/MyCookbooks.js
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react'; // 1. Import useCallback
+import { Link, useNavigate } from 'react-router-dom';
 import { FaPlus, FaTrash, FaEdit, FaBookOpen } from 'react-icons/fa';
 import { cookbookService } from '../services/cookbookService'; 
 import './CSS/MyCookbooks.css'; 
@@ -8,45 +8,92 @@ import './CSS/MyCookbooks.css';
 const MyCookbooks = () => {
   const [cookbooks, setCookbooks] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  const navigate = useNavigate();
 
-  // --- 1. LOAD DATA ---
-  useEffect(() => {
-    fetchCookbooks();
-  }, []);
-
-  const fetchCookbooks = async () => {
+  // 2. Dùng useCallback để "đóng băng" hàm này, giúp nó không bị tạo lại mỗi lần render
+  const fetchCookbooks = useCallback(async (isBackground = false) => {
     try {
-      setLoading(true);
+      if (!isBackground) setLoading(true); 
+
       const data = await cookbookService.getAll();
       setCookbooks(data);
     } catch (error) {
       console.error("Lỗi tải dữ liệu:", error);
+      
+      if (error.response && error.response.status === 401) {
+          alert("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
+          localStorage.removeItem('ACCESS_TOKEN');
+          navigate('/login');
+      }
     } finally {
-      setLoading(false);
+      if (!isBackground) setLoading(false);
     }
-  };
+  }, [navigate]); // Hàm này phụ thuộc vào navigate
+
+  // --- 1. LOAD DATA ---
+  useEffect(() => {
+    const token = localStorage.getItem('ACCESS_TOKEN');
+    if (!token) {
+        alert("Vui lòng đăng nhập để xem bộ sưu tập!");
+        navigate('/login');
+        return;
+    }
+
+    fetchCookbooks(false);
+  }, [navigate, fetchCookbooks]); // 3. Thêm fetchCookbooks vào dependency array
 
   // --- 2. XỬ LÝ SỰ KIỆN ---
+  
   const handleCreateNew = async () => {
     const name = prompt("Nhập tên bộ sưu tập mới:");
     if (name) {
-      const newItem = await cookbookService.create({ 
-        title: name, 
-        description: 'Mô tả ngắn về bộ sưu tập này...' 
-      });
-      setCookbooks([newItem, ...cookbooks]);
-      alert("Đã tạo thành công!");
+      try {
+        await cookbookService.create(name); 
+        await fetchCookbooks(true); 
+        alert("Đã tạo thành công!");
+      } catch (error) {
+        if (error.response && error.response.status === 401) {
+             navigate('/login');
+             return;
+        }
+        alert("Lỗi khi tạo: " + (error.response?.data?.message || "Lỗi server"));
+      }
     }
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Bạn có chắc muốn xóa bộ sưu tập này?")) {
-      await cookbookService.delete(id);
-      setCookbooks(cookbooks.filter(item => item.id !== id));
+      try {
+        await cookbookService.delete(id);
+        await fetchCookbooks(true);
+      } catch (error) {
+        if (error.response && error.response.status === 401) {
+            navigate('/login');
+            return;
+       }
+        alert("Không thể xóa bộ sưu tập này.");
+      }
     }
   };
 
-  // --- 3. RENDER GIAO DIỆN ---
+  const handleRename = async (id, currentName) => {
+    const newName = prompt("Nhập tên mới cho bộ sưu tập:", currentName);
+
+    if (newName && newName.trim() !== "" && newName !== currentName) {
+      try {
+        await cookbookService.update(id, newName);
+        await fetchCookbooks(true);
+      } catch (error) {
+        if (error.response && error.response.status === 401) {
+            navigate('/login');
+            return;
+        }
+        alert("Lỗi khi đổi tên: " + (error.response?.data?.message || "Vui lòng thử lại"));
+      }
+    }
+  };
+
   if (loading) {
     return <div className="loading-spinner">Đang tải bộ sưu tập...</div>;
   }
@@ -72,40 +119,46 @@ const MyCookbooks = () => {
       ) : (
         <div className="collection-grid">
           {cookbooks.map((book) => (
-            <div key={book.id} className="collection-card">
-              {/* Hình ảnh */}
+            <div key={book.ma_bo_suu_tap} className="collection-card">
+              
               <div className="card-image-wrapper">
-                {/* SỬA 1: Dữ liệu service trả về là 'image', không phải 'thumbnail' */}
                 <img 
-                  src={book.image || 'https://via.placeholder.com/300'} 
-                  alt={book.title} 
+                  src={'https://via.placeholder.com/300?text=Cookbook'} 
+                  alt={book.ten_bo_suu_tap} 
                 />
                 <div className="card-overlay">
-                  {/* SỬA 2: Sửa đường dẫn từ 'collection' thành 'cookbook' để khớp với Router */}
-                  <Link to={`/cookbook/${book.id}`} className="btn-view">
+                  <Link to={`/cookbook/${book.ma_bo_suu_tap}`} className="btn-view">
                     Xem chi tiết
                   </Link>
                 </div>
               </div>
 
-              {/* Nội dung */}
               <div className="card-body">
                 <div className="card-meta">
-                  <span className="recipe-count">{book.recipes_count || 0} công thức</span>
-                  <span className="date-create">{book.created_at}</span>
+                  <span className="recipe-count">
+                    {book.cong_thucs_count || 0} công thức
+                  </span>
+                  <span className="date-create">
+                    {new Date(book.created_at).toLocaleDateString('vi-VN')}
+                  </span>
                 </div>
-                <h3 className="card-title">{book.title}</h3>
-                <p className="card-desc">{book.description}</p>
                 
-                {/* Actions */}
+                <h3 className="card-title">{book.ten_bo_suu_tap}</h3>
+                <p className="card-desc">Danh sách các món ăn yêu thích</p>
+                
                 <div className="card-actions">
-                  <button className="action-btn edit" title="Chỉnh sửa">
+                  <button 
+                    className="action-btn edit" 
+                    title="Chỉnh sửa tên"
+                    onClick={() => handleRename(book.ma_bo_suu_tap, book.ten_bo_suu_tap)}
+                  >
                     <FaEdit />
                   </button>
+                  
                   <button 
                     className="action-btn delete" 
                     title="Xóa"
-                    onClick={() => handleDelete(book.id)}
+                    onClick={() => handleDelete(book.ma_bo_suu_tap)}
                   >
                     <FaTrash />
                   </button>
