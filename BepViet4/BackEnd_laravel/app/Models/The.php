@@ -16,4 +16,16 @@ class The extends Model
     protected $fillable = [
         'ten_the'
     ];
+
+    // many to many: thông qua bảng trung gian CongThucThe
+    public function congThuc()
+    {
+        return $this->belongsToMany(
+            CongThuc::class,
+            'cong_thuc_the',
+            'ma_the',
+            'ma_cong_thuc'
+        );
+    }
+
 }
