@@ -2,7 +2,7 @@
 import React from 'react';
 import { Recipe } from '../types';
 
-const RECIPES: Recipe[] = [
+const RECIPE = [
   {
     id: '1',
     title: 'Salad Hạt Diêm Mạch Mùa Hè',
@@ -95,7 +95,7 @@ const RECIPES: Recipe[] = [
   },
 ];
 
-const RecipeCard: React.FC<{ recipe: Recipe }> = ({ recipe }) => (
+const RecipeCard = ({ recipe }) => (
   <div className={`bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col ${recipe.status === 'reviewed' ? 'opacity-70 grayscale-[0.3]' : ''}`}>
     <div className="relative h-56 overflow-hidden">
       <img 
@@ -149,7 +149,7 @@ const RecipeCard: React.FC<{ recipe: Recipe }> = ({ recipe }) => (
   </div>
 );
 
-const RecipeApproval: React.FC = () => {
+const RecipeApproval = () => {
   return (
     <div className="max-w-[1600px] mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">

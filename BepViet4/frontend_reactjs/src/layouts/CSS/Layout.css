@@ -1,0 +1,146 @@
+/* --- BIẾN MÀU SẮC --- */
+:root {
+  --primary: #f97316;       /* Cam chủ đạo */
+  --primary-bg: #fff7ed;    /* Cam nhạt (nền active) */
+  --text-dark: #1e293b;     /* Chữ đậm */
+  --text-gray: #64748b;     /* Chữ nhạt */
+  --bg-body: #f8fafc;       /* Nền trang */
+  --border-color: #e2e8f0;  /* Đường viền */
+  --sidebar-width: 260px;
+}
+
+/* --- RESET CƠ BẢN --- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); }
+a { text-decoration: none; color: inherit; }
+
+/* --- LAYOUT TỔNG --- */
+.admin-wrapper {
+  display: flex;
+  height: 100vh;
+  overflow: hidden; /* Chặn cuộn trang cha */
+}
+
+/* --- SIDEBAR --- */
+.admin-sidebar {
+  width: var(--sidebar-width);
+  background: white;
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: transform 0.3s ease;
+  z-index: 50;
+}
+
+/* Header của Sidebar */
+.sidebar-header {
+  padding: 24px;
+  display: flex; align-items: center; gap: 12px;
+}
+.logo-icon {
+  background: var(--primary); color: white;
+  padding: 6px; border-radius: 8px; display: flex;
+}
+.logo-text { font-size: 20px; font-weight: 800; color: var(--text-dark); }
+.btn-close-mobile { display: none; background: none; border: none; font-size: 24px; cursor: pointer; }
+
+/* Menu Navigation */
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  color: var(--text-gray);
+  font-weight: 500;
+  transition: 0.2s;
+  cursor: pointer;
+}
+
+.nav-item:hover { background: var(--bg-body); color: var(--primary); }
+
+.nav-item.active {
+  background: var(--primary-bg);
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.nav-icon { font-size: 22px; }
+.nav-label { flex: 1; font-size: 14px; }
+.nav-badge {
+  background: #fee2e2; color: #dc2626;
+  padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700;
+}
+
+.nav-divider-label {
+  margin: 20px 0 8px 16px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px;
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid var(--border-color);
+}
+.user-profile-box {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px; background: var(--bg-body); border-radius: 12px;
+}
+.user-avatar { width: 40px; height: 40px; border-radius: 50%; }
+.user-info { flex: 1; overflow: hidden; }
+.user-name { font-size: 14px; font-weight: 700; color: var(--text-dark); }
+.user-role { font-size: 12px; color: var(--text-gray); }
+.btn-logout {
+  background: none; border: none; cursor: pointer; color: #94a3b8; transition: 0.2s;
+}
+.btn-logout:hover { color: #ef4444; }
+
+/* --- MAIN CONTENT --- */
+.main-content {
+  flex: 1;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  background-color: var(--bg-body);
+}
+
+.mobile-header { display: none; } /* Ẩn trên desktop */
+
+.page-container {
+  flex: 1;
+  overflow-y: auto; /* Cuộn nội dung riêng biệt */
+  padding: 30px;
+}
+
+/* --- MOBILE RESPONSIVE --- */
+@media (max-width: 1024px) {
+  .admin-sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    transform: translateX(-100%); /* Giấu sidebar sang trái */
+    width: 280px;
+  }
+  
+  .admin-sidebar.mobile-open { transform: translateX(0); } /* Hiện sidebar */
+  
+  .btn-close-mobile { display: block; margin-left: auto; }
+  
+  .mobile-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 40;
+  }
+
+  .mobile-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 15px 20px; background: white; border-bottom: 1px solid var(--border-color);
+  }
+  .mobile-brand { display: flex; align-items: center; gap: 8px; font-size: 18px; color: var(--text-dark); }
+  .logo-mini { color: var(--primary); }
+  .btn-menu-toggle { background: none; border: none; font-size: 24px; color: var(--text-gray); }
+  
+  .page-container { padding: 15px; }
+}
