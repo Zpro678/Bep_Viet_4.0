@@ -4,9 +4,10 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 // Import Layout
 import MainLayout from '../layouts/MainLayout';
 
-// Import Pages
+// Import Pages (Giữ nguyên các import của bạn)
 import Home from '../components/Home';
 import Explore from '../components/Explore';
+import MyRecipes from '../components/MyRecipes';
 import RecipeDetail from '../components/RecipeDetail';
 import Login from '../components/Login';
 import Register from '../components/Register';
@@ -18,13 +19,14 @@ import MealPlanner from '../components/MealPlanner';
 import ShoppingList from '../components/ShoppingList';
 import CreateRecipe from '../components/CreateRecipe';
 
-// --- WRAPPERS & PROTECTED ROUTE ---
-
-const ProtectedRoute = ({ children, isLoggedIn, setIsLoggedIn }) => {
+// --- 1. SỬA PROTECTED ROUTE ĐỂ NHẬN onLogout ---
+// Nhận prop onLogout từ AppRouter truyền xuống
+const ProtectedRoute = ({ children, isLoggedIn, onLogout }) => {
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />;
   }
-  return <MainLayout onLogout={() => setIsLoggedIn(false)}>{children}</MainLayout>;
+  // QUAN TRỌNG: Truyền onLogout (hàm xịn có xóa localStorage) vào MainLayout
+  return <MainLayout onLogout={onLogout}>{children}</MainLayout>;
 };
 
 const LoginWrapper = ({ setIsLoggedIn }) => {
@@ -48,8 +50,8 @@ const ForgotPasswordWrapper = () => {
   return <ForgotPassword onSwitchToLogin={() => navigate('/login')} />;
 };
 
-// --- COMPONENT ROUTER CHÍNH ---
-const AppRouter = ({ isLoggedIn, setIsLoggedIn }) => {
+// --- 2. SỬA APPROUTER ĐỂ NHẬN PROPS onLogout ---
+const AppRouter = ({ isLoggedIn, setIsLoggedIn, onLogout }) => {
   return (
     <Routes>
       {/* --- PUBLIC ROUTES --- */}
@@ -67,78 +69,76 @@ const AppRouter = ({ isLoggedIn, setIsLoggedIn }) => {
       />
 
       {/* --- PRIVATE ROUTES --- */}
+      {/* 3. TRUYỀN onLogout VÀO TẤT CẢ PROTECTED ROUTE */}
       
-      {/* 1. Trang chủ */}
       <Route path="/" element={
-        <ProtectedRoute isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn}>
+        <ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}>
           <Home />
         </ProtectedRoute>
       } />
 
-      {/* 2. Khám phá */}
       <Route path="/explore" element={
-        <ProtectedRoute isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn}>
+        <ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}>
           <Explore />
         </ProtectedRoute>
       } />
 
-      {/* 3. Chi tiết công thức */}
+      <Route path="/my-recipes" element={
+        <ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}>
+          <MyRecipes />
+        </ProtectedRoute>
+      } />
+      
       <Route path="/recipe/:id" element={
-        <ProtectedRoute isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn}>
+        <ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}>
           <RecipeDetail />
         </ProtectedRoute>
       } />
 
-      {/* 4. Hồ sơ cá nhân */}
       <Route path="/profile" element={
-        <ProtectedRoute isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn}>
+        <ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}>
           <UserProfile />
         </ProtectedRoute>
       } />
 
-      {/* 5. Danh sách Bộ sưu tập */}
       <Route path="/my-cookbooks" element={
-        <ProtectedRoute isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn}>
+        <ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}>
           <MyCookbooks />
         </ProtectedRoute>
       } />
       
-      {/* 6. Chi tiết Bộ sưu tập */}
       <Route path="/cookbook/:id" element={
-        <ProtectedRoute isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn}>
-           <CookbookDetail />
+        <ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}>
+          <CookbookDetail />
         </ProtectedRoute>
       } />
 
-      {/* 7. Lên kế hoạch ăn uống (MỚI) */}
       <Route path="/meal-planner" element={
-        <ProtectedRoute isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn}>
+        <ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}>
            <MealPlanner />
         </ProtectedRoute>
       } />
 
       <Route path="/shopping-list" element={
-          <ProtectedRoute isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn}>
+          <ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}>
             <ShoppingList />
         </ProtectedRoute>
       } />
 
       <Route path="/create-recipe" element={
-        <ProtectedRoute isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn}>
+        <ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}>
           <CreateRecipe />
         </ProtectedRoute>
       } />
 
-      {/* 8. Xem hồ sơ người khác (Public View) */}
       <Route path="/user/:id" element={
-        <ProtectedRoute isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn}>
+        <ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}>
            <div className="placeholder-page">
               <h2>Trang cá nhân người dùng (Public View)</h2>
            </div>
         </ProtectedRoute>
       } />
 
-      {/* Route 404 */}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
