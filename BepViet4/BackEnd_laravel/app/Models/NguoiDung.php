@@ -56,6 +56,19 @@ class NguoiDung extends Authenticatable
         return $this->hasMany(BoSuuTap::class, 'ma_nguoi_dung', 'ma_nguoi_dung');
     }
 
+    // hasMany: đánh giá
+    public function danhGia()
+    {
+        return $this->hasMany(DanhGia::class, 'ma_nguoi_dung', 'ma_nguoi_dung');
+    }
+
+    // hasMany: bình luận về bài viết
+    public function binhLuanBaiViet()
+    {
+        return $this->hasMany(BinhLuanBaiViet::class, 'ma_nguoi_dung', 'ma_nguoi_dung');
+    }
+
+
     ///////////////
     // Công thức đã đăng
     public function recipes()

@@ -26,4 +26,10 @@ class BuocThucHien extends Model
     {
         return $this->belongsTo(CongThuc::class, 'ma_cong_thuc', 'ma_cong_thuc');
     }
+
+    // hasMany: hình ảnh
+    public function hinhAnh()
+    {
+        return $this->hasMany(HinhAnhBuoc::class, 'ma_buoc', 'ma_buoc');
+    }
 }

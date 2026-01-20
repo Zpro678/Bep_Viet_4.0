@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use App\Models\The;
+use App\Exceptions\ForbiddenException;
 
 class CongThuc extends Model
 {
@@ -72,6 +74,26 @@ class CongThuc extends Model
         return $this->hasMany(VideoHuongDan::class, 'ma_cong_thuc', 'ma_cong_thuc');
     }
 
+    // hasMany: đánh giá
+    public function danhGia()
+    {
+        return $this->hasMany(DanhGia::class, 'ma_cong_thuc', 'ma_cong_thuc');
+    }
+
+    // hasMany: bình luận
+    public function binhLuan()
+    {
+        return $this->hasMany(BinhLuan::class, 'ma_cong_thuc', 'ma_cong_thuc')
+            ->whereNull('ma_binh_luan_cha');
+    }
+
+    // hasMany: bộ sưu tập
+    public function trongBoSuuTap()
+    {
+        return $this->hasMany(ChiTietBoSuuTap::class, 'ma_cong_thuc', 'ma_cong_thuc');
+    }
+
+
     // Tạo công thức
     public static function taoCongThuc($userId, $data)
     {
@@ -96,5 +118,128 @@ class CongThuc extends Model
             )
             ->orderByDesc('ngay_tao')
             ->paginate(10);
+    }
+
+    //    15. CHI TIẾT CƠ BẢN
+    public static function getDetailBasic(int $id): self
+    {
+        return self::with([
+            'tacGia:ma_nguoi_dung,ho_ten',
+            'danhMuc:ma_danh_muc,ten_danh_muc',
+            'vungMien:ma_vung_mien,ten_vung_mien'
+        ])->findOrFail($id);
+    }
+
+    //    16. CHI TIẾT ĐẦY ĐỦ
+    public static function getDetailFull(int $id): self
+    {
+        return self::with([
+            'tacGia',
+            'danhMuc',
+            'vungMien',
+            'nguyenLieu',
+            'buocThucHien.hinhAnh',
+            'hinhAnh',
+            'video',
+            'the',
+            'binhLuan.cacTraLoi'
+        ])->findOrFail($id);
+    }
+
+    //    19. CÔNG THỨC PHỔ BIẾN
+    public static function getPopular(int $limit = 10)
+    {
+        return self::withCount('danhGia')
+            ->withAvg('danhGia', 'so_sao')
+            ->orderByDesc('danh_gia_count')
+            ->orderByDesc('danh_gia_avg_so_sao')
+            ->limit($limit)
+            ->get();
+    }
+
+    //    20. SEARCH NÂNG CAO
+    public static function searchAdvanced(array $filters)
+    {
+        return self::query()
+            ->when($filters['keyword'] ?? null, function (Builder $q, $v) {
+                $q->where('ten_mon', 'like', "%$v%");
+            })
+            ->when(
+                $filters['ma_danh_muc'] ?? null,
+                fn($q, $v) =>
+                $q->where('ma_danh_muc', $v)
+            )
+            ->when(
+                $filters['ma_vung_mien'] ?? null,
+                fn($q, $v) =>
+                $q->where('ma_vung_mien', $v)
+            )
+            ->when(
+                $filters['do_kho'] ?? null,
+                fn($q, $v) =>
+                $q->where('do_kho', $v)
+            )
+            ->with([
+                'tacGia:ma_nguoi_dung,ho_ten',
+                'danhMuc:ma_danh_muc,ten_danh_muc',
+                'vungMien:ma_vung_mien,ten_vung_mien'
+            ])
+            ->orderByDesc('ngay_tao')
+            ->paginate(10);
+    }
+
+    // 17. Cập nhật công thức
+    public static function capNhatCongThuc(int $id, int $userId, array $data): self
+    {
+        $congThuc = self::findOrFail($id);
+
+        if ($congThuc->ma_nguoi_dung !== $userId) {
+            throw new ForbiddenException();
+        }
+
+        $congThuc->update($data);
+
+        return $congThuc;
+    }
+
+    // 18. Xóa công thức
+    public static function xoaCongThuc(int $id, int $userId): void
+    {
+        $congThuc = self::findOrFail($id);
+
+        if ($congThuc->ma_nguoi_dung !== $userId) {
+            throw new ForbiddenException();
+        }
+
+        $congThuc->delete();
+    }
+
+
+    // 21. Thêm/Sửa nguyên liệu cho công thức
+    public static function dongBoNguyenLieu(int $id, int $userId, array $ingredients): self
+    {
+        $congThuc = self::findOrFail($id);
+
+        if ($congThuc->ma_nguoi_dung !== $userId) {
+            throw new ForbiddenException();
+        }
+
+        $congThuc->nguyenLieu()->sync($ingredients);
+
+        return $congThuc->load('nguyenLieu');
+    }
+
+    // 22. Gán danh mục cho công thức
+    public static function capNhatDanhMuc( int $id, int $userId, int $maDanhMuc): self {
+        $congThuc = self::findOrFail($id);
+
+        if ($congThuc->ma_nguoi_dung !== $userId) {
+            throw new ForbiddenException();
+        }
+
+        $congThuc->ma_danh_muc = $maDanhMuc;
+        $congThuc->save();
+
+        return $congThuc->load('danhMuc');
     }
 }
