@@ -9,70 +9,150 @@ use Illuminate\Support\Facades\Validator;
 
 class BoSuuTap_ChiTietBoSuuTapController extends Controller
 {
-    public function updateName(Request $request, $id)
+    /**
+     * Lấy danh sách bộ sưu tập của User đang đăng nhập
+     */
+    public function index(Request $request)
     {
-        // 1. Validate dữ liệu đầu vào
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Vui lòng đăng nhập'], 401);
+        }
+
+        try {
+            $boSuuTaps = $user->boSuuTap() 
+                              ->withCount('congThucs')
+                              ->orderBy('created_at', 'desc')
+                              ->get();
+            
+            return response()->json([
+                'status' => true,
+                'message' => 'Lấy danh sách thành công',
+                'data' => $boSuuTaps
+            ], 200);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false, 
+                'message' => 'Lỗi Server: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Tạo bộ sưu tập mới cho User hiện tại
+     */
+    public function store(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'ten_bo_suu_tap' => 'required|string|max:255',
         ], [
             'ten_bo_suu_tap.required' => 'Vui lòng nhập tên bộ sưu tập',
+            'ten_bo_suu_tap.max'      => 'Tên bộ sưu tập không quá 255 ký tự',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => false,
-                'message' => 'Lỗi dữ liệu',
-                'errors' => $validator->errors()
+                'status'  => false,
+                'message' => 'Lỗi dữ liệu đầu vào',
+                'errors'  => $validator->errors()
             ], 422);
         }
 
-        // 2. Tìm bộ sưu tập theo ID (ma_bo_suu_tap)
-        // Model BoSuuTap đã khai báo primaryKey = 'ma_bo_suu_tap' nên dùng find($id) là được
-        $boSuuTap = BoSuuTap::find($id);
+        // Lấy User hiện tại
+        $user = $request->user();
+
+        try {
+            // Tạo mới và gán ma_nguoi_dung tự động
+            $boSuuTap = BoSuuTap::create([
+                'ten_bo_suu_tap' => $request->ten_bo_suu_tap,
+                'ma_nguoi_dung'  => $user->ma_nguoi_dung, // Lấy ID từ token
+            ]);
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Tạo bộ sưu tập thành công',
+                'data'    => $boSuuTap
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Lỗi Server: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Đổi tên bộ sưu tập (Chỉ chủ sở hữu mới đổi được)
+     */
+    public function updateName(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'ten_bo_suu_tap' => 'required|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $user = $request->user();
+
+        // Tìm bộ sưu tập nhưng PHẢI thuộc về user này
+        // Cách này đảm bảo User A không sửa được của User B dù biết ID
+        $boSuuTap = $user->boSuuTap()->find($id);
 
         if (!$boSuuTap) {
             return response()->json([
                 'status' => false,
-                'message' => 'Không tìm thấy bộ sưu tập'
+                'message' => 'Không tìm thấy bộ sưu tập hoặc bạn không có quyền sửa'
             ], 404);
         }
 
-        // 3. Cập nhật tên mới
         $boSuuTap->ten_bo_suu_tap = $request->ten_bo_suu_tap;
         $boSuuTap->save();
 
-        // 4. Trả về kết quả
         return response()->json([
             'status' => true,
-            'message' => 'Đổi tên bộ sưu tập thành công',
+            'message' => 'Đổi tên thành công',
             'data' => $boSuuTap
         ], 200);
     }
 
-    public function delete($id)
+    /**
+     * Xóa bộ sưu tập (Chỉ chủ sở hữu mới xóa được)
+     */
+    public function delete(Request $request, $id) // Thêm Request để lấy user
     {
-        // 1. Tìm bộ sưu tập xem có tồn tại không
-        $boSuuTap = BoSuuTap::find($id);
+        $user = $request->user();
+
+        // Tìm bộ sưu tập thuộc quyền sở hữu của user
+        $boSuuTap = $user->boSuuTap()->find($id);
 
         if (!$boSuuTap) {
             return response()->json([
                 'status' => false,
-                'message' => 'Không tìm thấy bộ sưu tập'
+                'message' => 'Không tìm thấy bộ sưu tập hoặc bạn không có quyền xóa'
             ], 404);
         }
 
-        // 2. Xóa tất cả chi tiết (công thức) thuộc bộ sưu tập này trước
+        // Xóa chi tiết trước
         ChiTietBoSuuTap::where('ma_bo_suu_tap', $id)->delete();
-
-        // 3. Sau khi dọn dẹp bên trong, tiến hành xóa bộ sưu tập cha
+        
+        // Xóa bộ sưu tập
         $boSuuTap->delete();
 
         return response()->json([
             'status' => true,
-            'message' => 'Đã xóa bộ sưu tập và toàn bộ công thức bên trong'
+            'message' => 'Đã xóa bộ sưu tập thành công'
         ], 200);
     }
 
+    /**
+     * Xem chi tiết (Có thể cho phép xem của người khác hoặc không tùy logic)
+     * Ở đây mình để logic: Ai cũng xem được nếu có ID (Public)
+     */
     public function show($id)
     {
         $boSuuTap = BoSuuTap::with('congThucs')->find($id);
@@ -88,85 +168,68 @@ class BoSuuTap_ChiTietBoSuuTapController extends Controller
         ], 200);
     }
 
+    /**
+     * Thêm món ăn vào bộ sưu tập (Chỉ chủ sở hữu mới thêm được)
+     */
     public function addRecipe(Request $request, $id)
     {
-        // 1. Validate dữ liệu: Bắt buộc phải có mã công thức
         $validator = Validator::make($request->all(), [
-            'ma_cong_thuc' => 'required|integer|exists:cong_thuc,ma_cong_thuc', // Kiểm tra xem công thức có tồn tại trong bảng cong_thuc không
+            'ma_cong_thuc' => 'required|integer|exists:cong_thuc,ma_cong_thuc',
             'ghi_chu'      => 'nullable|string'
-        ], [
-            'ma_cong_thuc.required' => 'Vui lòng chọn công thức cần thêm',
-            'ma_cong_thuc.exists'   => 'Công thức này không tồn tại',
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Lỗi dữ liệu đầu vào',
-                'errors'  => $validator->errors()
-            ], 422);
+            return response()->json(['status' => false, 'message' => $validator->errors()->first()], 422);
         }
 
-        // 2. Tìm bộ sưu tập
-        $boSuuTap = BoSuuTap::find($id);
+        $user = $request->user();
+        
+        // Kiểm tra quyền sở hữu bộ sưu tập
+        $boSuuTap = $user->boSuuTap()->find($id);
+        
         if (!$boSuuTap) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Không tìm thấy bộ sưu tập'
-            ], 404);
+            return response()->json(['status' => false, 'message' => 'Bộ sưu tập không tồn tại hoặc không chính chủ'], 404);
         }
 
-        // 3. Kiểm tra xem công thức này đã có trong bộ sưu tập chưa (Tránh trùng lặp)
-        // Hàm whereHas hoặc kiểm tra trong relation
-        $exists = $boSuuTap->congThucs()->where('chi_tiet_bo_suu_tap.ma_cong_thuc', $request->ma_cong_thuc)->exists();
+        // Kiểm tra trùng lặp món ăn
+        $exists = $boSuuTap->congThucs()
+                           ->where('chi_tiet_bo_suu_tap.ma_cong_thuc', $request->ma_cong_thuc)
+                           ->exists();
         
         if ($exists) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Công thức này đã có trong bộ sưu tập rồi'
-            ], 409); // 409 Conflict
+            return response()->json(['status' => false, 'message' => 'Món này đã có trong bộ sưu tập'], 409);
         }
 
-        // 4. Thêm vào bảng trung gian (attach)
-        // attach(id_công_thức, [các_cột_phụ_trong_bảng_trung_gian])
+        // Thêm vào
         $boSuuTap->congThucs()->attach($request->ma_cong_thuc, [
-            'ngay_them' => now(), // Lấy thời gian hiện tại
+            'ngay_them' => now(),
             'ghi_chu'   => $request->ghi_chu
         ]);
 
-        return response()->json([
-            'status'  => true,
-            'message' => 'Thêm công thức vào bộ sưu tập thành công'
-        ], 201);
+        return response()->json(['status' => true, 'message' => 'Thêm thành công'], 201);
     }
 
-    public function removeRecipe($id, $recipeId)
+    /**
+     * Xóa món ăn khỏi bộ sưu tập (Chỉ chủ sở hữu)
+     */
+    public function removeRecipe(Request $request, $id, $recipeId)
     {
-        // 1. Tìm bộ sưu tập
-        $boSuuTap = BoSuuTap::find($id);
+        $user = $request->user();
+
+        // Kiểm tra quyền sở hữu
+        $boSuuTap = $user->boSuuTap()->find($id);
 
         if (!$boSuuTap) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Không tìm thấy bộ sưu tập'
-            ], 404);
+            return response()->json(['status' => false, 'message' => 'Không tìm thấy bộ sưu tập'], 404);
         }
 
-        // 2. Xóa liên kết (Detach)
-        // Hàm detach() sẽ tìm trong bảng trung gian và xóa dòng có cặp (ma_bo_suu_tap, ma_cong_thuc) tương ứng.
-        // Nó trả về số lượng dòng đã xóa (0 nếu không tìm thấy, 1 nếu xóa thành công).
+        // Xóa liên kết
         $result = $boSuuTap->congThucs()->detach($recipeId);
 
         if ($result === 0) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Công thức này không có trong bộ sưu tập (hoặc ID công thức không đúng)'
-            ], 404);
+            return response()->json(['status' => false, 'message' => 'Món ăn không tồn tại trong danh sách'], 404);
         }
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Đã xóa công thức khỏi bộ sưu tập thành công'
-        ], 200);
+        return response()->json(['status' => true, 'message' => 'Đã xóa món ăn khỏi bộ sưu tập'], 200);
     }
 }

@@ -11,3 +11,4 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get('/feed', [CongThucController::class, 'getNewsFeed']);
 });
 
+  
