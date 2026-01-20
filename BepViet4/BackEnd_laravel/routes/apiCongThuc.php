@@ -9,5 +9,6 @@ Route::middleware('auth:sanctum')->group(function(){
     
     Route::get('/users/{id}/recipes', [CongThucController::class, 'getDanhSachCongThuc'])->where('id', '[0-9]+');
     Route::get('/feed', [CongThucController::class, 'getNewsFeed']);
+    Route::post('/addRecipes', [CongThucController::class, 'store']);
 });
 
