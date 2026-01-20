@@ -7,7 +7,6 @@ import MainLayout from '../layouts/MainLayout';
 // Import Pages
 import Home from '../components/Home';
 import Explore from '../components/Explore';
-import MyRecipes from '../components/MyRecipes';
 import RecipeDetail from '../components/RecipeDetail';
 import Login from '../components/Login';
 import Register from '../components/Register';
@@ -18,8 +17,6 @@ import CookbookDetail from '../components/CookbookDetail';
 import MealPlanner from '../components/MealPlanner'; 
 import ShoppingList from '../components/ShoppingList';
 import CreateRecipe from '../components/CreateRecipe';
-
-// 1. Route Bảo vệ (Dành cho trang cần đăng nhập)
 const ProtectedRoute = ({ children, isLoggedIn, onLogout }) => {
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />;
@@ -75,16 +72,6 @@ const AppRouter = ({ isLoggedIn, setIsLoggedIn, onLogout }) => {
         </PublicRoute>
       } />
 
-      {/* --- PRIVATE ROUTES (Bắt buộc Login) --- */}
-      <Route path="/my-recipes" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><MyRecipes /></ProtectedRoute>} />
-      <Route path="/recipe/:id" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><RecipeDetail /></ProtectedRoute>} />
-      <Route path="/profile" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><UserProfile /></ProtectedRoute>} />
-      <Route path="/my-cookbooks" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><MyCookbooks /></ProtectedRoute>} />
-      <Route path="/cookbook/:id" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><CookbookDetail /></ProtectedRoute>} />
-      <Route path="/meal-planner" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><MealPlanner /></ProtectedRoute>} />
-      <Route path="/shopping-list" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><ShoppingList /></ProtectedRoute>} />
-      <Route path="/create-recipe" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><CreateRecipe /></ProtectedRoute>} />
-      <Route path="/user/:id" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><div>Trang user public</div></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

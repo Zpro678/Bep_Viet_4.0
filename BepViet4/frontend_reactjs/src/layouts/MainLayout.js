@@ -1,6 +1,6 @@
 import React from 'react';
-import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
+import Navbar from '../components_user/Navbar';
+import Sidebar from '../components_user/Sidebar';
 
 // 1. Thêm isLoggedIn vào danh sách props nhận vào
 const MainLayout = ({ children, onLogout, isLoggedIn }) => {
