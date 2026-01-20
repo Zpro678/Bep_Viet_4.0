@@ -7,7 +7,6 @@ import {
 import { recipeDetailService } from '../api/recipeDetailServiceApi';
 import './CSS/RecipeDetail.css';
 
-// Đổi lại cho đúng đường dẫn máy bạn
 const STORAGE_URL = 'http://localhost:8000/storage/';
 
 const RecipeDetail = () => {
@@ -15,7 +14,7 @@ const RecipeDetail = () => {
   const [recipe, setRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Helper: Chuyển độ khó (1-5) sang chữ
+  // Chuyển độ khó (1-5) sang chữ
   const getDifficultyText = (level) => {
     const map = { 1: "Rất Dễ", 2: "Dễ", 3: "Vừa", 4: "Khó", 5: "Rất Khó" };
     return map[level] || "Vừa";
@@ -30,17 +29,16 @@ const RecipeDetail = () => {
         
         console.log("🔍 API Response:", response);
 
-        // Dựa vào JSON bạn gửi: { status: true, data: { ... } }
         if (response && response.data) {
-            // Trường hợp backend trả về Object chuẩn (như ID 7)
+            
             setRecipe(response.data);
         } else {
-            console.error("⚠️ Cấu trúc dữ liệu không khớp:", response);
+            console.error("Cấu trúc dữ liệu không khớp:", response);
         }
 
       } catch (error) {
-        console.error("❌ Lỗi tải dữ liệu hoặc ID không tồn tại:", error);
-        // Có thể setRecipe(null) ở đây nếu muốn hiện thông báo lỗi
+        console.error("Lỗi tải dữ liệu hoặc ID không tồn tại:", error);
+        
       } finally {
         setLoading(false);
       }

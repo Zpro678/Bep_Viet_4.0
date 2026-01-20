@@ -5,18 +5,19 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 
 // Import Pages
-import Home from '../components/Home';
-import Explore from '../components/Explore';
-import RecipeDetail from '../components/RecipeDetail';
-import Login from '../components/Login';
-import Register from '../components/Register';
-import ForgotPassword from '../components/ForgotPassword';
-import UserProfile from '../components/UserProfile';
-import MyCookbooks from '../components/MyCookbooks';
-import CookbookDetail from '../components/CookbookDetail';
-import MealPlanner from '../components/MealPlanner'; 
-import ShoppingList from '../components/ShoppingList';
-import CreateRecipe from '../components/CreateRecipe';
+import Home from '../components_user/Home';
+import Explore from '../components_user/Explore';
+import RecipeDetail from '../components_user/RecipeDetail';
+import Login from '../components_user/Login';
+import Register from '../components_user/Register';
+import ForgotPassword from '../components_user/ForgotPassword';
+import UserProfile from '../components_user/UserProfile';
+import MyCookbooks from '../components_user/MyCookbooks';
+import CookbookDetail from '../components_user/CookbookDetail';
+import MealPlanner from '../components_user/MealPlanner'; 
+import ShoppingList from '../components_user/ShoppingList';
+import CreateRecipe from '../components_user/CreateRecipe';
+import Dashboard from '../components_admin/Dashboard';
 
 // --- WRAPPERS & PROTECTED ROUTE ---
 
@@ -126,6 +127,12 @@ const AppRouter = ({ isLoggedIn, setIsLoggedIn }) => {
       <Route path="/create-recipe" element={
         <ProtectedRoute isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn}>
           <CreateRecipe />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/dashboard" element={
+        <ProtectedRoute isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn}>
+          <Dashboard />
         </ProtectedRoute>
       } />
 
