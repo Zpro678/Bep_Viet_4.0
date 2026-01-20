@@ -19,6 +19,7 @@ class CongThuc extends Model
         'ma_vung_mien',
         'ten_mon',
         'mo_ta',
+        'trang_thai',
         'thoi_gian_nau',
         'khau_phan',
         'do_kho',
@@ -27,6 +28,17 @@ class CongThuc extends Model
     public function luotThich()
     {
         return $this->morphMany(LuotThich::class, 'thich');
+    }
+
+    public function scopeDaDuyet($query)
+    {
+        return $query->where('trang_thai', 'cong_khai');
+    }
+
+    // Dùng để lấy bài chờ duyệt: CongThuc::choDuyet()->get();
+    public function scopeChoDuyet($query)
+    {
+        return $query->where('trang_thai', 'cho_duyet');
     }
 
     public function cacBuoc()

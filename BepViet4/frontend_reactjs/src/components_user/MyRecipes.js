@@ -116,7 +116,7 @@ const MyRecipes = () => {
                  
                  <div className="recipe-row-info">
                     {/* Đường dẫn này nên trỏ về trang chi tiết ID */}
-                    <Link to={`/recipe/${recipeId}/detail-full`} className="recipe-name">{recipe.ten_mon}</Link>
+                    <Link to={`/recipe/${recipeId}`} className="recipe-name">{recipe.ten_mon}</Link>
                     <div className="recipe-meta">
                        <span><FaClock /> {recipe.thoi_gian || recipe.thoi_gian_nau + ' phút'}</span>
                        <span className="dot">•</span>

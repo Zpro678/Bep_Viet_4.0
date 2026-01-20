@@ -177,7 +177,7 @@ const RecipeDetail = () => {
               {recipe.buoc_thuc_hien?.map((step) => (
                 <div key={step.ma_buoc} className="step-card">
                   <div className="step-header">
-                    <div className="step-number">Bước {step.so_thu_tu}</div>
+                    <div className="step-number" style={{color:'white'}}>Bước {step.so_thu_tu}</div>
                     {step.thoi_gian > 0 && (
                         <div className="step-time"><FaClock /> {step.thoi_gian} phút</div>
                     )}

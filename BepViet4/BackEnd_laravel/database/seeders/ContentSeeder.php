@@ -21,6 +21,7 @@ class ContentSeeder extends Seeder
             'ma_vung_mien' => $vungMienId,
             'ten_mon' => 'Canh Chua Cá Lóc',
             'mo_ta' => 'Món canh chua giải nhiệt mùa hè',
+            'trang_thai'=> 'cong_khai',
             'thoi_gian_nau' => 30,
             'khau_phan' => 4,
             'do_kho' => 2, // 1-5

@@ -23,7 +23,7 @@ const LoginPromptModal = ({ onClose, onConfirm }) => {
           Vui lòng đăng nhập để tiếp tục khám phá!
         </p>
         
-        <div className="modal-actions">
+        <div className="modal-action">
           <button className="btn-modal btn-modal-cancel" onClick={onClose}>
             Để sau
           </button>

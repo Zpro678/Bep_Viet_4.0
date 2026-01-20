@@ -22,37 +22,47 @@ use Illuminate\Auth\Access\AuthorizationException as ForbiddenException;
 class CongThucController extends Controller
 {
     // ========================= Lấy danh sách công thức của người dùng theo id ===================================
-    public function getDanhSachCongThuc($id)
+    public function getDanhSachCongThuc(Request $request, $id) 
     {
-        // kiểm tra người dùng tồn tại
-        $user = NguoiDung::where('ma_nguoi_dung', $id)->first();
-        if (!$user) {
+        // 1. Kiểm tra user tồn tại
+        $userToCheck = NguoiDung::where('ma_nguoi_dung', $id)->first();
+        if (!$userToCheck) {
             return response()->json(['status' => 'error', 'message' => 'Người dùng không tồn tại'], 404);
         }
-
-       
-        $recipes = CongThuc::where('ma_nguoi_dung', $id)
-            ->with(['hinhAnh' => function ($query) {
-                // Sau khi lấy tất cả công thức thì sẽ lấy hình ảnh tương ứng với mỗi công thức
-                $query->select('ma_cong_thuc', 'duong_dan');
+    
+        // 2. Khởi tạo Query
+        $query = CongThuc::where('ma_nguoi_dung', $id);
+    
+        // 3. Kiểm tra người xem có phải là chủ sở hữu không  
+        $currentUserId = $request->user('sanctum') ? $request->user('sanctum')->ma_nguoi_dung : null;
+    
+        // Nếu người xem KHÔNG PHẢI là chủ sở hữu -> Chỉ hiện bài đã duyệt (công khai)
+        if ($currentUserId != $id) {
+            $query->where('trang_thai', 'cong_khai');
+        }
+    
+        // 4. Thực hiện query và eager loading 
+        $recipes = $query->with(['hinhAnh' => function ($q) {
+                $q->select('ma_cong_thuc', 'duong_dan');
             }])
-            ->select('ma_cong_thuc', 'ten_mon', 'mo_ta', 'thoi_gian_nau', 'do_kho', 'ngay_tao') 
+            ->select('ma_cong_thuc', 'ten_mon', 'mo_ta', 'trang_thai', 'thoi_gian_nau', 'do_kho', 'ngay_tao')
             ->orderBy('ngay_tao', 'desc')
-            ->paginate(10); // Phân trang
-
-        //Xử lý dữ liệu và lấy 1 ảnh đại diện
+            ->paginate(10);
+    
+        // 5. Transform dữ liệu 
         $recipes->getCollection()->transform(function ($recipe) {
             return [
                 'id' => $recipe->ma_cong_thuc,
                 'ten_mon' => $recipe->ten_mon,
                 'mo_ta_ngan' => $recipe->mo_ta,
+                'trang_thai' => $recipe->trang_thai, 
                 'thoi_gian' => $recipe->thoi_gian_nau . ' phút',
                 'do_kho' => $recipe->do_kho . '/5',
-                'hinh_anh' => $recipe->hinhAnh->first() ? $recipe->hinhAnh->first()->duong_dan : 'default_image_url.jpg',
+                'hinh_anh' => $recipe->hinhAnh->first() ? $recipe->hinhAnh->first()->duong_dan : 'default.jpg',
                 'ngay_dang' => $recipe->ngay_tao,
             ];
         });
-
+    
         return response()->json([
             'status' => 'success',
             'data' => $recipes
@@ -61,77 +71,88 @@ class CongThucController extends Controller
 
     // ========================= Lấy bảng tin (news feed) cho người dùng theo dõi ===================================
     public function getNewsFeed(Request $request)
-    {
-        
-        $currentUser = $request->user();
-        $followingIds = $currentUser->dangTheoDoi()->pluck('nguoi_dung.ma_nguoi_dung')->toArray();
-        $idsString = !empty($followingIds) ? implode(',', $followingIds) : '0';
+{
+    $currentUser = $request->user();
     
-        $recipesQuery = DB::table('cong_thuc')
-            ->select(
-                'ma_cong_thuc as id', 
-                'ma_nguoi_dung', 
-                'created_at', 
-                DB::raw('"CongThuc" as type')
-            )
-            ->where('ma_nguoi_dung', '!=', $currentUser->ma_nguoi_dung);
- 
-        $postsQuery = DB::table('bai_viet')
-            ->select(
-                'ma_bai_viet as id', 
-                'ma_nguoi_dung', 
-                'created_at', 
-                DB::raw('"BaiViet" as type') 
-            )
-            ->where('ma_nguoi_dung', '!=', $currentUser->ma_nguoi_dung);
+    // Lấy danh sách ID người đang theo dõi
+    $followingIds = $currentUser->dangTheoDoi()->pluck('nguoi_dung.ma_nguoi_dung')->toArray();
+    $idsString = !empty($followingIds) ? implode(',', $followingIds) : '0';
+
     
-      
-        $combinedQuery = $recipesQuery->union($postsQuery)
-            ->orderByRaw("CASE WHEN ma_nguoi_dung IN ($idsString) THEN 1 ELSE 0 END DESC") 
-            ->orderBy('created_at', 'desc');
-    
-        $paginatedFeed = $combinedQuery->paginate(10);
-    
-        $paginatedFeed->getCollection()->transform(function ($item) use ($currentUser) {
+    $recipesQuery = DB::table('cong_thuc')
+        ->select(
+            'ma_cong_thuc as id', 
+            'ma_nguoi_dung', 
+            'created_at', 
+            DB::raw('"CongThuc" as type')
+        )
+        ->where('ma_nguoi_dung', '!=', $currentUser->ma_nguoi_dung)
+        ->where('trang_thai', 'cong_khai'); 
+
+   
+    $postsQuery = DB::table('bai_viet')
+        ->select(
+            'ma_bai_viet as id', 
+            'ma_nguoi_dung', 
+            'created_at', 
+            DB::raw('"BaiViet" as type') 
+        )
+        ->where('ma_nguoi_dung', '!=', $currentUser->ma_nguoi_dung);
+        // ->where('trang_thai', 'cong_khai');
+
+    // Union và Sắp xếp 
+    $combinedQuery = $recipesQuery->union($postsQuery)
+        ->orderByRaw("CASE WHEN ma_nguoi_dung IN ($idsString) THEN 1 ELSE 0 END DESC") 
+        ->orderBy('created_at', 'desc');
+
+    $paginatedFeed = $combinedQuery->paginate(10);
+
+    // Transform dữ liệu
+    $paginatedFeed->getCollection()->transform(function ($item) use ($currentUser) {
+        if ($item->type === 'CongThuc') {
             
-            if ($item->type === 'CongThuc') {
-            
-                $fullData = CongThuc::with('nguoiTao')
-                    ->withCount('luotThich') // Đếm like
-                    ->find($item->id);
-                    
-                if ($fullData) {
-                     $fullData->is_liked = $fullData->luotThich()
-                         ->where('ma_nguoi_dung', $currentUser->ma_nguoi_dung)
-                         ->exists();
-                     $fullData->type = 'CongThuc'; // Gán lại type để Frontend biết
-                }
-                return $fullData;
+            // Lấy chi tiết công thức
+            $fullData = CongThuc::with('nguoiTao')
+                ->withCount('luotThich')
+                ->where('trang_thai', 'cong_khai')
+                ->find($item->id);
                 
-            } else {
-              
-                $fullData = BaiViet::with('nguoiTao')
-                    ->withCount('luotThich')
-                    ->find($item->id);
-                    
-                if ($fullData) {
-                     $fullData->is_liked = $fullData->luotThich()
-                         ->where('ma_nguoi_dung', $currentUser->ma_nguoi_dung)
-                         ->exists();
-                     $fullData->type = 'BaiViet';
-                }
-                return $fullData;
+            if ($fullData) {
+                 $fullData->is_liked = $fullData->luotThich()
+                     ->where('ma_nguoi_dung', $currentUser->ma_nguoi_dung)
+                     ->exists();
+                 $fullData->type = 'CongThuc';
+                 
+                 // Clean up output (chỉ lấy hình đầu tiên )
+                 $fullData->hinh_anh_dau_tien = $fullData->hinhAnh->first() ? $fullData->hinhAnh->first()->duong_dan : null;
+                 unset($fullData->hinhAnh); // Xóa mảng hình ảnh gốc cho gọn JSON
             }
-        });
+            return $fullData;
+            
+        } else {
+            
+            $fullData = BaiViet::with('nguoiTao')
+                ->withCount('luotThich')
+                ->find($item->id);
+                
+            if ($fullData) {
+                 $fullData->is_liked = $fullData->luotThich()
+                     ->where('ma_nguoi_dung', $currentUser->ma_nguoi_dung)
+                     ->exists();
+                 $fullData->type = 'BaiViet';
+            }
+            return $fullData;
+        }
+    });
+
     
-        // Lọc bỏ các item null (trường hợp hiếm hoi ID có trong index nhưng bị xóa trong bảng thật)
-        $cleanData = $paginatedFeed->getCollection()->filter()->values();
-        $paginatedFeed->setCollection($cleanData);
-    
-        return response()->json([
-            'status' => 'success',
-            'data' => $paginatedFeed
-        ]);
+    $cleanData = $paginatedFeed->getCollection()->filter()->values();
+    $paginatedFeed->setCollection($cleanData);
+
+    return response()->json([
+        'status' => 'success',
+        'data' => $paginatedFeed
+    ]);
 }
 
 public function store(Request $request)
@@ -174,6 +195,7 @@ public function store(Request $request)
             'ma_vung_mien'  => $request->ma_vung_mien, // Có thể null
             'ten_mon'       => $request->ten_mon,
             'mo_ta'         => $request->mo_ta,
+            'trang_thai' => 'cho_duyet',
             'thoi_gian_nau' => $request->thoi_gian_nau,
             'khau_phan'     => $request->khau_phan,
             'do_kho'        => $request->do_kho,
@@ -264,7 +286,7 @@ public function store(Request $request)
 
                 // 6.2 Kiểm tra xem bước này có ảnh không
                 // Trong FormData: cac_buoc[0][hinh_anh]
-                // Laravel Request sẽ hứng được file ở đúng index đó
+                // Laravel Request sẽ hứng được file 
                 if (isset($stepData['hinh_anh']) && $request->hasFile("cac_buoc.$index.hinh_anh")) {
                     $files = $request->file("cac_buoc.$index.hinh_anh");
                     
@@ -290,7 +312,7 @@ public function store(Request $request)
 
         return response()->json([
             'status'  => 'success',
-            'message' => 'Tạo công thức thành công!',
+            'message' => 'Công thức đang chờ duyệt!',
             'data'    => $congThuc->load('hinhAnh', 'nguyenLieu', 'the', 'cacBuoc.hinhAnhBuoc')
         ], 201);
 
@@ -307,34 +329,57 @@ public function store(Request $request)
     }
 }
 
-    public function index(Request $request)
-    {
-        $filter = [
-            'ten'     => $request->query('ten'),      // tên món
-            'do_kho'  => $request->query('do_kho'),   // độ khó
-        ];
-
-        $recipes = CongThuc::with([
-            'tacGia:ma_nguoi_dung,ten_nguoi_dung',
-            'danhMuc:ma_danh_muc,ten_danh_muc',
-            'vungMien:ma_vung_mien,ten_vung_mien'
-        ])
-            ->when($filter['ten'], function ($q, $v) {
-                $q->where('ten_mon', 'like', "%$v%");
-            })
-            ->when($filter['do_kho'], function ($q, $v) {
-                $q->where('do_kho', $v);
-            })
-            ->orderByDesc('ngay_tao')
-            ->paginate(10);
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Danh sách công thức',
-            'data' => $recipes
-        ]);
+public function index(Request $request)
+{
+    
+    // with('nguoiDung'): Kỹ thuật Eager Loading để lấy luôn thông tin người đăng
+    // withAvg('danhGia', 'so_sao'): Tính luôn điểm trung bình đánh giá
+    $query = CongThuc::with(['nguoiDung:id,ho_ten,anh_dai_dien', 'hinhAnhCongThucs'])
+        ->withAvg('danhGia', 'so_sao') // Tạo thêm trường danh_gia_avg_so_sao
+        ->where('trang_thai', 'cong_khai'); // Chỉ lấy bài công khai
+    
+    // Tìm kiếm theo tên món
+    if ($request->has('keyword')) {
+        $query->where('ten_mon', 'like', '%' . $request->keyword . '%');
     }
 
+    // Lọc theo Danh mục (VD: Món Chay, Món Mặn)
+    if ($request->has('danh_muc_id')) {
+        $query->where('danh_muc_id', $request->danh_muc_id);
+    }
+
+    // Lọc theo Vùng miền (Bắc, Trung, Nam)
+    if ($request->has('vung_mien_id')) {
+        $query->where('vung_mien_id', $request->vung_mien_id);
+    }
+
+    // 3. Xử lý Sắp xếp 
+    // Mặc định là mới nhất
+    $sort = $request->input('sort', 'newest'); 
+    
+    switch ($sort) {
+        case 'popular':
+            // Sắp xếp theo điểm đánh giá cao nhất
+            $query->orderByDesc('danh_gia_avg_so_sao');
+            break;
+        case 'oldest':
+            $query->orderBy('created_at', 'asc');
+            break;
+        default: 
+            $query->orderBy('created_at', 'desc');
+            break;
+    }
+
+    // 4. Phân trang (Mỗi trang 10 công thức)
+    $congThucs = $query->paginate(10);
+
+    // 5. Trả về JSON chuẩn
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Lấy danh sách công thức thành công',
+        'data' => $congThucs
+    ], 200);
+}
     //    15. GET /recipes/{id}
     public function show($id)
     {

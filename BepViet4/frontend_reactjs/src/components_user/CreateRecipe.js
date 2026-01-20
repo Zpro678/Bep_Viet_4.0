@@ -151,7 +151,7 @@ const CreateRecipe = () => {
       console.log("Server response:", response);
       
       if(response.status === 'success' || response.status === 201) {
-          alert("Đăng công thức thành công!");
+          alert("Công thức đang chờ duyệt!");
           navigate('/profile'); 
       }
     } catch (error) {
@@ -326,7 +326,7 @@ const CreateRecipe = () => {
           <h3>Các bước thực hiện</h3>
           {steps.map((step, index) => (
             <div key={index} className="step-row" style={{ alignItems: 'start' }}>
-              <span className="step-number">Bước {index + 1}</span>
+              <span className="step-number" style={{color:'white'}}>Bước {index + 1}</span>
               <div className="step-inputs">
                 <textarea
                   placeholder={`Hướng dẫn bước ${index + 1}...`}
