@@ -11,3 +11,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users/{id}/followers', [TheoDoiController::class, 'getFollowers'])->where('id', '[0-9]+');
 });
 
+Route::get('/users/{id}/follow-status', [TheoDoiController::class, 'checkFollowStatus']);

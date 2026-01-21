@@ -23,3 +23,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/posts/{id}', [BaiVietController::class, 'destroy']);
 });
 
+Route::get('/users/{id}/posts', [BaiVietController::class, 'getDanhSachBaiViet']);

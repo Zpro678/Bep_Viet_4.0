@@ -149,3 +149,34 @@
     justify-content: center;
   }
 }
+
+/* nút theo dõi*/
+.btn-follow {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+/* Chưa theo dõi */
+.btn-follow {
+    background-color: #f97316;
+    color: white;
+}
+
+.btn-follow:hover {
+    background-color: #ea580c;
+}
+
+/* Đang theo dõi */
+.btn-follow.following {
+    background-color: #e4e6eb;
+    color: #050505;
+}
+
+.btn-follow.following:hover {
+    background-color: #ea580c;
+    color: white;
+}
