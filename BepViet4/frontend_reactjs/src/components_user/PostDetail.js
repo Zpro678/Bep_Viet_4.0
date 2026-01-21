@@ -1,23 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { postService } from '../services/postService';
+import  postService  from '../services/postService';
 import { FaRegHeart, FaHeart, FaRegComment, FaShare, FaArrowLeft, FaPaperPlane } from 'react-icons/fa';
-
-// Import CSS
 import './CSS/PostDetail.css'; 
 
 const API_BASE_URL = 'http://localhost:8000'; 
 
-// Hàm này vẫn giữ để dùng cho ảnh bài viết
 const getImageUrl = (path) => {
   if (!path) return '';
   if (path.startsWith('http')) return path; 
   return `${API_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
 };
 
-// ==========================================================
-// 1. CÁC HÀM HỖ TRỢ VÀ COMPONENT AVATAR
-// ==========================================================
+
 
 const stringToColor = (string) => {
     if (!string) return '#ccc';

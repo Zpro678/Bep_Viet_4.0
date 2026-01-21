@@ -28,6 +28,8 @@ class BaiViet extends Model
     {
         return $this->belongsTo(NguoiDung::class, 'ma_nguoi_dung');
     }
+   
+    // Model: NguoiDung
     
     public function binhLuan()
     {
@@ -49,7 +51,7 @@ class BaiViet extends Model
                   ->orWhere('noi_dung', 'like', "%$v%");
             })
             ->with([
-                'nguoiDung:ma_nguoi_dung,ho_ten,anh_dai_dien', 
+                'nguoiDung:ma_nguoi_dung,ho_ten', 
                 'hinhAnh' 
             ])
             ->withCount('binhLuan') 
@@ -67,7 +69,7 @@ class BaiViet extends Model
             'binhLuan' => function($query) {
                 $query->whereNull('ma_binh_luan_cha') // <--- QUAN TRỌNG: Lọc bỏ các câu reply
                       ->orderByDesc('ngay_gui') 
-                      ->with('nguoiDung:ma_nguoi_dung,ho_ten,anh_dai_dien')
+                      ->with('nguoiDung:ma_nguoi_dung,ho_ten')
                       ->withCount('traLoi'); // Đếm số câu trả lời để hiển thị "Xem x câu trả lời"
             }
         ])
