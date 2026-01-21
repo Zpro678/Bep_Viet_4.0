@@ -19,8 +19,8 @@ return new class extends Migration
             $table->unsignedInteger('ma_bai_viet');
 
             // 3. Các cột dữ liệu
-            $table->text('duong_dan')->nullable(); // VARCHAR(MAX) -> text, cho phép NULL
-            $table->text('mo_ta'); // NVARCHAR(MAX) -> text, NOT NULL (bắt buộc)
+            $table->text('duong_dan');
+            $table->text('mo_ta')->nullable(); 
 
             // Timestamp (tùy chọn nếu muốn theo dõi ngày tạo ảnh)
             // $table->timestamps();

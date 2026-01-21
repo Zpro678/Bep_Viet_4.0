@@ -345,11 +345,12 @@
 
 .step-image {
   width: 100%;
-  max-width: 100%;
+  max-width: 100%; /* Full width của card */
   height: auto;
   border-radius: 8px;
   object-fit: cover;
   margin-top: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
 }
 
 /* --- 7. BÌNH LUẬN --- */

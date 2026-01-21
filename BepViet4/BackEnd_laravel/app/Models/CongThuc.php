@@ -19,6 +19,7 @@ class CongThuc extends Model
         'ma_vung_mien',
         'ten_mon',
         'mo_ta',
+        'trang_thai',
         'thoi_gian_nau',
         'khau_phan',
         'do_kho',
@@ -29,6 +30,25 @@ class CongThuc extends Model
         return $this->morphMany(LuotThich::class, 'thich');
     }
 
+    public function scopeDaDuyet($query)
+    {
+        return $query->where('trang_thai', 'cong_khai');
+    }
+
+    // Dùng để lấy bài chờ duyệt: CongThuc::choDuyet()->get();
+    public function scopeChoDuyet($query)
+    {
+        return $query->where('trang_thai', 'cho_duyet');
+    }
+
+    public function cacBuoc()
+    {
+        return $this->hasMany(
+            BuocThucHien::class,
+            'ma_cong_thuc',   // FK ở bảng buoc_thuc_hien
+            'ma_cong_thuc'    // PK ở bảng cong_thuc
+        )->orderBy('so_thu_tu');
+    }
     // BelongsTo: Thuộc về 1 Người dùng 
     public function nguoiTao()
     {

@@ -23,34 +23,32 @@ const RecipeDetail = () => {
   const [recipe, setRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // --- STATE MODAL (TỪ CODE 2) ---
+  // --- STATE XỬ LÝ MODAL & COOKBOOK (ĐÃ THÊM LẠI PHẦN NÀY) ---
   const [showModal, setShowModal] = useState(false);
-  const [myCookbooks, setMyCookbooks] = useState([]); 
+  const [myCookbooks, setMyCookbooks] = useState([]);
   const [selectedCookbookId, setSelectedCookbookId] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  // Helper: Chuyển độ khó
+  // Helper: Chuyển độ khó (1-5) sang chữ
   const getDifficultyText = (level) => {
     const map = { 1: "Rất Dễ", 2: "Dễ", 3: "Vừa", 4: "Khó", 5: "Rất Khó" };
     return map[level] || "Vừa";
   };
 
-  // --- 1. LOAD CHI TIẾT MÓN (LOGIC CODE 1 - CHI TIẾT HƠN) ---
+  // --- 1. LOAD CHI TIẾT MÓN ---
   useEffect(() => {
     const fetchDetail = async () => {
       try {
         setLoading(true);
         const response = await recipeDetailService.getById(id);
         
-        // console.log("🔍 API Response:", response); // Bật lên nếu cần debug
-
         if (response && response.data) {
             setRecipe(response.data);
         } else {
-            console.error("⚠️ Cấu trúc dữ liệu không khớp:", response);
+            console.error("Cấu trúc dữ liệu không khớp:", response);
         }
       } catch (error) {
-        console.error("❌ Lỗi tải dữ liệu:", error);
+        console.error("❌ Lỗi tải dữ liệu hoặc ID không tồn tại:", error);
       } finally {
         setLoading(false);
       }
@@ -60,7 +58,7 @@ const RecipeDetail = () => {
     window.scrollTo(0, 0);
   }, [id]);
 
-  // --- 2. CÁC HÀM XỬ LÝ MODAL (TỪ CODE 2) ---
+  // --- 2. CÁC HÀM XỬ LÝ MODAL ---
   
   // Mở modal và check đăng nhập
   const handleOpenModal = async () => {
@@ -98,7 +96,7 @@ const RecipeDetail = () => {
 
       try {
           setIsSaving(true);
-          await cookbookService.addRecipe(selectedCookbookId, id, ""); // Note để trống
+          await cookbookService.addRecipe(selectedCookbookId, id, ""); 
           
           alert("Đã lưu thành công!");
           setShowModal(false);
@@ -218,7 +216,7 @@ const RecipeDetail = () => {
               </a>
             )}
 
-            {/* BUTTONS ACTION (Đã gắn hàm handleOpenModal) */}
+            {/* BUTTONS ACTION */}
             <div className="recipe-actions">
               <button className="btn-action btn-save" onClick={handleOpenModal}>
                 <FaBookmark /> Thêm vào Bộ Sưu Tập
@@ -258,7 +256,7 @@ const RecipeDetail = () => {
               {recipe.buoc_thuc_hien?.map((step) => (
                 <div key={step.ma_buoc} className="step-card">
                   <div className="step-header">
-                    <div className="step-number">Bước {step.so_thu_tu}</div>
+                    <div className="step-number" style={{color:'white'}}>Bước {step.so_thu_tu}</div>
                     {step.thoi_gian > 0 && (
                         <div className="step-time"><FaClock /> {step.thoi_gian} phút</div>
                     )}
@@ -302,7 +300,7 @@ const RecipeDetail = () => {
         </div>
       </div>
 
-      {/* --- MODAL POPUP (TỪ CODE 2) --- */}
+      {/* --- MODAL POPUP --- */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-box-save">

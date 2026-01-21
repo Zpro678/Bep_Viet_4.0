@@ -1,20 +1,65 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'; 
 import './App.css';
-import AppRouter from './routes/AppRouter'; // Import file Router vừa tạo
+
+
+import AppRouter from './routes/AppRouter';       
+import AdminRouter from './routes/AdminRouter';  
+import authApi from './api/authApi';
 
 function App() {
-  // State Global (Auth, Theme, etc.)
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    const token = localStorage.getItem('ACCESS_TOKEN');
+    return !!token; 
+  });
+
+  
+  const handleLogout = async () => {
+    try {
+        await authApi.logout(); 
+    } catch (error) {
+        console.log("Lỗi logout server hoặc token đã hết hạn");
+    } finally {
+        localStorage.removeItem('ACCESS_TOKEN');
+        localStorage.removeItem('USER');
+        localStorage.removeItem('USER_INFO');
+        localStorage.setItem('isLoggedIn', 'false'); // Cập nhật cả cái này nếu bạn dùng ở AppRouter
+        setIsLoggedIn(false);
+    }
+  };
 
   return (
     <Router>
       <div className="App">
-        {/* Chỉ gọi AppRouter và truyền props cần thiết */}
-        <AppRouter 
-          isLoggedIn={isLoggedIn} 
-          setIsLoggedIn={setIsLoggedIn} 
-        />
+      
+        <Routes>
+          
+          
+        <Route 
+            path="/admin/*" 
+            element={
+              <AdminRouter 
+                isLoggedIn={isLoggedIn} 
+                setIsLoggedIn={setIsLoggedIn} 
+                onLogout={handleLogout}       
+              />
+            }
+          />
+
+   
+          <Route 
+            path="/*" 
+            element={
+              <AppRouter 
+                isLoggedIn={isLoggedIn} 
+                setIsLoggedIn={setIsLoggedIn} 
+                onLogout={handleLogout}
+              />
+            } 
+          />
+          
+        </Routes>
       </div>
     </Router>
   );

@@ -17,10 +17,12 @@ const Login = ({ onLogin, onSwitchToRegister, onSwitchToForgotPassword }) => {
       const res = await authApi.login({ ten_dang_nhap, mat_khau });
 
       const { access_token, user } = res.data;
-  
+      //console.log("User Data từ API:", user.vai_tro);
+      const userRole = user.vai_tro ? user.vai_tro.toUpperCase() : '';
+      console.log("User Data từ API:", userRole);
       localStorage.setItem('ACCESS_TOKEN', access_token);
       localStorage.setItem('USER', JSON.stringify(user));
-      onLogin();
+      onLogin(userRole);
   
     } catch (err) {
    

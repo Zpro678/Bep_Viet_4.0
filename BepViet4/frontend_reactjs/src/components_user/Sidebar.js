@@ -20,6 +20,11 @@ const Sidebar = () => {
           <span className="nav-icon">🏠</span> Trang chủ
         </li>
 
+        {/* Công thức cá nhân */}
+        <li className={`nav-item ${isActive('/my-recipes')}`} onClick={() => navigate('/my-recipes')}>
+          <span className="nav-icon">📖</span> Công thức cá nhân
+        </li>
+
         {/* Khám phá */}
         <li className={`nav-item ${isActive('/explore')}`} onClick={() => navigate('/explore')}>
           <span className="nav-icon">🌍</span> Khám phá

@@ -6,7 +6,6 @@ export const postService = {
   getFeed: async (params = {}) => {
     try {
       const response = await axiosClient.get('/posts', { params });
-      // Xử lý dữ liệu trả về linh hoạt (do Laravel paginate trả về object, còn list thường trả về array)
       const result = response.data; 
       if (result && result.data && Array.isArray(result.data)) {
         return result.data; 
@@ -21,33 +20,33 @@ export const postService = {
     }
   },
 
-  // 2. TẠO BÀI VIẾT (QUAN TRỌNG: FIX HEADER ĐỂ GỬI FILE)
+  // 2. TẠO BÀI VIẾT
   createPost: async (formData) => {
     try {
       const response = await axiosClient.post('/posts', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data', // Bắt buộc phải có dòng này khi gửi File
+          'Content-Type': 'multipart/form-data',
         },
       });
-      
-      if (response && (response.status === 200 || response.status === 201)) {
-          return response.data;
-      }
       return response.data; 
     } catch (error) {
       console.error("Lỗi tạo bài viết:", error);
-      throw error; // Ném lỗi ra để Home.js bắt được và hiển thị alert
+      throw error;
     }
   },
 
-  // 3. CHI TIẾT
+  // 3. CHI TIẾT (ĐÃ SỬA)
   getPostDetail: async (id) => {
     try {
+      // Gọi API
       const response = await axiosClient.get(`/posts/${id}`);
-      return response.status === 200 ? response.data : null;
+      
+      // Axios trả về object response, dữ liệu thực nằm trong response.data
+      // Backend Laravel (nếu dùng Model::find) sẽ trả về JSON object của bài viết
+      return response.data; 
     } catch (error) {
       console.error("Lỗi lấy chi tiết:", error);
-      throw error;
+      return null; // Trả về null để bên Component biết mà hiển thị lỗi
     }
   },
 

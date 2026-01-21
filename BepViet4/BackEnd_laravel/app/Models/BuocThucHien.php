@@ -32,4 +32,12 @@ class BuocThucHien extends Model
     {
         return $this->hasMany(HinhAnhBuoc::class, 'ma_buoc', 'ma_buoc');
     }
+    public function hinhAnhBuoc()
+    {
+        return $this->hasMany(
+            HinhAnhBuoc::class,
+            'ma_buoc',
+            'ma_buoc'
+        );
+    }
 }
