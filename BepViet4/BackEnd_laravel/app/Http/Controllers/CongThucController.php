@@ -178,8 +178,7 @@ class CongThucController extends Controller
 public function store(Request $request)
 {
     
-    // 1. Validate dữ liệu (Nên tách ra Request riêng như bài trước, ở đây viết gọn)
-    // Lưu ý: Validate mảng và file upload khá phức tạp
+   
     $request->validate([
         'ten_mon' => 'required|string|max:255',
         'ma_danh_muc' => 'required|exists:danh_muc,ma_danh_muc',
@@ -202,7 +201,7 @@ public function store(Request $request)
         'tags' => 'nullable|array'
     ]);
 
-    // BẮT ĐẦU TRANSACTION (Quan trọng: Lỗi 1 chỗ là hoàn tác tất cả)
+    
     DB::beginTransaction();
 
     try {
@@ -483,77 +482,161 @@ public function index(Request $request)
         ]);
     }
 
-    // 17. PUT /recipes/{id}: 
+   
     public function update(Request $request, $id)
     {
-        $validator = Validator::make($request->all(), [
+        // 1. Tìm công thức cần sửa
+        $congThuc = CongThuc::findOrFail($id);
+    
+        // Kiểm tra quyền (Ví dụ: chỉ người tạo mới được sửa)
+        if ($congThuc->ma_nguoi_dung !== $request->user()->ma_nguoi_dung) {
+            return response()->json(['message' => 'Bạn không có quyền sửa công thức này'], 403);
+        }
+    
+        // 2. Validate (giống store nhưng có thể bỏ 'required' ở một số trường để cho phép cập nhật từng phần)
+        $request->validate([
             'ten_mon' => 'sometimes|required|string|max:255',
-            'mo_ta' => 'nullable|string',
+            'ma_danh_muc' => 'sometimes|required|exists:danh_muc,ma_danh_muc',
             'thoi_gian_nau' => 'sometimes|required|integer|min:1',
             'khau_phan' => 'sometimes|required|integer|min:1',
-            'do_kho' => 'sometimes|required|integer|min:1|max:5',
-            'ma_vung_mien' => 'sometimes|required|integer|exists:vung_mien,ma_vung_mien'
+            'do_kho' => 'sometimes|required|integer|between:1,5',
+            'hinh_anh_bia' => 'nullable|image|max:5120',
+            'nguyen_lieu' => 'sometimes|required|array',
+            'cac_buoc' => 'sometimes|required|array',
+            'tags' => 'nullable|array'
         ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Dữ liệu cập nhật không hợp lệ',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
+    
+        DB::beginTransaction();
+    
         try {
-            $userId = $request->user()->ma_nguoi_dung;
-
-            $congThuc = CongThuc::capNhatCongThuc(
-                $id,
-                $userId,
-                $validator->validated()
-            );
-
+            // --- BƯỚC 1: CẬP NHẬT THÔNG TIN CHÍNH ---
+            $congThuc->update($request->only([
+                'ma_danh_muc', 'ma_vung_mien', 'ten_mon', 'mo_ta', 'thoi_gian_nau', 'khau_phan', 'do_kho'
+            ]));
+    
+            // --- BƯỚC 2: XỬ LÝ ẢNH BÌA MỚI ---
+            if ($request->hasFile('hinh_anh_bia')) {
+                // Xóa ảnh cũ nếu cần (tùy logic của bạn)
+                // Storage::disk('public')->delete($congThuc->hinhAnh->duong_dan);
+                
+                $path = $request->file('hinh_anh_bia')->store('recipes/covers', 'public');
+                
+                // Cập nhật hoặc tạo mới ảnh bìa
+                HinhAnhCongThuc::updateOrCreate(
+                    ['ma_cong_thuc' => $congThuc->ma_cong_thuc],
+                    ['duong_dan' => $path, 'mo_ta' => 'Ảnh bìa chính']
+                );
+            }
+    
+            // --- BƯỚC 3: XỬ LÝ VIDEO ---
+            if ($request->filled('video_url')) {
+                $url = $request->video_url;
+                $nenTang = str_contains($url, 'youtube') ? 'Youtube' : (str_contains($url, 'tiktok') ? 'Tiktok' : 'Website');
+    
+                VideoHuongDan::updateOrCreate(
+                    ['ma_cong_thuc' => $congThuc->ma_cong_thuc],
+                    [
+                        'tieu_de_video' => 'Video hướng dẫn làm ' . $congThuc->ten_mon,
+                        'duong_dan_video' => $url,
+                        'nen_tang' => $nenTang,
+                        'la_video_chinh' => 1
+                    ]
+                );
+            }
+    
+            // --- BƯỚC 4: XỬ LÝ TAGS (Sử dụng sync) ---
+            if ($request->has('tags')) {
+                $tagIds = [];
+                foreach ($request->tags as $tagName) {
+                    $tag = The::firstOrCreate(
+                        ['ten_the' => trim($tagName)],
+                        ['slug' => Str::slug($tagName)]
+                    );
+                    $tagIds[] = $tag->ma_the;
+                }
+                $congThuc->the()->sync($tagIds); // sync sẽ tự động xóa tag cũ không có trong mảng mới
+            }
+    
+            // --- BƯỚC 5: XỬ LÝ NGUYÊN LIỆU ---
+            if ($request->has('nguyen_lieu')) {
+                $syncData = [];
+                foreach ($request->nguyen_lieu as $nlItem) {
+                    $nguyenLieu = NguyenLieu::firstOrCreate(
+                        ['ten_nguyen_lieu' => trim($nlItem['ten_nguyen_lieu'])],
+                        ['loai_nguyen_lieu' => $nlItem['loai_nguyen_lieu'] ?? 'Khác']
+                    );
+                    
+                    $syncData[$nguyenLieu->ma_nguyen_lieu] = [
+                        'dinh_luong' => $nlItem['dinh_luong'],
+                        'don_vi_tinh' => $nlItem['don_vi_tinh']
+                    ];
+                }
+                $congThuc->nguyenLieu()->sync($syncData);
+            }
+    
+            // --- BƯỚC 6: XỬ LÝ CÁC BƯỚC THỰC HIỆN (Xóa cũ tạo mới cho đơn giản) ---
+            if ($request->has('cac_buoc')) {
+                // Cách đơn giản nhất để update các bước phức tạp là xóa đi tạo lại
+                // Nếu muốn tối ưu hơn, bạn cần so sánh ID từng bước
+                $congThuc->cacBuoc()->delete(); 
+    
+                foreach ($request->cac_buoc as $index => $stepData) {
+                    $buoc = BuocThucHien::create([
+                        'ma_cong_thuc' => $congThuc->ma_cong_thuc,
+                        'so_thu_tu'    => $index + 1,
+                        'noi_dung'     => $stepData['noi_dung']
+                    ]);
+    
+                    // Xử lý ảnh cho từng bước (nếu có gửi lên)
+                    if (isset($stepData['hinh_anh']) && $request->hasFile("cac_buoc.$index.hinh_anh")) {
+                        $files = $request->file("cac_buoc.$index.hinh_anh");
+                        if (!is_array($files)) $files = [$files];
+    
+                        foreach ($files as $file) {
+                            $pathStep = $file->store('recipes/steps', 'public');
+                            HinhAnhBuoc::create([
+                                'ma_buoc'   => $buoc->ma_buoc,
+                                'duong_dan' => $pathStep,
+                                'mo_ta'     => 'Ảnh minh họa bước ' . ($index + 1)
+                            ]);
+                        }
+                    }
+                }
+            }
+    
+            DB::commit();
+    
             return response()->json([
-                'status' => true,
-                'message' => 'Cập nhật công thức thành công',
-                'data' => $congThuc
+                'status'  => 'success',
+                'message' => 'Cập nhật công thức thành công!',
+                'data'    => $congThuc->load('hinhAnh', 'nguyenLieu', 'the', 'cacBuoc.hinhAnhBuoc')
             ]);
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Công thức không tồn tại'
-            ], 404);
-        } catch (ForbiddenException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => $e->getMessage()
-            ], 403);
+    
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Lỗi cập nhật công thức: " . $e->getMessage());
+            return response()->json(['status' => 'error', 'message' => 'Lỗi hệ thống'], 500);
         }
     }
 
     // 18. DELETE /recipes/{id}:
-    public function destroy(Request $request, $id)
-    {
-        try {
-            $userId = $request->user()->ma_nguoi_dung;
+    public function destroy($id)
+{
+    // Tìm công thức
+    $congThuc = CongThuc::find($id);
 
-            CongThuc::xoaCongThuc($id, $userId);
-
-            return response()->json([
-                'status' => true,
-                'message' => 'Xóa công thức thành công'
-            ], 200);
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Công thức không tồn tại'
-            ], 404);
-        } catch (ForbiddenException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => $e->getMessage()
-            ], 403);
-        }
+    if (!$congThuc) {
+        return response()->json(['message' => 'Không tìm thấy công thức'], 404);
     }
+
+    
+    $congThuc->delete();
+
+    return response()->json([
+        'status' => 'success', 
+        'message' => 'Đã xóa công thức thành công (đưa vào thùng rác)!'
+    ], 200);
+}
 
     // 21. POST /recipes/{id}/ingredients:
     public function syncIngredients(Request $request, $id)

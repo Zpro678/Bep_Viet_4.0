@@ -7,8 +7,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Exceptions\ForbiddenException;
 use App\Models\BaiViet;
-use App\Models\LuotThich;
-use App\Models\HinhAnhBaiViet;
+use App\Models\HinhAnhBaiViet; 
 use Illuminate\Support\Facades\Storage; 
 
 class BaiVietController extends Controller
@@ -53,8 +52,8 @@ class BaiVietController extends Controller
     {
         // 1. Validate
         $validator = Validator::make($request->all(), [
-            'tieu_de' => 'required|string|max:255',
-            'noi_dung' => 'required|string',
+            'tieu_de' => 'nullable|string|max:255',
+            'noi_dung' => 'nullable|string',
             // Validate mảng hinh_anh
             'hinh_anh' => 'nullable|array', 
             'hinh_anh.*' => 'image|mimes:jpeg,png,jpg,webp|max:10240', // Max 10MB mỗi ảnh
@@ -69,7 +68,7 @@ class BaiVietController extends Controller
             $post = BaiViet::taoBaiViet($request->user(), [
                 'tieu_de' => $request->tieu_de,
                 'noi_dung' => $request->noi_dung,
-                'hinh_anh_dai_dien' => null // Sẽ cập nhật sau
+                // 'hinh_anh_dai_dien' => null // Sẽ cập nhật sau
             ]);
 
             // 3. Xử lý lưu nhiều ảnh vào bảng hinh_anh_bai_viet
@@ -114,49 +113,57 @@ class BaiVietController extends Controller
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'tieu_de' => 'sometimes|required|string|max:255',
-            'noi_dung' => 'sometimes|required|string',
-            'hinh_anh_dai_dien' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120' // Max 5MB, không có gif
+            'tieu_de' => 'sometimes|nullable|string|max:255',
+            'noi_dung' => 'sometimes|nullable|string',
+            'hinh_anh' => 'nullable|array',
+            'hinh_anh.*' => 'image|mimes:jpeg,png,jpg,webp|max:10240',
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Dữ liệu không hợp lệ',
-                'errors' => $validator->errors()
-            ], 422);
+            return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
         }
 
         try {
-            $data = $validator->validated();
+            $post = BaiViet::findOrFail($id);
 
-            // 2. Xử lý lưu file ảnh cập nhật (Logic thêm mới)
-            if ($request->hasFile('hinh_anh_dai_dien')) {
-                $path = $request->file('hinh_anh_dai_dien')->store('posts', 'public');
-                $data['hinh_anh_dai_dien'] = '/storage/' . $path;
+            // Kiểm tra quyền chủ sở hữu
+            if ($post->ma_nguoi_dung != $request->user()->ma_nguoi_dung) {
+                return response()->json(['status' => false, 'message' => 'Bạn không có quyền sửa'], 403);
             }
 
-            $post = BaiViet::capNhatBaiViet(
-                $id,
-                $request->user(),
-                $data
-            );
+            // Cập nhật text
+            $post->update($request->only(['tieu_de', 'noi_dung']));
+
+            // Xử lý ảnh mới nếu có gửi lên
+            if ($request->hasFile('hinh_anh')) {
+                $images = $request->file('hinh_anh');
+                foreach($images as $index => $file) {
+                    $path = $file->store('posts', 'public');
+                    $fullPath = '/storage/' . $path;
+
+                    HinhAnhBaiViet::create([
+                        'ma_bai_viet' => $post->ma_bai_viet,
+                        'duong_dan' => $fullPath,
+                        'mo_ta' => 'Ảnh cập nhật'
+                    ]);
+
+                    // Nếu chưa có ảnh đại diện thì lấy ảnh đầu tiên mới up làm đại diện
+                    if (!$post->hinh_anh_dai_dien) {
+                        $post->hinh_anh_dai_dien = $fullPath;
+                        $post->save();
+                    }
+                }
+            }
+
+            $post->load('hinhAnh'); // Load lại danh sách ảnh mới nhất
 
             return response()->json([
                 'status' => true,
-                'message' => 'Cập nhật bài viết thành công',
+                'message' => 'Cập nhật thành công',
                 'data' => $post
             ]);
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Bài viết không tồn tại'
-            ], 404);
-        } catch (ForbiddenException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => $e->getMessage()
-            ], 403);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
@@ -182,7 +189,4 @@ class BaiVietController extends Controller
             ], 403);
         }
     }
-
-    
-
 }

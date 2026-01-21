@@ -23,7 +23,7 @@ const CookbookDetail = () => {
       console.error("Lỗi:", error);
       if (error.response && error.response.status === 401) {
           alert("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
-          localStorage.removeItem('access_token');
+          localStorage.removeItem('ACCESS_TOKEN');
           navigate('/login');
       }
     } finally {

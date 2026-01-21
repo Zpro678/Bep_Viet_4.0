@@ -1,4 +1,6 @@
 /* --- PostDetail.css --- */
+
+/* 1. LAYOUT CHUNG */
 .feed-container {
   max-width: 680px;
   margin: 0 auto;
@@ -6,6 +8,14 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
+.loading-text, .error-text {
+  text-align: center;
+  margin-top: 50px;
+  color: #65676b;
+  font-weight: 500;
+}
+
+/* 2. NÚT QUAY LẠI */
 .back-btn {
   background: none;
   border: none;
@@ -25,6 +35,7 @@
   color: #1c1e21;
 }
 
+/* 3. THẺ BÀI VIẾT (POST CARD) */
 .post-card {
   background-color: #fff;
   border-radius: 8px;
@@ -85,6 +96,7 @@
   white-space: pre-wrap; 
 }
 
+/* 4. HÌNH ẢNH TRONG BÀI */
 .post-media-container {
   width: 100%;
   display: flex;
@@ -101,6 +113,7 @@
   background-color: #f0f2f5;
 }
 
+/* 5. THỐNG KÊ & ACTION BUTTONS */
 .post-stats {
   padding: 10px 16px;
   border-bottom: 1px solid #ced0d4;
@@ -137,6 +150,7 @@
   background-color: #f0f2f5;
 }
 
+/* 6. PHẦN BÌNH LUẬN (COMMENT SECTION) */
 .comment-section {
   padding: 16px;
   background-color: #fff;
@@ -148,78 +162,13 @@
   color: #65676b;
 }
 
-.comment-item {
-  display: flex;
-  margin-bottom: 12px;
-  align-items: flex-start;
-}
-
-.comment-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  margin-right: 8px;
-  object-fit: cover;
-}
-
-.comment-content-group {
-  display: flex;
-  flex-direction: column;
-  max-width: 85%;
-}
-
-.comment-bubble {
-  background-color: #f0f2f5;
-  padding: 8px 12px;
-  border-radius: 18px;
-  display: inline-block;
-}
-
-.comment-author-name {
-  display: block;
-  font-weight: 600;
-  font-size: 13px;
-  color: #050505;
-  margin-bottom: 2px;
-}
-
-.comment-text {
-  font-size: 14px;
-  color: #050505;
-  line-height: 1.4;
-}
-
-.comment-meta {
-  margin-left: 12px;
-  margin-top: 2px;
-  font-size: 12px;
-  color: #65676b;
-}
-
-.comment-meta span {
-  margin-right: 12px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.comment-meta span.time {
-  font-weight: 400;
-  cursor: default;
-}
-
-.no-comment {
-  text-align: center;
-  color: #65676b;
-  padding: 20px 0;
-  font-style: italic;
-}
-
+/* --- INPUT NHẬP COMMENT CHÍNH --- */
 .comment-input-area {
   display: flex;
   align-items: center;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #f0f2f5;
+  margin-bottom: 20px; /* Tách biệt với list comment */
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f0f2f5;
 }
 
 .comment-input-box {
@@ -227,8 +176,8 @@
   background-color: #f0f2f5;
   border: none;
   border-radius: 20px;
-  padding: 8px 12px;
-  font-size: 14px;
+  padding: 10px 16px;
+  font-size: 15px;
   outline: none;
   margin-right: 8px;
 }
@@ -243,13 +192,242 @@
   color: #0084ff;
   cursor: pointer;
   padding: 8px;
-  font-size: 16px;
+  font-size: 18px; /* Icon to hơn một chút */
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background-color 0.2s;
+  border-radius: 50%;
 }
 
 .send-cmt-btn:hover {
   background-color: #f0f2f5;
-  border-radius: 50%;
 }
+
+.send-cmt-btn:disabled {
+  color: #ccc;
+  cursor: default;
+}
+
+/* --- ITEM BÌNH LUẬN (CẤU TRÚC MỚI) --- */
+
+.comment-item-container {
+  margin-bottom: 12px;
+}
+
+.comment-item {
+  display: flex;
+  align-items: flex-start;
+}
+
+.comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-right: 10px;
+  object-fit: cover;
+  flex-shrink: 0; /* Không bị co lại khi màn hình nhỏ */
+}
+
+.comment-content-group {
+  display: flex;
+  flex-direction: column;
+  max-width: 88%;
+}
+
+/* Bong bóng chat */
+.comment-bubble {
+  background-color: #f0f2f5;
+  padding: 8px 12px;
+  border-radius: 18px;
+  display: inline-block;
+  position: relative;
+}
+
+.comment-author-name {
+  display: block;
+  font-weight: 600;
+  font-size: 13px;
+  color: #050505;
+  margin-bottom: 2px;
+}
+
+.comment-text {
+  font-size: 14px;
+  color: #050505;
+  line-height: 1.4;
+  word-wrap: break-word; /* Xuống dòng nếu text quá dài */
+}
+
+/* --- FORM SỬA BÌNH LUẬN --- */
+.edit-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+}
+
+.edit-comment-input {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px;
+  font-size: 14px;
+  outline: none;
+  background: white;
+  width: 100%;
+}
+
+.edit-comment-input:focus {
+  border-color: #0084ff;
+}
+
+.edit-actions {
+  margin-top: 6px;
+  font-size: 12px;
+  display: flex;
+  gap: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* --- CÁC NÚT HÀNH ĐỘNG (Like, Reply, Delete...) --- */
+.comment-meta {
+  margin-left: 12px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #65676b;
+  display: flex;
+  gap: 12px; /* Khoảng cách giữa các nút */
+  align-items: center;
+}
+
+.action-link {
+  font-weight: 600;
+  cursor: pointer;
+  color: #65676b;
+  transition: text-decoration 0.2s;
+}
+
+.action-link:hover {
+  text-decoration: underline;
+}
+
+.comment-meta span.time {
+  font-weight: 400;
+  cursor: default;
+  color: #65676b;
+}
+
+/* --- FORM TRẢ LỜI (REPLY INPUT) --- */
+.reply-input-area {
+  margin-top: 8px;
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.reply-input {
+  flex: 1;
+  background-color: #f0f2f5;
+  border: 1px solid #ccd0d5;
+  border-radius: 16px;
+  padding: 6px 12px;
+  font-size: 13px;
+  outline: none;
+  transition: background-color 0.2s;
+}
+
+.reply-input:focus {
+  background-color: #e4e6eb;
+}
+
+.send-reply-btn {
+  background: none;
+  border: none;
+  color: #0084ff;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+/* --- DANH SÁCH TRẢ LỜI & CẤU TRÚC CÂY --- */
+
+/* Nút "Xem câu trả lời" */
+.view-replies-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: #65676b;
+  cursor: pointer;
+  margin-left: 12px;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  user-select: none;
+}
+
+/* Đường kẻ cong nối từ comment cha xuống nút xem reply */
+.view-replies-link::before {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 12px; 
+  border-bottom: 2px solid #e4e6eb; /* Màu đường kẻ */
+  border-left: 2px solid #e4e6eb;
+  border-bottom-left-radius: 12px; /* Bo cong */
+  margin-right: 8px;
+  margin-bottom: 4px;
+}
+
+.view-replies-link:hover {
+  text-decoration: underline;
+}
+
+/* Container chứa các comment con */
+.replies-list {
+  margin-top: 10px;
+  margin-left: 0; /* Canh lề, phần thụt đầu dòng được xử lý bởi logic render đệ quy */
+  padding-left: 0;
+  /* Nếu muốn các reply con thụt vào so với cha, hãy thêm margin-left ở đây */
+  /* margin-left: 42px; */
+}
+
+/* Xử lý khi không có comment */
+.no-comment {
+  text-align: center;
+  color: #65676b;
+  padding: 30px 0;
+  font-style: italic;
+  font-size: 14px;
+}
+
+/* src/components/CSS/EditPostModal.css */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 1000;
+}
+.modal-content {
+    background: white; width: 90%; max-width: 500px;
+    border-radius: 8px; padding: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+.modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;
+}
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: 600; }
+.form-group input, .form-group textarea {
+    width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;
+}
+.image-preview-box {
+    border: 2px dashed #ddd; padding: 10px; text-align: center; border-radius: 6px;
+}
+.image-preview-box img { max-height: 150px; display: block; margin: 0 auto 10px; }
+.upload-label { cursor: pointer; color: #007bff; font-weight: 500; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.btn-save { background: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
+.btn-cancel { background: #eee; color: #333; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }

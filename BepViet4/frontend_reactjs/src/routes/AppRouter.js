@@ -21,6 +21,7 @@ import MealPlanner from '../components_user/MealPlanner';
 import ShoppingList from '../components_user/ShoppingList';
 import CreateRecipe from '../components_user/CreateRecipe';
 import MyRecipes from '../components_user/MyRecipes';
+import EditRecipe from '../components_user/EditRecipe';
 
 // Import Admin Pages
 import Dashboard from '../components_admin/Dashboard';
@@ -138,7 +139,7 @@ const AppRouter = ({ isLoggedIn, setIsLoggedIn, onLogout }) => {
       <Route path="/meal-planner" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><MealPlanner /></ProtectedRoute>} />
       <Route path="/shopping-list" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><ShoppingList /></ProtectedRoute>} />
       <Route path="/create-recipe" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><CreateRecipe /></ProtectedRoute>} />
-
+      <Route path="/edit-recipe/:id" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><EditRecipe /></ProtectedRoute>} />
       <Route path="/user/:id" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><div>Trang xem user khác</div></ProtectedRoute>} />
 
 
