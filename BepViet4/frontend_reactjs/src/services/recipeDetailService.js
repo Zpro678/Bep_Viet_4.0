@@ -2,11 +2,11 @@
 
 export const recipeDetailService = {
   getById: async (id) => {
-    // Giả lập gọi API: axios.get('/api/recipes/' + id)
+  
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({
-          // --- BẢNG: CONGTHUC ---
+       
           id: id,
           title: "Bò Kho Bánh Mì", // Tên món ăn
           description: "Món bò kho đậm đà với thịt nạm pha gân được hầm mềm rục, thấm vị sả, hoa hồi, quế. Nước sốt sệt, màu nâu đỏ óng ánh, chấm cùng bánh mì giòn rụm là tuyệt phẩm cho bữa sáng hoặc bữa tối ấm cúng.",

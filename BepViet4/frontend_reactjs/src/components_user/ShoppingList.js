@@ -22,28 +22,28 @@ const ShoppingList = () => {
     fetchData();
   }, []);
 
-  // 2. Xử lý Toggle (Đánh dấu đã mua)
+ 
   const handleToggle = async (id) => {
     // Tìm item để lấy trạng thái cũ
     const itemToToggle = items.find(i => i.id === id);
     if (!itemToToggle) return;
 
-    // Cập nhật UI ngay lập tức (Optimistic Update)
+   
     const updatedItems = items.map(item => 
       item.id === id ? { ...item, is_bought: !item.is_bought } : item
     );
     setItems(updatedItems);
 
-    // Gọi API ngầm
+  
     try {
       await shoppingListService.toggleStatus(id, itemToToggle.is_bought);
     } catch (error) {
       console.error("Lỗi cập nhật trạng thái");
-      // Revert lại nếu cần thiết
+   
     }
   };
 
-  // 3. Xử lý Xóa
+ 
   const handleDelete = async (id) => {
     if(!window.confirm("Bạn chắc chắn muốn xóa?")) return;
 

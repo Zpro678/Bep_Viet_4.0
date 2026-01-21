@@ -1,0 +1,506 @@
+/* =========================================
+   1. LAYOUT CHUNG & FEED CONTAINER
+   ========================================= */
+.feed-container {
+  max-width: 700px;
+  margin: 20px auto;
+  padding: 0 10px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.feed-message {
+  text-align: center;
+  margin-top: 20px;
+  color: #65676b;
+}
+
+/* =========================================
+   2. CREATE POST BOX (Thanh kích hoạt)
+   ========================================= */
+.create-post-box {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cp-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.cp-input-trigger {
+  flex: 1;
+  background-color: #f0f2f5;
+  border-radius: 20px;
+  padding: 8px 12px;
+  color: #65676b;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.cp-input-trigger:hover {
+  background-color: #e4e6eb;
+}
+
+.cp-bottom {
+  display: flex;
+  justify-content: center;
+}
+
+.cp-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #65676b;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.cp-action-btn:hover {
+  background-color: #f0f2f5;
+}
+
+/* =========================================
+   3. POST CARD (Hiển thị bài viết)
+   ========================================= */
+.post-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  padding-bottom: 4px;
+}
+
+.post-header {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+}
+
+.user-info-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.username {
+  font-weight: 600;
+  color: #050505;
+  font-size: 15px;
+}
+
+.post-date {
+  font-size: 12px;
+  color: #65676b;
+}
+
+.post-content-area {
+  padding: 4px 16px 16px;
+  cursor: pointer;
+}
+
+.post-caption-text {
+  font-size: 15px;
+  color: #050505;
+  white-space: pre-wrap;
+}
+
+.post-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #050505;
+  line-height: 1.3;
+  display: block;
+}
+
+/* --- ẢNH Ở NGOÀI FEED (Đã cập nhật để hiển thị đẹp hơn) --- */
+.post-image-container {
+  width: 100%;
+  max-height: 500px; /* Giới hạn chiều cao */
+  background-color: #000; /* Nền đen để nổi bật ảnh nếu ảnh không full khung */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.post-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Đảm bảo thấy toàn bộ ảnh, không bị cắt */
+  max-height: 500px;
+}
+
+.post-actions {
+  display: flex;
+  justify-content: space-around;
+  padding: 4px 12px;
+  border-top: 1px solid #f0f2f5;
+  margin-top: 8px;
+}
+
+.action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 6px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #65676b;
+  font-weight: 600;
+  font-size: 14px;
+  margin: 2px;
+}
+
+.action-btn:hover {
+  background-color: #f0f2f5;
+}
+
+.action-btn.liked {
+  color: #ed4956;
+}
+
+/* =========================================
+   4. MODAL (Popup tạo bài viết)
+   ========================================= */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(244, 244, 244, 0.85);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background-color: white;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  border: 1px solid #ddd;
+}
+
+.modal-header {
+  padding: 16px;
+  border-bottom: 1px solid #f0f2f5;
+  position: relative;
+  text-align: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.close-btn {
+  position: absolute;
+  top: 12px; right: 16px;
+  background: #e4e6eb;
+  border: none;
+  border-radius: 50%;
+  width: 36px; height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  color: #606770;
+}
+
+.close-btn:hover {
+  background-color: #d8dadf;
+}
+
+.modal-body {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.user-profile-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.avatar-small {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-name-bold {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.post-title-input {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #f0f2f5;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 10px 0;
+  margin-bottom: 10px;
+  outline: none;
+  font-family: inherit;
+}
+
+.post-input-area {
+  width: 100%;
+  min-height: 80px;
+  border: none;
+  resize: none;
+  font-size: 16px;
+  font-family: inherit;
+  outline: none;
+  margin-bottom: 10px;
+}
+
+/* --- FIX: KHUNG XEM TRƯỚC ẢNH TRONG MODAL --- */
+.image-preview-container {
+  position: relative;
+  width: 100%;
+  height: 250px; /* Chiều cao cố định để không vỡ modal */
+  background-color: #f7f8fa;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.image-preview-single {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain; /* Ảnh giữ tỷ lệ, không bị méo */
+}
+
+.remove-image-btn-single {
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background-color: rgba(255,255,255,0.9);
+  border: 1px solid #ccc;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  color: #333;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.remove-image-btn-single:hover {
+  background-color: #fff;
+  color: #d11a2a;
+}
+/* ------------------------------------------- */
+
+.add-to-post {
+  border: 1px solid #dbdbdb;
+  border-radius: 8px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.add-to-post span {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.option-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.modal-footer {
+  padding: 16px;
+}
+
+.submit-post-btn {
+  width: 100%;
+  background-color: #ff6600;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.submit-post-btn:disabled {
+  background-color: #e4e6eb;
+  color: #bcc0c4;
+  cursor: not-allowed;
+}
+
+.submit-post-btn:hover:not(:disabled) {
+  background-color: #fd9854;
+}
+
+/* --- CSS CHO PREVIEW NHIỀU ẢNH TRONG MODAL --- */
+.preview-grid-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.preview-item {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid #eee;
+}
+
+.preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.remove-img-btn {
+    position: absolute;
+    top: 2px; right: 2px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px; height: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+
+/* --- CSS CHO GRID ẢNH Ở FEED (POST CARD) --- */
+.post-media-container {
+    width: 100%;
+    overflow: hidden;
+    cursor: pointer;
+    background: #000;
+}
+
+.post-image-grid {
+    display: grid;
+    gap: 2px;
+    width: 100%;
+    /* Mặc định chiều cao khung */
+    height: 400px; 
+}
+
+.grid-item {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+}
+
+.grid-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; 
+    display: block;
+}
+
+.post-image-grid.grid-1 {
+    grid-template-columns: 1fr;
+    height: auto;
+    max-height: 600px;
+}
+.post-image-grid.grid-1 .grid-item img {
+    object-fit: contain; 
+    max-height: 600px;
+    background: #000;
+}
+
+.post-image-grid.grid-2 {
+    grid-template-columns: 1fr 1fr;
+    height: 300px;
+}
+
+.post-image-grid.grid-3 {
+    grid-template-columns: 1.5fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    height: 350px;
+}
+.post-image-grid.grid-3 .item-0 {
+    grid-row: 1 / 3; 
+}
+
+.post-image-grid.grid-4 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    height: 350px;
+}
+
+.more-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+}

@@ -34,4 +34,4 @@ require __DIR__ . '/apiBoSuuTap_ChiTietBoSuuTap.php';
 
 require __DIR__ . '/apiNguyenLieu.php';
 
-
+require __DIR__ . '/apiAdmin.php';

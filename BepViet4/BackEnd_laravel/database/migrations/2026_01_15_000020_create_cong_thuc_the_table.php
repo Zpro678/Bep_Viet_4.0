@@ -17,6 +17,7 @@ return new class extends Migration
             $table->unsignedInteger('ma_the');
 
             $table->primary(['ma_cong_thuc', 'ma_the']);
+          
             // created_at and updated_at
             $table->timestamps();
 

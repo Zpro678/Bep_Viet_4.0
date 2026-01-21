@@ -50,7 +50,7 @@ class MasterDataSeeder extends Seeder
                 'ho_ten' => 'Quản Trị Viên',
                 'ngay_sinh' => '1990-01-01',
                 'gioi_tinh' => 'Nam',
-                'vai_tro' => 'Admin'
+                'vai_tro' => 'admin'
             ],
             [
                 'ten_dang_nhap' => 'chef_huong',
@@ -59,7 +59,7 @@ class MasterDataSeeder extends Seeder
                 'ho_ten' => 'Đầu Bếp Hương',
                 'ngay_sinh' => '1995-05-15',
                 'gioi_tinh' => 'Nữ',
-                'vai_tro' => 'DauBep'
+                'vai_tro' => 'blogger'
             ]
         ]);
     }
