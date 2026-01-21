@@ -33,19 +33,36 @@ class CongThucController extends Controller
         // 2. Khởi tạo Query
         $query = CongThuc::where('ma_nguoi_dung', $id);
     
-        // 3. Kiểm tra người xem có phải là chủ sở hữu không  
-        $currentUserId = $request->user('sanctum') ? $request->user('sanctum')->ma_nguoi_dung : null;
+        // 3. Kiểm tra người xem
+        $currentUserId = $request->user('sanctum')
+            ? $request->user('sanctum')->ma_nguoi_dung
+            : null;
     
-        // Nếu người xem KHÔNG PHẢI là chủ sở hữu -> Chỉ hiện bài đã duyệt (công khai)
         if ($currentUserId != $id) {
             $query->where('trang_thai', 'cong_khai');
         }
     
-        // 4. Thực hiện query và eager loading 
-        $recipes = $query->with(['hinhAnh' => function ($q) {
+       
+        $query->whereExists(function ($q) {
+            $q->select(DB::raw(1))
+              ->from('hinh_anh_cong_thuc as hinh_anh')
+              ->whereColumn('hinh_anh.ma_cong_thuc', 'cong_thuc.ma_cong_thuc');
+        });
+    
+        // 4. Query + eager loading 
+        $recipes = $query
+            ->with(['hinhAnh' => function ($q) {
                 $q->select('ma_cong_thuc', 'duong_dan');
             }])
-            ->select('ma_cong_thuc', 'ten_mon', 'mo_ta', 'trang_thai', 'thoi_gian_nau', 'do_kho', 'ngay_tao')
+            ->select(
+                'ma_cong_thuc',
+                'ten_mon',
+                'mo_ta',
+                'trang_thai',
+                'thoi_gian_nau',
+                'do_kho',
+                'ngay_tao'
+            )
             ->orderBy('ngay_tao', 'desc')
             ->paginate(10);
     
@@ -55,10 +72,12 @@ class CongThucController extends Controller
                 'id' => $recipe->ma_cong_thuc,
                 'ten_mon' => $recipe->ten_mon,
                 'mo_ta_ngan' => $recipe->mo_ta,
-                'trang_thai' => $recipe->trang_thai, 
+                'trang_thai' => $recipe->trang_thai,
                 'thoi_gian' => $recipe->thoi_gian_nau . ' phút',
                 'do_kho' => $recipe->do_kho . '/5',
-                'hinh_anh' => $recipe->hinhAnh->first() ? $recipe->hinhAnh->first()->duong_dan : 'default.jpg',
+                'hinh_anh' => $recipe->hinhAnh->first()
+                    ? $recipe->hinhAnh->first()->duong_dan
+                    : 'default.jpg',
                 'ngay_dang' => $recipe->ngay_tao,
             ];
         });
@@ -68,6 +87,7 @@ class CongThucController extends Controller
             'data' => $recipes
         ], 200);
     }
+    
 
     // ========================= Lấy bảng tin (news feed) cho người dùng theo dõi ===================================
     public function getNewsFeed(Request $request)

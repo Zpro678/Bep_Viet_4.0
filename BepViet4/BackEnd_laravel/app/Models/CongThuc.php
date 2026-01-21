@@ -83,15 +83,12 @@ class CongThuc extends Model
     }
 
     // Many-to-Many: Thẻ/Tags (qua bảng trung gian CongThuc_The) [cite: 314]
-
     public function the()
     {
         return $this->belongsToMany(The::class, 'cong_thuc_the', 'ma_cong_thuc', 'ma_the');
     }
 
-
     // HasMany: Hình ảnh 
-
     public function hinhAnh()
     {
         return $this->hasMany(HinhAnhCongThuc::class, 'ma_cong_thuc', 'ma_cong_thuc');

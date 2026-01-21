@@ -16,7 +16,6 @@ class NguoiDung extends Authenticatable
     protected $table = 'nguoi_dung';
     protected $primaryKey = 'ma_nguoi_dung';
     public $timestamps = false; 
-
     protected $fillable = [
         'ten_dang_nhap', 'email','mat_khau', 'ho_ten', 'ngay_sinh', 'gioi_tinh', 'vai_tro'
     ];
