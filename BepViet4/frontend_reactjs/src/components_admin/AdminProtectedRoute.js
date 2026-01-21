@@ -4,7 +4,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 const AdminProtectedRoute = () => {
   // 1. Lấy thông tin từ LocalStorage
   const token = localStorage.getItem('access_token');
-  const userInfoStr = localStorage.getItem('USER');
+  const userInfoStr = localStorage.getItem('user');
   
   let user = null;
   if (userInfoStr) {
@@ -18,9 +18,9 @@ const AdminProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
-  const userRole = user.vai_tro ? user.vai_tro.toUpperCase() : '';
+  const userRole = user.vai_tro ? user.vai_tro.toLowerCase() : '';
 
-  if (userRole != 'ADMIN') {
+  if (userRole != 'admin') {
     alert("Bạn không có quyền truy cập trang quản trị!");
     return <Navigate to="/" replace />;
   }

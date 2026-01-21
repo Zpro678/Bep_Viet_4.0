@@ -27,10 +27,10 @@ import Dashboard from '../components_admin/Dashboard';
 const AdminGuard = ({ children, isLoggedIn, onLogout }) => {
   if (!isLoggedIn) return <Navigate to="/login" replace />;
 
-  const user = JSON.parse(localStorage.getItem('USER') || '{}');
-  const role = user.vai_tro ? user.vai_tro.toUpperCase() : '';
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const role = user.vai_tro ? user.vai_tro.toLowerCase() : '';
 
-  if (role !== 'ADMIN') {
+  if (role !== 'admin') {
     return <Navigate to="/" replace />;
   }
   return <AdminLayout onLogout={onLogout}>{children}</AdminLayout>;

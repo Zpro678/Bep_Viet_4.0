@@ -21,7 +21,7 @@ const Login = ({ onLogin, onSwitchToRegister, onSwitchToForgotPassword }) => {
       const userRole = user.vai_tro ? user.vai_tro.toUpperCase() : '';
       console.log("User Data từ API:", userRole);
       localStorage.setItem('access_token', access_token);
-      localStorage.setItem('USER', JSON.stringify(user));
+      localStorage.setItem('user', JSON.stringify(user));
       onLogin(userRole);
   
     } catch (err) {
