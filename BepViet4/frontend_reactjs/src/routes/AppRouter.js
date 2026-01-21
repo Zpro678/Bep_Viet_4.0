@@ -28,10 +28,10 @@ import Dashboard from '../components_admin/Dashboard';
 const AdminGuard = ({ children, isLoggedIn, onLogout }) => {
   if (!isLoggedIn) return <Navigate to="/login" replace />;
 
-  const user = JSON.parse(localStorage.getItem('USER') || '{}');
-  const role = user.vai_tro ? user.vai_tro.toUpperCase() : '';
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const role = user.vai_tro ? user.vai_tro.toLowerCase() : '';
 
-  if (role !== 'ADMIN') {
+  if (role !== 'admin') {
     return <Navigate to="/" replace />;
   }
   return <AdminLayout onLogout={onLogout}>{children}</AdminLayout>;
@@ -53,11 +53,11 @@ const PublicRoute = ({ children, isLoggedIn, onLogout }) => {
 // PHẦN 2: LOGIC LOGIN/REGISTER
 // =========================================================================
 
-const LoginWrapper = ({ setIsLoggedIn,onLogout, children}) => {
+const LoginWrapper = ({ setIsLoggedIn, onLogout, children}) => {
   const navigate = useNavigate();
   const handleLoginSuccess = (role) => {
     setIsLoggedIn(true);
-    if (role && role.toUpperCase() === 'ADMIN') {
+    if (role && role.toLowerCase() === 'admin') {
         navigate('/admin/dashboard');
     } else {
         navigate('/');

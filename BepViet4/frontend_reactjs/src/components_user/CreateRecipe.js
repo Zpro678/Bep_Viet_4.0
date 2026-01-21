@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'; 
 import { useNavigate } from 'react-router-dom';
-import createRecipeServiceApi from '../api/createRecipeServiceApi';
+import createRecipeService  from '../api/createRecipeServiceApi';
 import './CSS/CreateRecipe.css';
 import { FaPlus, FaTrash, FaCloudUploadAlt, FaSave, FaImage, FaTimes } from 'react-icons/fa'; 
 
@@ -147,7 +147,7 @@ const CreateRecipe = () => {
     });
 
     try {
-      const response = await createRecipeServiceApi.create(formData);
+      const response = await createRecipeService.create(formData);
       console.log("Server response:", response);
       
       if(response.status === 'success' || response.status === 201) {

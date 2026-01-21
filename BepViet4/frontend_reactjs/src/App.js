@@ -11,7 +11,7 @@ function App() {
   // 1. Khởi tạo state dựa trên việc có TOKEN hay không
   // !!token sẽ trả về true nếu có token, false nếu không có
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return !!localStorage.getItem('ACCESS_TOKEN');
+    return !!localStorage.getItem('access_token');
   });
 
   const handleLogout = async () => {
@@ -21,8 +21,8 @@ function App() {
         console.log("Lỗi logout server hoặc token đã hết hạn");
     } finally {
         // 2. Chỉ cần xóa Token và User info là đủ
-        localStorage.removeItem('ACCESS_TOKEN');
-        localStorage.removeItem('USER');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user');
         
         // Cập nhật State để giao diện tự chuyển về trang Login ngay lập tức
         setIsLoggedIn(false);
