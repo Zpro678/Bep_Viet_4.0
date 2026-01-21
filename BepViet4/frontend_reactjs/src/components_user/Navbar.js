@@ -5,7 +5,7 @@ import {
 } from 'react-icons/fa';
 import './CSS/Navbar.css'; 
 import { Link, useNavigate } from 'react-router-dom';
-import userApi from '../api/userApi'; // 2. Import API
+import userApi from '../api/userApi'; // 
 
 const Navbar = ({ onLogout, onSearch, isLoggedIn }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -36,26 +36,25 @@ const Navbar = ({ onLogout, onSearch, isLoggedIn }) => {
           // Log ra xem cấu trúc dữ liệu trả về (Debug)
           console.log("User Info:", response); 
 
-          // Cấu trúc response của bạn: { status: 'success', data: {...UserObject} }
-          // Tùy vào axiosClient cấu hình trả về data gốc hay data.data
-          // Thường là response.data (nếu user object nằm trong key data)
+          
+         
           if (response.data) {
              setUserInfo(response.data);
           } else {
-             setUserInfo(response); // Trường hợp axiosClient đã handle trả về thẳng data
+             setUserInfo(response); 
           }
 
         } catch (error) {
           console.error("Lỗi lấy thông tin user:", error);
         }
       } else {
-        // Nếu logout thì xóa info đi
+       
         setUserInfo(null);
       }
     };
 
     fetchProfile();
-  }, [isLoggedIn]); // Chạy lại mỗi khi trạng thái đăng nhập thay đổi
+  }, [isLoggedIn]); 
 
   const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
   const toggleFilterPanel = () => setShowFilterPanel(!showFilterPanel);
