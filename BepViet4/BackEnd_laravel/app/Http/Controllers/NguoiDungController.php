@@ -12,11 +12,12 @@ use App\Models\CongThuc;
 
 class NguoiDungController extends Controller
 {
+
     public function profile(Request $request)
     {
         // middleware 'auth:sanctum' -> Laravel tự tìm đến user và gắn vào $request
         $user = $request->user();
-       
+
         return response()->json([
             'status' => 'success',
             'message' => 'Lấy thông tin thành công.',
@@ -30,10 +31,10 @@ class NguoiDungController extends Controller
 
         $validator = Validator::make($request->all(), [
             'ho_ten' => 'required|string|max:255',
-           
+
             'email' => [
-                'required', 
-                'email', 
+                'required',
+                'email',
                 Rule::unique(NguoiDung::class)->ignore($user->id) // Email phải là duy nhất, nhưng trừ user hiện tại
             ],
             'mat_khau' => 'nullable|string|min:6',
@@ -67,8 +68,8 @@ class NguoiDungController extends Controller
     {
 
         $user = NguoiDung::select('ma_nguoi_dung', 'ho_ten', 'created_at')
-                        ->where('ma_nguoi_dung', $id)
-                        ->first();
+            ->where('ma_nguoi_dung', $id)
+            ->first();
 
         if (!$user) {
             return response()->json([
@@ -82,20 +83,20 @@ class NguoiDungController extends Controller
             'data' => $user
         ], 200);
     }
-    
+
     // ================================== Thống kê tổng quan người dùng ===================================
     public function overview($id)
     {
-        
+
         $user = NguoiDung::withCount([
-            'congThuc',      
-            'baiViet',      
-            'boSuuTap',     
-            'nguoiTheoDoi',   
-            'dangTheoDoi'     
+            'congThuc',
+            'baiViet',
+            'boSuuTap',
+            'nguoiTheoDoi',
+            'dangTheoDoi'
         ])->find($id);
 
-      
+
         if (!$user) {
             return response()->json([
                 'status' => 'error',
@@ -106,13 +107,13 @@ class NguoiDungController extends Controller
         $totalLikes = $user->baiViet()->sum('luot_yeu_thich');
 
         $responseData = [
-            'id' => $user->ma_nguoi_dung, 
-            'ten_dang_nhap' => $user->ten_dang_nhap, 
-            'ho_ten' => $user->ho_ten, 
+            'id' => $user->ma_nguoi_dung,
+            'ten_dang_nhap' => $user->ten_dang_nhap,
+            'ho_ten' => $user->ho_ten,
             // 'avatar' => $user->anh_dai_dien ?? null, 
             'vai_tro' => $user->vai_tro,
             'ThongKe' => [
-                'tong_cong_thuc' => $user->cong_thucs_count, 
+                'tong_cong_thuc' => $user->cong_thucs_count,
                 'tong_bai_viet' => $user->bai_viets_count,
                 'tong_bo_suu_tap' => $user->bo_suu_taps_count,
                 'tong_nguoi_theo_doi' => $user->nguoi_theo_doi_count,
@@ -137,24 +138,24 @@ class NguoiDungController extends Controller
                 'message' => 'Người dùng không tồn tại'
             ], 404);
         }
-         $user->loadCount([
-            'congThuc',      
-            'baiViet',      
-            'boSuuTap',     
-            'nguoiTheoDoi',   
-            'dangTheoDoi'     
+        $user->loadCount([
+            'congThuc',
+            'baiViet',
+            'boSuuTap',
+            'nguoiTheoDoi',
+            'dangTheoDoi'
         ]);
 
         $totalLikes = $user->baiViet()->sum('luot_yeu_thich');
 
         $responseData = [
-            'id' => $user->ma_nguoi_dung, 
-            'ten_dang_nhap' => $user->ten_dang_nhap, 
-            'ho_ten' => $user->ho_ten, 
+            'id' => $user->ma_nguoi_dung,
+            'ten_dang_nhap' => $user->ten_dang_nhap,
+            'ho_ten' => $user->ho_ten,
             // 'avatar' => $user->anh_dai_dien ?? null, 
             'vai_tro' => $user->vai_tro,
             'ThongKe' => [
-                'tong_cong_thuc' => $user->cong_thucs_count, 
+                'tong_cong_thuc' => $user->cong_thucs_count,
                 'tong_bai_viet' => $user->bai_viets_count,
                 'tong_bo_suu_tap' => $user->bo_suu_taps_count,
                 'tong_nguoi_theo_doi' => $user->nguoi_theo_doi_count,

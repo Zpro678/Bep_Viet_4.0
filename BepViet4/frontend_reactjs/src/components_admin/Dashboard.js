@@ -2,10 +2,10 @@ import React from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
-import { 
-  FaUserFriends, FaBookOpen, FaCheckCircle, FaFlag, FaServer, 
+import {
+  FaUserFriends, FaBookOpen, FaCheckCircle, FaFlag, FaServer,
   FaArrowUp, FaExclamationCircle, FaPlus, FaMoon, FaEllipsisH,
-  FaAngleDown 
+  FaAngleDown
 } from 'react-icons/fa';
 import './CSS/Dashboard.css';
 

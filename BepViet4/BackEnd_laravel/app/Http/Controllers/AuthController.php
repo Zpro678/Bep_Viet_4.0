@@ -38,7 +38,7 @@ class AuthController extends Controller
                 'ho_ten'        => $request->ho_ten,
                 'ngay_sinh'     => $request->ngay_sinh,
                 'gioi_tinh'     => $request->gioi_tinh,
-                'vai_tro'       => 'member',
+                'vai_tro'       => 'member', 
             ]);
 
             //Tạo Token (Sanctum) trả về luôn cho người dùng

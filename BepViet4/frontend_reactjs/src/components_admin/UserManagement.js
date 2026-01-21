@@ -1,184 +1,192 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-// 👇 Bỏ FaLock, FaUnlock. Chỉ giữ lại Edit, Trash, Search, Plus
-import { FaEdit, FaTrash, FaSearch, FaPlus, FaLock, FaUnlock } from 'react-icons/fa';
-import AdminApi from '../api/AdminApi'; 
-import './CSS/UserManagement.css'; 
 
-const UserManagement = () => {
-  const navigate = useNavigate();
-  
-  const [users, setUsers] = useState([]); 
-  const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+import React from 'react';
+import { User } from '../types';
 
-  // 1. Hàm lấy danh sách User
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const response = await AdminApi.getUsers(); 
-      
-      let userList = [];
-      if (response?.data?.data?.data && Array.isArray(response.data.data.data)) {
-          userList = response.data.data.data;
-      } else if (response?.data?.data && Array.isArray(response.data.data)) {
-          userList = response.data.data;
-      } else if (Array.isArray(response?.data)) {
-          userList = response.data;
-      } else if (Array.isArray(response)) {
-          userList = response;
-      }
-      setUsers(userList);
+const USERS: User[] = [
+  {
+    id: '1',
+    name: 'Jane Cooper',
+    email: 'jane.cooper@example.com',
+    avatar: 'https://picsum.photos/seed/user1/100/100',
+    role: 'Admin',
+    roleDescription: 'Quản lý hệ thống',
+    status: 'active',
+    joinDate: '14 Th1, 2023',
+  },
+  {
+    id: '2',
+    name: 'Cody Fisher',
+    email: 'cody.fisher@example.com',
+    avatar: 'https://picsum.photos/seed/user2/100/100',
+    role: 'Chef',
+    roleDescription: 'Người sáng tạo nội dung',
+    status: 'active',
+    joinDate: '22 Th3, 2023',
+  },
+  {
+    id: '3',
+    name: 'Esther Howard',
+    email: 'esther.howard@example.com',
+    avatar: 'https://picsum.photos/seed/user3/100/100',
+    role: 'User',
+    roleDescription: 'Thành viên thường',
+    status: 'blocked',
+    joinDate: '04 Th8, 2023',
+  },
+  {
+    id: '4',
+    name: 'Jenny Wilson',
+    email: 'jenny.wilson@example.com',
+    avatar: 'https://picsum.photos/seed/user4/100/100',
+    role: 'Chef',
+    roleDescription: 'Cộng tác viên',
+    status: 'pending',
+    joinDate: '15 Th9, 2023',
+  },
+  {
+    id: '5',
+    name: 'Kristin Watson',
+    email: 'kristin.watson@example.com',
+    avatar: 'https://picsum.photos/seed/user5/100/100',
+    role: 'User',
+    roleDescription: 'Thành viên mới',
+    status: 'active',
+    joinDate: '21 Th11, 2023',
+  },
+];
 
-    } catch (error) {
-      console.error("Lỗi khi tải danh sách user:", error);
-      setUsers([]); 
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  // 2. Xử lý Xóa (Gọi API xóa luôn)
-  const handleDelete = async (id) => {
-      if(window.confirm('Hành động này không thể hoàn tác. Bạn chắc chắn muốn XÓA VĨNH VIỄN người dùng này?')) {
-          try {
-              await AdminApi.deleteUser(id); // Gọi API xóa
-              setUsers(users.filter(u => u.ma_nguoi_dung !== id)); // Cập nhật giao diện
-              alert("Đã xóa người dùng thành công.");
-          } catch (error) {
-              console.error("Lỗi khi xóa:", error);
-              alert("Xóa thất bại. Có thể người dùng này đang có dữ liệu ràng buộc.");
-          }
-      }
-  }
-
-  const handleEdit = (id) => {
-      alert(`Đang phát triển: Sửa user ID ${id}`);
-      // navigate(`/admin/users/edit/${id}`);
-  }
-
-  const filteredUsers = Array.isArray(users) ? users.filter(user => {
-    const name = user.ho_ten ? user.ho_ten.toLowerCase() : '';
-    const email = user.email ? user.email.toLowerCase() : '';
-    const search = searchTerm.toLowerCase();
-    return name.includes(search) || email.includes(search);
-  }) : [];
-
+const UserManagement: React.FC = () => {
   return (
-    <div className="user-manager-container">
-      {/* HEADER */}
-      <div className="page-header">
-        <h2 className="page-title">Quản Lý Người Dùng</h2>
-        
-        <div className="header-actions">
-           <div className="search-box">
-                <FaSearch className="search-icon" />
-                <input 
-                    type="text" 
-                    className="search-input" 
-                    placeholder="Tìm tên, email..." 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
-            </div>
-
-            <Link to="/admin/create-user" className="btn-add-new">
-                <FaPlus style={{marginRight: '5px'}} /> Thêm mới
-            </Link>
+    <div className="max-w-[1600px] mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-slate-800">Quản lý người dùng</h1>
+          <p className="text-slate-400 font-medium mt-1">Quản lý tài khoản, vai trò và quyền hạn.</p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <button className="flex items-center space-x-2 bg-white border border-slate-200 text-slate-600 px-5 py-3 rounded-2xl font-bold hover:bg-slate-50 transition-all">
+            <span className="material-icons-round text-lg">file_download</span>
+            <span>Xuất dữ liệu</span>
+          </button>
+          <button className="flex items-center space-x-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-2xl shadow-xl shadow-orange-500/30 transition-all transform hover:-translate-y-1">
+            <span className="material-icons-round text-lg">add</span>
+            <span className="font-bold">Thêm người dùng mới</span>
+          </button>
         </div>
       </div>
 
-      {/* TABLE */}
-      {loading ? (
-          <div className="loading-text">Đang tải dữ liệu...</div>
-      ) : (
-        <table className="user-table">
-            <thead>
-                <tr>
-                    <th style={{width: '50px'}}>ID</th>
-                    <th>Thành viên</th>
-                    <th>Vai trò</th>
-                    {/* Bỏ cột Trạng thái nếu muốn, hoặc giữ lại để xem thôi */}
-                    <th>Trạng thái</th> 
-                    <th style={{textAlign: 'right'}}>Hành động</th>
-                </tr>
+      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm mb-8 flex flex-wrap gap-6 items-end">
+        <div className="flex-1 min-w-[240px]">
+          <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Lọc theo vai trò</label>
+          <div className="relative">
+            <select className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20 appearance-none">
+              <option>Tất cả vai trò</option>
+              <option>Admin</option>
+              <option>Chef</option>
+              <option>User</option>
+            </select>
+            <span className="material-icons-round absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
+          </div>
+        </div>
+        <div className="flex-1 min-w-[240px]">
+          <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Lọc theo trạng thái</label>
+          <div className="relative">
+            <select className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20 appearance-none">
+              <option>Tất cả trạng thái</option>
+              <option>Đang hoạt động</option>
+              <option>Bị chặn</option>
+              <option>Chờ kích hoạt</option>
+            </select>
+            <span className="material-icons-round absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
+          </div>
+        </div>
+        <div className="flex-[2] min-w-[300px]">
+          <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Tìm kiếm</label>
+          <div className="relative">
+            <input 
+              type="text" 
+              placeholder="Tên hoặc email..." 
+              className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-4 pr-12 py-2.5 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+            />
+            <span className="material-icons-round absolute right-4 top-2.5 text-slate-400">search</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50/50 border-b border-slate-50">
+              <tr>
+                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Người dùng</th>
+                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Vai trò</th>
+                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Trạng thái</th>
+                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ngày tham gia</th>
+                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Thao tác</th>
+              </tr>
             </thead>
-            <tbody>
-                {filteredUsers.length > 0 ? (
-                    filteredUsers.map((user) => {
-                        const status = user.trang_thai || 'active'; 
-
-                        return (
-                        <tr key={user.ma_nguoi_dung}>
-                            <td>#{user.ma_nguoi_dung}</td>
-                            <td>
-                                <div className="user-cell">
-                                    <img 
-                                        src={`https://ui-avatars.com/api/?name=${user.ho_ten}&background=random&color=fff`} 
-                                        alt="avatar" 
-                                        className="user-avatar-img"
-                                    />
-                                    <div className="user-info-text">
-                                        <span className="user-name">{user.ho_ten}</span>
-                                        <span className="user-email">{user.email}</span>
-                                    </div>
-                                </div>
-                            </td>
-                            
-                            <td>
-                                <span style={{ 
-                                    fontWeight: 'bold', 
-                                    color: user.vai_tro === 'admin' ? '#d32f2f' : 
-                                           user.vai_tro === 'blogger' ? '#1976d2' : '#388e3c'
-                                }}>
-                                    {user.vai_tro ? user.vai_tro.toUpperCase() : 'USER'}
-                                </span>
-                            </td>
-
-                            <td>
-                                <span className={`status-badge ${status === 'active' ? 'status-active' : 'status-banned'}`}>
-                                    {status === 'active' ? 'Hoạt động' : 'Đã khóa'}
-                                </span>
-                            </td>
-
-                            <td>
-                                <div className="action-buttons" style={{justifyContent: 'flex-end'}}>
-                                    
-                                    {/* Nút Sửa: Màu xanh */}
-                                    <button 
-                                        className="btn-icon btn-edit"
-                                        onClick={() => handleEdit(user.ma_nguoi_dung)}
-                                        title="Chỉnh sửa"
-                                    >
-                                        <FaEdit />
-                                    </button>
-
-                                    {/* Nút Xóa: Màu đỏ (Gọi API xóa) */}
-                                    <button 
-                                        className="btn-icon btn-deleted"
-                                        onClick={() => handleDelete(user.ma_nguoi_dung)}
-                                        title="Xóa vĩnh viễn"
-                                    >
-                                        <FaTrash />
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    )})
-                ) : (
-                   <tr>
-                       <td colSpan="5" style={{textAlign: "center", padding: "20px"}}>
-                           Không tìm thấy người dùng nào.
-                       </td>
-                   </tr>
-                )}
+            <tbody className="divide-y divide-slate-50">
+              {USERS.map((user) => (
+                <tr key={user.id} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-8 py-5">
+                    <div className="flex items-center space-x-4">
+                      <img src={user.avatar} alt={user.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-slate-100" />
+                      <div>
+                        <p className="text-sm font-black text-slate-800">{user.name}</p>
+                        <p className="text-xs text-slate-400 font-medium">{user.email}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-8 py-5">
+                    <p className="text-sm font-black text-slate-700">{user.role}</p>
+                    <p className="text-xs text-slate-400 font-medium">{user.roleDescription}</p>
+                  </td>
+                  <td className="px-8 py-5">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                      user.status === 'active' ? 'bg-green-100 text-green-700' : 
+                      user.status === 'blocked' ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-500'
+                    }`}>
+                      {user.status === 'active' ? 'Đang hoạt động' : user.status === 'blocked' ? 'Bị chặn' : 'Chờ kích hoạt'}
+                    </span>
+                  </td>
+                  <td className="px-8 py-5">
+                    <p className="text-sm text-slate-500 font-bold">{user.joinDate}</p>
+                  </td>
+                  <td className="px-8 py-5 text-right">
+                    <div className="flex items-center justify-end space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button className="p-2 text-slate-400 hover:text-orange-500 transition-all rounded-lg hover:bg-white hover:shadow-sm">
+                        <span className="material-icons-round text-lg">edit</span>
+                      </button>
+                      <button className="p-2 text-slate-400 hover:text-red-500 transition-all rounded-lg hover:bg-white hover:shadow-sm">
+                        <span className="material-icons-round text-lg">{user.status === 'blocked' ? 'check_circle' : 'block'}</span>
+                      </button>
+                      <button className="p-2 text-slate-400 hover:text-red-600 transition-all rounded-lg hover:bg-white hover:shadow-sm">
+                        <span className="material-icons-round text-lg">delete</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
-        </table>
-      )}
+          </table>
+        </div>
+        <div className="p-6 border-t border-slate-50 flex items-center justify-between">
+          <p className="text-sm text-slate-400 font-bold">Hiển thị 1 đến 5 của 20 kết quả</p>
+          <div className="flex items-center space-x-2">
+            <button className="h-9 w-9 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400">
+              <span className="material-icons-round">chevron_left</span>
+            </button>
+            <button className="h-9 w-9 bg-orange-500 text-white font-black text-sm rounded-xl">1</button>
+            <button className="h-9 w-9 bg-slate-50 text-slate-500 font-bold text-sm rounded-xl hover:bg-slate-100 transition-all">2</button>
+            <button className="h-9 w-9 bg-slate-50 text-slate-500 font-bold text-sm rounded-xl hover:bg-slate-100 transition-all">3</button>
+            <span className="px-1 text-slate-300">...</span>
+            <button className="h-9 w-9 bg-slate-50 text-slate-500 font-bold text-sm rounded-xl hover:bg-slate-100 transition-all">8</button>
+            <button className="h-9 w-9 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400">
+              <span className="material-icons-round">chevron_right</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

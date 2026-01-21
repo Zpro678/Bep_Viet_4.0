@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import './CSS/AdminLayout.css'; 
+import './CSS/AdminLayout.css';
 
 const SIDEBAR_ITEMS = [
   { label: 'Tổng quan', path: '/admin/dashboard', icon: 'dashboard' },
@@ -9,9 +9,9 @@ const SIDEBAR_ITEMS = [
 ];
 
 const CATEGORY_ITEMS = [
-  // { label: 'Loại món ăn', path: '/admin/categories/types', icon: 'restaurant' },
-  // { label: 'Bữa ăn', path: '/admin/categories/meals', icon: 'schedule' },
-  // { label: 'Chế độ ăn', path: '/admin/categories/diets', icon: 'spa' },
+  { label: 'Vùng Miền', path: '/admin/categories/regions', icon: 'restaurant' },
+  { label: 'Công Thức', path: '/admin/categories/recipes', icon: 'schedule' },
+  // { label: 'Thực Đơn', path: '/admin/categories/meal-plans', icon: 'spa' },
   { label: 'Nguyên liệu', path: '/admin/categories/ingredients', icon: 'egg' },
 ];
 
@@ -33,7 +33,7 @@ const AdminLayout = ({ onLogout }) => {
           <span className="logo-text">CookSpace</span>
           {/* Nút đóng menu trên mobile */}
           <button className="btn-close-mobile" onClick={() => setIsMobileMenuOpen(false)}>
-             <span className="material-icons-round">close</span>
+            <span className="material-icons-round">close</span>
           </button>
         </div>
 
@@ -99,8 +99,8 @@ const AdminLayout = ({ onLogout }) => {
         {/* Header Mobile (Chỉ hiện khi màn hình nhỏ) */}
         <header className="mobile-header">
           <div className="mobile-brand">
-             <span className="material-icons-round logo-mini">soup_kitchen</span>
-             <strong>CookSpace</strong>
+            <span className="material-icons-round logo-mini">soup_kitchen</span>
+            <strong>CookSpace</strong>
           </div>
           <button className="btn-menu-toggle" onClick={() => setIsMobileMenuOpen(true)}>
             <span className="material-icons-round">menu</span>

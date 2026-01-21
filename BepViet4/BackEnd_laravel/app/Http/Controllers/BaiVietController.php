@@ -10,6 +10,7 @@ use App\Models\BaiViet;
 
 class BaiVietController extends Controller
 {
+
     // 23. GET /posts
     public function index(Request $request)
     {

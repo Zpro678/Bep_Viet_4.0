@@ -8,6 +8,14 @@ use App\Models\ThucDon;
 class ThucDonController extends Controller
 {
     //
+    public function iindex()
+    {
+        $thucDon = ThucDon::all(); // Lấy tất cả thực đơn
+        return response()->json([
+            'message' => 'Lấy danh sách thực đơn thành công',
+            'data' => $thucDon // Trả về mảng dữ liệu
+        ]);
+    }
     // 43. GET /meal-plans: Xem lịch ăn uống (có lọc theo ngày)
     public function index(Request $request)
     {
@@ -19,8 +27,8 @@ class ThucDonController extends Controller
             ->where('thuc_don.ma_nguoi_dung', $userId)
             // CHÚ Ý: Phải select rõ ràng để tránh trùng tên cột (ví dụ id, ngay_tao)
             ->select(
-                'thuc_don.*', 
-                'cong_thuc.ten_mon', 
+                'thuc_don.*',
+                'cong_thuc.ten_mon',
                 'cong_thuc.mo_ta'
             );
 
@@ -46,17 +54,17 @@ class ThucDonController extends Controller
         // Validate dữ liệu
         $request->validate([
             'ma_cong_thuc' => 'required|exists:cong_thuc,ma_cong_thuc', // Phải là ID món ăn có thật
-            'ngay_an'      => 'required|date', // Định dạng YYYY-MM-DD
-            'buoi'         => 'required|string', // Sáng, Trưa, Chiều, Tối...
+            'ngay_an' => 'required|date', // Định dạng YYYY-MM-DD
+            'buoi' => 'required|string', // Sáng, Trưa, Chiều, Tối...
         ]);
 
         // Tạo mới bản ghi
         $thucDon = ThucDon::create([
             'ma_nguoi_dung' => $request->user()->ma_nguoi_dung, // Tự động lấy ID người đang login
             // 'ma_nguoi_dung' => $request->input('ma_nguoi_dung'), TestAPI
-            'ma_cong_thuc'  => $request->input('ma_cong_thuc'),
-            'ngay_an'       => $request->input('ngay_an'),
-            'buoi'          => $request->input('buoi'),
+            'ma_cong_thuc' => $request->input('ma_cong_thuc'),
+            'ngay_an' => $request->input('ngay_an'),
+            'buoi' => $request->input('buoi'),
         ]);
 
         return response()->json([

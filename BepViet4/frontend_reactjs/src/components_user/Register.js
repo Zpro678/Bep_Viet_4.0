@@ -32,28 +32,35 @@ const Register = ({ onSwitchToLogin }) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    // --- 1. VALIDATE FRONTEND (Giữ nguyên) ---
+    // --- 1. KIỂM TRA RỖNG ---
     if (!formData.ten_dang_nhap || !formData.email || !formData.ho_ten || !formData.mat_khau || !formData.confirm_mat_khau || !formData.ngay_sinh) {
         setError('Vui lòng điền đầy đủ thông tin!');
         return; 
     }
 
+    // --- 2. KIỂM TRA EMAIL HỢP LỆ ---
     if (!isValidEmail(formData.email)) {
         setError('Địa chỉ Email không đúng định dạng!');
         return;
     }
 
+    // --- 3. KIỂM TRA NGÀY SINH (MỚI THÊM) ---
+    // Lấy ngày hiện tại
     const today = new Date();
+    // Lấy ngày người dùng chọn
     const birthDate = new Date(formData.ngay_sinh);
+
+    // Nếu ngày sinh lớn hơn hoặc bằng ngày hôm nay -> Lỗi
     if (birthDate >= today) {
         setError('Ngày sinh không hợp lệ (phải trước ngày hôm nay)!');
         return;
     }
 
+    // --- 4. KIỂM TRA MẬT KHẨU ---
     if (formData.mat_khau !== formData.confirm_mat_khau) {
       setError('Mật khẩu nhập lại không khớp!');
       return;
@@ -64,7 +71,7 @@ const handleSubmit = async (e) => {
         return;
     }
 
-    // --- 2. GỌI API ---
+    // --- 5. GỌI API ---
     setLoading(true);
 
     try {
@@ -80,56 +87,30 @@ const handleSubmit = async (e) => {
       const response = await authApi.register(payload);
 
       if (response.status === 'success' || response.access_token) {
-        // Thành công -> Báo user và chuyển về trang Login
-        alert(`Đăng ký thành công! Vui lòng đăng nhập.`);
-        if (onSwitchToLogin) {
-            onSwitchToLogin();
-        } else {
-            navigate('/login');
-        }
+        const { access_token, user } = response.data ? response.data : response;
+
+        localStorage.setItem('ACCESS_TOKEN', access_token);
+        localStorage.setItem('USER_INFO', JSON.stringify(user));
+
+        alert(`Đăng ký thành công, Vui lòng đăng nhập !`);
+        navigate('/');
       }
 
     } catch (err) {
       console.error("Lỗi đăng ký:", err);
-      
-      // --- 3. XỬ LÝ LỖI VÀ DỊCH SANG TIẾNG VIỆT (PHẦN QUAN TRỌNG) ---
       if (err.response && err.response.data && err.response.data.errors) {
         const errorList = err.response.data.errors;
+        const firstErrorKey = Object.keys(errorList)[0];
         
-        // Lấy tên trường lỗi đầu tiên (ví dụ: 'email' hoặc 'ten_dang_nhap')
-        const fieldName = Object.keys(errorList)[0]; 
-        // Lấy nội dung lỗi tiếng Anh (ví dụ: 'The email has already been taken.')
-        const errorMessage = errorList[fieldName][0]; 
-        
-        // Kiểm tra xem lỗi có phải là "taken" (Đã tồn tại) không?
-        if (errorMessage.includes('taken')) {
-            // 👇 Xử lý cho EMAIL
-            if (fieldName === 'email') {
-                setError('Email này đã được đăng ký, vui lòng sử dụng email khác!');
-            } 
-            // 👇 Xử lý cho TÊN ĐĂNG NHẬP (Y hệt email)
-            else if (fieldName === 'ten_dang_nhap') {
-                setError('Tên đăng nhập này đã tồn tại, vui lòng chọn tên khác!');
-            } 
-            // Các trường hợp trùng khác
-            else {
-                setError('Dữ liệu này đã tồn tại trên hệ thống.');
-            }
-        } 
-        // 👇 Xử lý lỗi Ngày sinh (nếu có)
-        else if (fieldName === 'ngay_sinh') {
-              setError('Ngày sinh không hợp lệ!');
-        }
-        // 👇 Các lỗi còn lại (Dịch sơ bộ hoặc để nguyên)
-        else {
-            // Ví dụ: 'The ten dang nhap field is required.' -> thay thế đơn giản
-            let cleanMsg = errorMessage.replace('The ', '').replace(' field is required.', ' không được để trống.');
-            setError(cleanMsg); 
+        // --- Xử lý riêng lỗi ngày sinh nếu lỡ Server vẫn trả về ---
+        if (firstErrorKey === 'ngay_sinh') {
+            setError('Ngày sinh không hợp lệ!');
+        } else {
+            setError(errorList[firstErrorKey][0]); 
         }
 
       } else {
-        // Lỗi chung (Server error, mất mạng...)
-        setError(err.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại sau.");
+        setError(err.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại.");
       }
     } finally {
       setLoading(false);

@@ -1,124 +1,85 @@
 import React, { useState, useEffect } from 'react';
 import { postService } from '../services/postService';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './CSS/Home.css';
 
-// --- COMPONENT CON: POST CARD ---
 const PostCard = ({ post }) => {
   const navigate = useNavigate();
-  const [isLiked, setIsLiked] = useState(false);
-  const [likes, setLikes] = useState(post.likes_count);
-
-  const handleDetailClick = () => {
-    navigate(`/recipe/${post.id}`);
-  };
-
-  const handleLike = async (e) => {
-    e.stopPropagation();
-    
-    const newStatus = !isLiked;
-    setIsLiked(newStatus);
-    setLikes(prev => newStatus ? prev + 1 : prev - 1);
-
-    try {
-      await postService.likePost(post.id);
-    } catch (error) {
-      setIsLiked(!newStatus);
-      setLikes(prev => newStatus ? prev - 1 : prev + 1);
-    }
-  };
+  // Khớp với ma_bai_viet từ DB của bạn
+  const handleDetailClick = () => navigate(`/post/${post.ma_bai_viet || post.id}`);
 
   return (
     <div className="post-card">
-      {/* Header */}
       <div className="post-header">
-        <img 
-          src={post.user.avatar} 
-          alt={post.user.name} 
-          className="avatar" 
-        />
+        <img src={post.nguoi_tao?.anh_dai_dien || post.user?.avatar} className="avatar" alt="avt" />
         <div className="user-info">
-          <span className="username">{post.user.name}</span>
-          <span className="post-date">{post.created_at}</span>
+          <span className="username">{post.nguoi_tao?.ho_ten || post.user?.name}</span>
+          <span className="post-date">{new Date(post.created_at).toLocaleDateString('vi-VN')}</span>
         </div>
       </div>
-
-      {/* Caption */}
       <div className="post-caption" onClick={handleDetailClick}>
-        <strong>{post.user.name}</strong>
-        {post.content}
+        <strong style={{ marginRight: '5px' }}>{post.tieu_de}</strong>
+        <span>{post.noi_dung}</span>
       </div>
-
-      {/* Image */}
-      <img 
-        src={post.image} 
-        alt="Món ăn" 
-        className="post-image" 
-        loading="lazy" 
-        onClick={handleDetailClick}
-      />
-
-      {/* Actions */}
+      {post.hinh_anh && (
+        <img src={post.hinh_anh} className="post-image" alt="Món ăn" onClick={handleDetailClick} />
+      )}
       <div className="post-actions">
-        {/* Nút Like: Dùng template literal để thêm class 'liked' nếu isLiked = true */}
-        <span 
-          className={`action-btn ${isLiked ? 'liked' : ''}`} 
-          onClick={handleLike}
-        >
-          {isLiked ? '❤️' : '🤍'} {likes}
-        </span>
-        
-        <span className="action-btn" onClick={handleDetailClick}>
-          💬 {post.comments_count}
-        </span>
-        
-        <span className="action-btn">
-          ✈️
-        </span>
+        <span className="action-btn">❤️ {post.luot_thich_count || 0}</span>
+        <span className="action-btn">💬 {post.binh_luan_count || 0}</span>
       </div>
     </div>
   );
 };
 
-// --- COMPONENT CHÍNH: HOME ---
 const Home = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const searchKeyword = queryParams.get('search');
+
   useEffect(() => {
-    const fetchFeed = async () => {
+    const loadData = async () => {
       try {
         setLoading(true);
-        const data = await postService.getFeed();
-        setPosts(data);
+        let result;
+        if (searchKeyword) {
+          // Gọi API UC-24 searchPost
+          const response = await postService.searchPosts(searchKeyword);
+          // Laravel paginate trả về object, danh sách nằm trong .data
+          result = response.data?.data || response;
+        } else {
+          result = await postService.getFeed();
+        }
+        setPosts(Array.isArray(result) ? result : []);
       } catch (error) {
-        console.error("Lỗi tải bảng tin:", error);
+        console.error("Lỗi:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchFeed();
-  }, []);
+    loadData();
+  }, [searchKeyword]);
 
-  if (loading) {
-    return (
-       <div className="feed">
-          <div className="feed-message loading-spinner">Đang tải bảng tin...</div>
-       </div>
-    );
-  }
+  if (loading) return <div className="feed"><div className="feed-message loading-spinner">Đang tải...</div></div>;
 
   return (
     <div className="feed">
+      {searchKeyword && (
+        <div style={{ padding: '15px', background: '#f8f9fa', marginBottom: '10px', borderRadius: '8px' }}>
+          Kết quả tìm kiếm cho: <strong>"{searchKeyword}"</strong>
+        </div>
+      )}
+
       {posts.map(post => (
-        <PostCard key={post.id} post={post} />
+        <PostCard key={post.ma_bai_viet || post.id} post={post} />
       ))}
 
-      {posts.length === 0 && (
-        <div className="feed-message">
-          Chưa có bài đăng nào. Hãy theo dõi thêm mọi người nhé!
-        </div>
+      {!loading && posts.length === 0 && (
+        <div className="feed-message">Không tìm thấy bài viết nào khớp với từ khóa.</div>
       )}
     </div>
   );

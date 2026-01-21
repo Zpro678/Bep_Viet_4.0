@@ -22,35 +22,35 @@ class NguyenLieuController extends Controller
     {
         // 1. Validate dữ liệu
         $validator = Validator::make($request->all(), [
-            'ten_nguyen_lieu'  => 'required|string|max:255|unique:nguyen_lieu,ten_nguyen_lieu',
-            'loai_nguyen_lieu' => 'required|string|max:100', 
-            'hinh_anh'         => 'nullable|string' 
+            'ten_nguyen_lieu' => 'required|string|max:255|unique:nguyen_lieu,ten_nguyen_lieu',
+            'loai_nguyen_lieu' => 'required|string|max:100',
+            'hinh_anh' => 'nullable|string'
         ], [
-            'ten_nguyen_lieu.required'  => 'Tên nguyên liệu không được để trống',
-            'ten_nguyen_lieu.unique'    => 'Nguyên liệu này đã có trong hệ thống',
+            'ten_nguyen_lieu.required' => 'Tên nguyên liệu không được để trống',
+            'ten_nguyen_lieu.unique' => 'Nguyên liệu này đã có trong hệ thống',
             'loai_nguyen_lieu.required' => 'Phải phân loại nguyên liệu (Ví dụ: Thịt, Rau...)',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'status'  => false,
+                'status' => false,
                 'message' => 'Lỗi dữ liệu đầu vào',
-                'errors'  => $validator->errors()
+                'errors' => $validator->errors()
             ], 422);
         }
 
         // 2. Tạo mới nguyên liệu
         $nguyenLieu = NguyenLieu::create([
-            'ten_nguyen_lieu'  => $request->ten_nguyen_lieu,
+            'ten_nguyen_lieu' => $request->ten_nguyen_lieu,
             'loai_nguyen_lieu' => $request->loai_nguyen_lieu,
-            'hinh_anh'         => $request->hinh_anh
+            'hinh_anh' => $request->hinh_anh
         ]);
 
         // 3. Trả về kết quả
         return response()->json([
-            'status'  => true,
+            'status' => true,
             'message' => 'Thêm nguyên liệu thành công',
-            'data'    => $nguyenLieu
+            'data' => $nguyenLieu
         ], 201);
     }
 
@@ -91,5 +91,23 @@ class NguyenLieuController extends Controller
             'message' => 'Cập nhật nguyên liệu thành công',
             'data' => $nguyenLieu
         ], 200);
+    }
+    public function destroy(Request $request, $id)
+    {
+        // Lấy user đang đăng nhập (Sanctum)
+        $item = NguyenLieu::find($id);
+        if (!$item) {
+            return response()->json(['message' => 'Không tìm thấy nguyên liệu'], 404);
+        }
+
+        try {
+            $item->delete();
+            return response()->json(['message' => 'Xóa nguyên liệu thành công'], 200);
+        } catch (\Exception $e) {
+            // Lỗi này xảy ra khi nguyên liệu đang được dùng ở bảng khác
+            return response()->json([
+                'message' => 'Không thể xóa! Nguyên liệu này đang được sử dụng trong các công thức.'
+            ], 500);
+        }
     }
 }

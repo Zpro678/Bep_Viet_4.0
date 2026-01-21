@@ -22,6 +22,33 @@ use Illuminate\Auth\Access\AuthorizationException as ForbiddenException;
 class CongThucController extends Controller
 {
     // ========================= Lấy danh sách công thức của người dùng theo id ===================================
+    public function iindex()
+    {
+        // Sử dụng Query Builder để Join các bảng lấy tên thay vì ID
+        $congThuc = DB::table('cong_thuc')
+            ->leftJoin('nguoi_dung', 'cong_thuc.ma_nguoi_dung', '=', 'nguoi_dung.ma_nguoi_dung')
+            ->leftJoin('danh_muc', 'cong_thuc.ma_danh_muc', '=', 'danh_muc.ma_danh_muc')
+            ->leftJoin('vung_mien', 'cong_thuc.ma_vung_mien', '=', 'vung_mien.ma_vung_mien')
+            ->select(
+                'cong_thuc.ma_cong_thuc',
+                'nguoi_dung.ho_ten as ten_nguoi_dung', // Lấy tên người dùng
+                'danh_muc.ten_danh_muc',               // Lấy tên danh mục
+                'vung_mien.ten_vung_mien',             // Lấy tên vùng miền
+                'cong_thuc.ten_mon',
+                'cong_thuc.mo_ta',
+                'cong_thuc.trang_thai',
+                'cong_thuc.thoi_gian_nau',
+                'cong_thuc.khau_phan',
+                'cong_thuc.do_kho',
+                'cong_thuc.created_at'
+            )
+            ->get();
+
+        return response()->json([
+            'message' => 'Lấy danh sách công thức thành công',
+            'data' => $congThuc
+        ], 200);
+    }
     public function getDanhSachCongThuc(Request $request, $id)
     {
         // 1. Kiểm tra user tồn tại
@@ -32,38 +59,6 @@ class CongThucController extends Controller
 
         // 2. Khởi tạo Query
         $query = CongThuc::where('ma_nguoi_dung', $id);
-
-        // 3. Kiểm tra người xem
-        $currentUserId = $request->user('sanctum')
-            ? $request->user('sanctum')->ma_nguoi_dung
-            : null;
-    
-        if ($currentUserId != $id) {
-            $query->where('trang_thai', 'cong_khai');
-        }
-    
-       
-        $query->whereExists(function ($q) {
-            $q->select(DB::raw(1))
-              ->from('hinh_anh_cong_thuc as hinh_anh')
-              ->whereColumn('hinh_anh.ma_cong_thuc', 'cong_thuc.ma_cong_thuc');
-        });
-    
-        // 4. Query + eager loading 
-        $recipes = $query
-            ->with(['hinhAnh' => function ($q) {
-                $q->select('ma_cong_thuc', 'duong_dan');
-            }])
-            ->select(
-                'ma_cong_thuc',
-                'ten_mon',
-                'mo_ta',
-                'trang_thai',
-                'thoi_gian_nau',
-                'do_kho',
-                'ngay_tao'
-            );
-
 
         // 3. Kiểm tra người xem có phải là chủ sở hữu không  
         $currentUserId = $request->user('sanctum') ? $request->user('sanctum')->ma_nguoi_dung : null;
@@ -92,9 +87,7 @@ class CongThucController extends Controller
                 'trang_thai' => $recipe->trang_thai,
                 'thoi_gian' => $recipe->thoi_gian_nau . ' phút',
                 'do_kho' => $recipe->do_kho . '/5',
-                'hinh_anh' => $recipe->hinhAnh->first()
-                    ? $recipe->hinhAnh->first()->duong_dan
-                    : 'default.jpg',
+                'hinh_anh' => $recipe->hinhAnh->first() ? $recipe->hinhAnh->first()->duong_dan : 'default.jpg',
                 'ngay_dang' => $recipe->ngay_tao,
             ];
         });
@@ -104,7 +97,6 @@ class CongThucController extends Controller
             'data' => $recipes
         ], 200);
     }
-    
 
     // ========================= Lấy bảng tin (news feed) cho người dùng theo dõi ===================================
     public function getNewsFeed(Request $request)
@@ -368,52 +360,44 @@ class CongThucController extends Controller
 
     public function index(Request $request)
     {
+        // 1. Khởi tạo Query với Eager Loading
+        // Sử dụng ma_nguoi_dung làm khóa chính theo DB của bạn
+        $query = CongThuc::with(['nguoiDung:ma_nguoi_dung,ho_ten,anh_dai_dien', 'hinhAnh'])
+            ->withAvg('danhGia', 'so_sao') // Tạo ra cột ảo: danh_gia_avg_so_sao
+            ->where('trang_thai', 'cong_khai');
 
-        // with('nguoiDung'): Kỹ thuật Eager Loading để lấy luôn thông tin người đăng
-        // withAvg('danhGia', 'so_sao'): Tính luôn điểm trung bình đánh giá
-        $query = CongThuc::with(['nguoiDung:id,ho_ten,anh_dai_dien', 'hinhAnhCongThucs'])
-            ->withAvg('danhGia', 'so_sao') // Tạo thêm trường danh_gia_avg_so_sao
-            ->where('trang_thai', 'cong_khai'); // Chỉ lấy bài công khai
-
-        // Tìm kiếm theo tên món
-        if ($request->has('keyword')) {
+        // 2. Tìm kiếm và Lọc
+        if ($request->filled('keyword')) {
             $query->where('ten_mon', 'like', '%' . $request->keyword . '%');
         }
-
-        // Lọc theo Danh mục (VD: Món Chay, Món Mặn)
-        if ($request->has('danh_muc_id')) {
-            $query->where('danh_muc_id', $request->danh_muc_id);
+        if ($request->filled('ma_danh_muc')) {
+            $query->where('ma_danh_muc', $request->ten_danh_muc);
+        }
+        if ($request->filled('ma_vung_mien')) {
+            $query->where('ma_vung_mien', $request->ma_vung_mien);
         }
 
-        // Lọc theo Vùng miền (Bắc, Trung, Nam)
-        if ($request->has('vung_mien_id')) {
-            $query->where('vung_mien_id', $request->vung_mien_id);
-        }
-
-        // 3. Xử lý Sắp xếp 
-        // Mặc định là mới nhất
+        // 3. XỬ LÝ SẮP XẾP
         $sort = $request->input('sort', 'newest');
 
         switch ($sort) {
             case 'popular':
-                // Sắp xếp theo điểm đánh giá cao nhất
+                // Sắp xếp theo điểm đánh giá trung bình (cột ảo)
                 $query->orderByDesc('danh_gia_avg_so_sao');
                 break;
             case 'oldest':
-                $query->orderBy('created_at', 'asc');
+                $query->orderBy('ngay_tao', 'asc'); // Dùng ngay_tao thay vì created_at
                 break;
+            case 'newest':
             default:
-                $query->orderBy('created_at', 'desc');
+                $query->orderBy('ngay_tao', 'desc');
                 break;
         }
 
-        // 4. Phân trang (Mỗi trang 10 công thức)
-        $congThucs = $query->paginate(10);
+        $congThucs = $query->paginate(12);
 
-        // 5. Trả về JSON chuẩn
         return response()->json([
             'status' => 'success',
-            'message' => 'Lấy danh sách công thức thành công',
             'data' => $congThucs
         ], 200);
     }
@@ -503,72 +487,173 @@ class CongThucController extends Controller
     // 17. PUT /recipes/{id}: 
     public function update(Request $request, $id)
     {
+        // 1. Kiểm tra tồn tại và quyền sở hữu
+        $congThuc = CongThuc::find($id);
+        if (!$congThuc) {
+            return response()->json(['status' => false, 'message' => 'Công thức không tồn tại'], 404);
+        }
+
+        if ($congThuc->ma_nguoi_dung !== $request->user()->ma_nguoi_dung) {
+            return response()->json(['status' => false, 'message' => 'Bạn không có quyền sửa công thức này'], 403);
+        }
+
+        // 2. Validate dữ liệu
         $validator = Validator::make($request->all(), [
             'ten_mon' => 'sometimes|required|string|max:255',
-            'mo_ta' => 'nullable|string',
+            'ma_danh_muc' => 'sometimes|required|exists:danh_muc,ma_danh_muc',
             'thoi_gian_nau' => 'sometimes|required|integer|min:1',
             'khau_phan' => 'sometimes|required|integer|min:1',
-            'do_kho' => 'sometimes|required|integer|min:1|max:5',
-            'ma_vung_mien' => 'sometimes|required|integer|exists:vung_mien,ma_vung_mien'
+            'do_kho' => 'sometimes|required|integer|between:1,5',
+            'hinh_anh_bia' => 'nullable|image|max:5120', // 5MB
+
+            // Validate nguyên liệu (nếu có gửi lên)
+            'nguyen_lieu' => 'sometimes|array',
+            'nguyen_lieu.*.ten_nguyen_lieu' => 'required_with:nguyen_lieu|string',
+            'nguyen_lieu.*.dinh_luong' => 'required_with:nguyen_lieu|numeric',
+            'nguyen_lieu.*.don_vi_tinh' => 'required_with:nguyen_lieu|string',
+
+            // Validate các bước (nếu có gửi lên)
+            'cac_buoc' => 'sometimes|array',
+            'cac_buoc.*.noi_dung' => 'required_with:cac_buoc|string',
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Dữ liệu cập nhật không hợp lệ',
-                'errors' => $validator->errors()
-            ], 422);
+            return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
         }
 
+        DB::beginTransaction();
         try {
-            $userId = $request->user()->ma_nguoi_dung;
+            // --- BƯỚC 1: CẬP NHẬT THÔNG TIN CƠ BẢN ---
+            $congThuc->update($request->only([
+                'ten_mon',
+                'mo_ta',
+                'ma_danh_muc',
+                'ma_vung_mien',
+                'thoi_gian_nau',
+                'khau_phan',
+                'do_kho'
+            ]));
 
-            $congThuc = CongThuc::capNhatCongThuc(
-                $id,
-                $userId,
-                $validator->validated()
-            );
+            // --- BƯỚC 2: XỬ LÝ ẢNH BÌA ---
+            if ($request->hasFile('hinh_anh_bia')) {
+                // Lấy ảnh cũ để xóa file vật lý trong storage
+                $oldImages = HinhAnhCongThuc::where('ma_cong_thuc', $id)->get();
+                foreach ($oldImages as $oldImg) {
+                    if (\Storage::disk('public')->exists($oldImg->duong_dan)) {
+                        \Storage::disk('public')->delete($oldImg->duong_dan);
+                    }
+                    $oldImg->delete();
+                }
 
+                $path = $request->file('hinh_anh_bia')->store('recipes/covers', 'public');
+                HinhAnhCongThuc::create([
+                    'ma_cong_thuc' => $id,
+                    'duong_dan' => $path,
+                    'mo_ta' => 'Ảnh bìa cập nhật'
+                ]);
+            }
+
+            // --- BƯỚC 3: CẬP NHẬT NGUYÊN LIỆU (Dùng Sync) ---
+            if ($request->has('nguyen_lieu')) {
+                $syncData = [];
+                foreach ($request->nguyen_lieu as $nlItem) {
+                    $nguyenLieu = NguyenLieu::firstOrCreate(
+                        ['ten_nguyen_lieu' => trim($nlItem['ten_nguyen_lieu'])],
+                        ['loai_nguyen_lieu' => $nlItem['loai_nguyen_lieu'] ?? 'Khác']
+                    );
+                    $syncData[$nguyenLieu->ma_nguyen_lieu] = [
+                        'dinh_luong' => $nlItem['dinh_luong'],
+                        'don_vi_tinh' => $nlItem['don_vi_tinh']
+                    ];
+                }
+                $congThuc->nguyenLieu()->sync($syncData);
+            }
+
+            // --- BƯỚC 4: CẬP NHẬT CÁC BƯỚC THỰC HIỆN ---
+            if ($request->has('cac_buoc')) {
+                // Lấy các bước cũ để xóa ảnh các bước trước khi xóa bản ghi
+                $oldSteps = BuocThucHien::where('ma_cong_thuc', $id)->with('hinhAnhBuoc')->get();
+                foreach ($oldSteps as $step) {
+                    foreach ($step->hinhAnhBuoc as $img) {
+                        if (\Storage::disk('public')->exists($img->duong_dan)) {
+                            \Storage::disk('public')->delete($img->duong_dan);
+                        }
+                    }
+                    $step->delete(); // Cascade delete sẽ tự xóa HinhAnhBuoc nếu có set FK
+                }
+
+                // Tạo lại các bước mới
+                foreach ($request->cac_buoc as $index => $stepData) {
+                    $buoc = BuocThucHien::create([
+                        'ma_cong_thuc' => $id,
+                        'so_thu_tu' => $index + 1,
+                        'noi_dung' => $stepData['noi_dung']
+                    ]);
+
+                    // Upload ảnh mới cho từng bước (nếu có)
+                    if (isset($stepData['hinh_anh']) && $request->hasFile("cac_buoc.$index.hinh_anh")) {
+                        $file = $request->file("cac_buoc.$index.hinh_anh");
+                        $pathStep = $file->store('recipes/steps', 'public');
+                        HinhAnhBuoc::create([
+                            'ma_buoc' => $buoc->ma_buoc,
+                            'duong_dan' => $pathStep,
+                            'mo_ta' => 'Ảnh bước ' . ($index + 1)
+                        ]);
+                    }
+                }
+            }
+
+            DB::commit();
             return response()->json([
                 'status' => true,
-                'message' => 'Cập nhật công thức thành công',
-                'data' => $congThuc
+                'message' => 'Cập nhật công thức thành công!',
+                'data' => $congThuc->load('hinhAnh', 'nguyenLieu', 'cacBuoc.hinhAnhBuoc')
             ]);
-        } catch (ModelNotFoundException $e) {
+
+        } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'status' => false,
-                'message' => 'Công thức không tồn tại'
-            ], 404);
-        } catch (ForbiddenException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => $e->getMessage()
-            ], 403);
+                'message' => 'Lỗi: ' . $e->getMessage()
+            ], 500);
         }
     }
-
     // 18. DELETE /recipes/{id}:
     public function destroy(Request $request, $id)
     {
+        DB::beginTransaction();
         try {
-            $userId = $request->user()->ma_nguoi_dung;
+            $user = $request->user();
+            $congThuc = CongThuc::where('ma_cong_thuc', $id)->first();
 
-            CongThuc::xoaCongThuc($id, $userId);
+            if (!$congThuc) {
+                return response()->json(['status' => false, 'message' => 'Không tìm thấy công thức'], 404);
+            }
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Xóa công thức thành công'
-            ], 200);
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Công thức không tồn tại'
-            ], 404);
-        } catch (ForbiddenException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => $e->getMessage()
-            ], 403);
+            // Kiểm tra quyền: chỉ Admin hoặc Chủ bài viết mới được xóa
+            if ($user->vai_tro !== 'admin' && $congThuc->ma_nguoi_dung !== $user->ma_nguoi_dung) {
+                return response()->json(['status' => false, 'message' => 'Bạn không có quyền xóa'], 403);
+            }
+
+            // Xóa các dữ liệu liên quan trước (Nếu DB không để On Delete Cascade)
+            $congThuc->nguyenLieu()->detach(); // Xóa bảng trung gian nguyên liệu
+            $congThuc->the()->detach();        // Xóa bảng trung gian thẻ
+
+            // Xóa ảnh vật lý (nếu có)
+            foreach ($congThuc->hinhAnh as $img) {
+                if (\Storage::disk('public')->exists($img->duong_dan)) {
+                    \Storage::disk('public')->delete($img->duong_dan);
+                }
+            }
+
+            // Cuối cùng xóa công thức
+            $congThuc->delete();
+
+            DB::commit();
+            return response()->json(['status' => true, 'message' => 'Xóa thành công']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
         }
     }
 
@@ -743,10 +828,5 @@ class CongThucController extends Controller
         $results = $query->orderBy('ma_cong_thuc', 'desc')->paginate(12);
 
         return response()->json(['status' => 'success', 'data' => $results]);
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Lọc công thức thành công',
-            'data' => $results
-        ], 422);
     }
 }
