@@ -21,5 +21,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // 27. Xóa bài viết
     Route::delete('/posts/{id}', [BaiVietController::class, 'destroy']);
+    
 });
 

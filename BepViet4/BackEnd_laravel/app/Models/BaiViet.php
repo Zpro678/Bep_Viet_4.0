@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Models\NguoiDung;
 use App\Models\BinhLuanBaiViet;
 use App\Models\HinhAnhBaiViet;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use App\Exceptions\ForbiddenException;
 
@@ -31,6 +30,7 @@ class BaiViet extends Model
     }
     public function binhLuan()
     {
+        // Quan hệ 1-N với bảng bình luận
         return $this->hasMany(BinhLuanBaiViet::class, 'ma_bai_viet');
     }
     public function hinhAnh()
@@ -42,98 +42,69 @@ class BaiViet extends Model
     public static function danhSach(array $filters)
     {
         return self::query()
-            ->when(
-                $filters['keyword'] ?? null,
-                function (Builder $q, $v) {
-                    $q->where('tieu_de', 'like', "%$v%")
-                      ->orWhere('noi_dung', 'like', "%$v%");
-                }
-            )
+            ->when($filters['keyword'] ?? null, function ($q, $v) {
+                $q->where('tieu_de', 'like', "%$v%")
+                  ->orWhere('noi_dung', 'like', "%$v%");
+            })
             ->with([
-                'nguoiDung:ma_nguoi_dung,ho_ten'
+                'nguoiDung:ma_nguoi_dung,ho_ten', 
+                'hinhAnh' 
             ])
+            ->withCount('binhLuan') 
             ->orderByDesc('ngay_dang')
             ->paginate(10);
     }
 
-    // 25. CHI TIẾT BÀI VIẾT
     public static function chiTiet(int $id): self
     {
         return self::with([
-            'nguoiDung:ma_nguoi_dung,ho_ten',
-            'binhLuan',
+            'nguoiDung:ma_nguoi_dung,ho_ten,anh_dai_dien',
+            'binhLuan.nguoiDung:ma_nguoi_dung,ho_ten,anh_dai_dien', // Load thêm người bình luận
             'hinhAnh'
-        ])->findOrFail($id);
+        ])
+        ->withCount('binhLuan') // Đếm bình luận cho chi tiết luôn
+        ->findOrFail($id);
     }
 
-    // KIỂM TRA: tài khoản vai trò BLOGGER
-     private static function checkBlogger(NguoiDung $user): void
+    // Kiểm tra quyền
+    private static function checkQuyenDangBai(NguoiDung $user): void
     {
-        if ($user->vai_tro !== 'blogger') {
-            throw new ForbiddenException('Chỉ blogger mới được thực hiện thao tác này');
+        $cacVaiTroDuocPhep = ['blogger', 'admin'];
+        if (!in_array($user->vai_tro, $cacVaiTroDuocPhep)) {
+            throw new ForbiddenException('Bạn không có quyền thực hiện thao tác này');
         }
     }
 
     // 24. TẠO BÀI VIẾT
     public static function taoBaiViet(NguoiDung $user, array $data): self
     {
-        self::checkBlogger($user);
-
+        self::checkQuyenDangBai($user);
         $data['ma_nguoi_dung'] = $user->ma_nguoi_dung;
         $data['ngay_dang'] = now();
-
         return self::create($data);
     }
 
     // 26. CẬP NHẬT BÀI VIẾT
     public static function capNhatBaiViet(int $id, NguoiDung $user, array $data): self
     {
-       self::checkBlogger($user);
-
+        self::checkQuyenDangBai($user);
         $baiViet = self::findOrFail($id);
-
         if ($baiViet->ma_nguoi_dung !== $user->ma_nguoi_dung) {
             throw new ForbiddenException('Bạn không có quyền chỉnh sửa bài viết này');
         }
-
         $data['ngay_chinh'] = now();
-
         $baiViet->update($data);
-
         return $baiViet;
     }
 
-    // ===== 27. XÓA BÀI VIẾT =====
+    // 27. XÓA BÀI VIẾT
     public static function xoaBaiViet(int $id, NguoiDung $user): void
     {
-        self::checkBlogger($user);
-
+        self::checkQuyenDangBai($user);
         $baiViet = self::findOrFail($id);
-
         if ($baiViet->ma_nguoi_dung !== $user->ma_nguoi_dung) {
             throw new ForbiddenException('Bạn không có quyền xóa bài viết này');
         }
-
-        // // Xóa ảnh liên quan (nếu DB chưa cascade)
-        // HinhAnhBaiViet::where('ma_bai_viet', $id)->delete();
-
-        // // Xóa bình luận
-        // BinhLuanBaiViet::where('ma_bai_viet', $id)->delete();
-
         $baiViet->delete();
     }
-    
-    // public function nguoiDung() { return $this->belongsTo(NguoiDung::class, 'ma_nguoi_dung'); }
-    // public function binhLuan() { return $this->hasMany(BinhLuanBaiViet::class, 'ma_bai_viet'); }
-    // public function hinhAnh() { return $this->hasMany(HinhAnhBaiViet::class, 'ma_bai_viet'); }
-
-    public function nguoiTao()
-    {
-        return $this->belongsTo(NguoiDung::class, 'ma_nguoi_dung', 'ma_nguoi_dung');
-    }
-    public function luotThich()
-    {
-        return $this->morphMany(LuotThich::class, 'thich');
-    }
-
 }

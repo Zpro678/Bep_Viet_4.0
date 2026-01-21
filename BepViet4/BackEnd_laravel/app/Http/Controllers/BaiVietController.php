@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Exceptions\ForbiddenException;
 use App\Models\BaiViet;
+use App\Models\LuotThich;
+use App\Models\HinhAnhBaiViet;
+use Illuminate\Support\Facades\Storage; 
 
 class BaiVietController extends Controller
 {
@@ -48,36 +51,62 @@ class BaiVietController extends Controller
     // 24. POST /posts:
     public function store(Request $request)
     {
+        // 1. Validate
         $validator = Validator::make($request->all(), [
             'tieu_de' => 'required|string|max:255',
             'noi_dung' => 'required|string',
-            'hinh_anh_dai_dien' => 'nullable|string|max:255'
+            // Validate mảng hinh_anh
+            'hinh_anh' => 'nullable|array', 
+            'hinh_anh.*' => 'image|mimes:jpeg,png,jpg,webp|max:10240', // Max 10MB mỗi ảnh
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Dữ liệu không hợp lệ',
-                'errors' => $validator->errors()
-            ], 422);
+            return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
         }
 
         try {
-            $post = BaiViet::taoBaiViet(
-                $request->user(),
-                $validator->validated()
-            );
+            // 2. Tạo bài viết gốc trước
+            $post = BaiViet::taoBaiViet($request->user(), [
+                'tieu_de' => $request->tieu_de,
+                'noi_dung' => $request->noi_dung,
+                'hinh_anh_dai_dien' => null // Sẽ cập nhật sau
+            ]);
+
+            // 3. Xử lý lưu nhiều ảnh vào bảng hinh_anh_bai_viet
+            if ($request->hasFile('hinh_anh')) {
+                $images = $request->file('hinh_anh');
+                
+                foreach($images as $index => $file) {
+                    // Lưu file vào storage
+                    $path = $file->store('posts', 'public');
+                    $fullPath = '/storage/' . $path;
+
+                    // Lưu vào DB bảng phụ
+                    HinhAnhBaiViet::create([
+                        'ma_bai_viet' => $post->ma_bai_viet,
+                        'duong_dan' => $fullPath,
+                        'mo_ta' => 'Ảnh số ' . ($index + 1)
+                    ]);
+
+                    // (Tùy chọn) Cập nhật ảnh đại diện là ảnh đầu tiên để hiển thị thumbnail ở nơi khác
+                    if ($index === 0) {
+                        $post->hinh_anh_dai_dien = $fullPath;
+                        $post->save();
+                    }
+                }
+            }
+
+            // Load lại quan hệ hình ảnh để trả về Frontend ngay lập tức
+            $post->load('hinhAnh');
 
             return response()->json([
                 'status' => true,
-                'message' => 'Tạo bài viết thành công',
+                'message' => 'Đăng bài thành công',
                 'data' => $post
             ], 201);
-        } catch (ForbiddenException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => $e->getMessage()
-            ], 403);
+
+        } catch (\Exception $e) {
+             return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
@@ -87,7 +116,7 @@ class BaiVietController extends Controller
         $validator = Validator::make($request->all(), [
             'tieu_de' => 'sometimes|required|string|max:255',
             'noi_dung' => 'sometimes|required|string',
-            'hinh_anh_dai_dien' => 'nullable|string|max:255'
+            'hinh_anh_dai_dien' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120' // Max 5MB, không có gif
         ]);
 
         if ($validator->fails()) {
@@ -99,10 +128,18 @@ class BaiVietController extends Controller
         }
 
         try {
+            $data = $validator->validated();
+
+            // 2. Xử lý lưu file ảnh cập nhật (Logic thêm mới)
+            if ($request->hasFile('hinh_anh_dai_dien')) {
+                $path = $request->file('hinh_anh_dai_dien')->store('posts', 'public');
+                $data['hinh_anh_dai_dien'] = '/storage/' . $path;
+            }
+
             $post = BaiViet::capNhatBaiViet(
                 $id,
                 $request->user(),
-                $validator->validated()
+                $data
             );
 
             return response()->json([
@@ -145,4 +182,7 @@ class BaiVietController extends Controller
             ], 403);
         }
     }
+
+    
+
 }

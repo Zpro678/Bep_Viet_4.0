@@ -12,33 +12,59 @@ class BoSuuTap_ChiTietBoSuuTapController extends Controller
     /**
      * Lấy danh sách bộ sưu tập của User đang đăng nhập
      */
-    public function index(Request $request)
-    {
-        $user = $request->user();
+   public function index(Request $request)
+{
+    $user = $request->user();
 
-        if (!$user) {
-            return response()->json(['status' => false, 'message' => 'Vui lòng đăng nhập'], 401);
-        }
-
-        try {
-            $boSuuTaps = $user->boSuuTap() 
-                              ->withCount('congThucs')
-                              ->orderBy('created_at', 'desc')
-                              ->get();
-            
-            return response()->json([
-                'status' => true,
-                'message' => 'Lấy danh sách thành công',
-                'data' => $boSuuTaps
-            ], 200);
-            
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false, 
-                'message' => 'Lỗi Server: ' . $e->getMessage()
-            ], 500);
-        }
+    if (!$user) {
+        return response()->json(['status' => false, 'message' => 'Vui lòng đăng nhập'], 401);
     }
+
+    try {
+        // 1. Lấy danh sách BST kèm theo công thức (để lấy ảnh)
+        $boSuuTaps = $user->boSuuTap()
+            ->withCount('congThucs')
+            ->with(['congThucs' => function ($query) {
+                // Sắp xếp theo ngày thêm vào BST mới nhất để lấy ảnh mới nhất
+                // Lưu ý: bảng trung gian là chi_tiet_bo_suu_tap
+                $query->orderBy('chi_tiet_bo_suu_tap.ngay_them', 'desc')
+                      ->select('cong_thuc.ma_cong_thuc', 'cong_thuc.ten_mon') // Chỉ lấy cột cần thiết cho nhẹ
+                      ->with('hinhAnh'); // Eager load bảng hinh_anh
+            }])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // 2. Xử lý dữ liệu: Lấy ảnh từ công thức đầu tiên gán vào biến 'hinh_anh_bia'
+        $boSuuTaps->transform(function ($bst) {
+            $firstRecipe = $bst->congThucs->first(); // Lấy công thức mới nhất
+            $image = null;
+
+            if ($firstRecipe && $firstRecipe->hinhAnh->isNotEmpty()) {
+                $image = $firstRecipe->hinhAnh->first()->duong_dan;
+            }
+
+            // Gán thêm field hinh_anh_bia vào object trả về
+            $bst->hinh_anh_bia = $image;
+            
+            // Xóa mảng congThucs đi cho response nhẹ, vì list bên ngoài không cần chi tiết món
+            unset($bst->congThucs); 
+            
+            return $bst;
+        });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Lấy danh sách thành công',
+            'data' => $boSuuTaps
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Lỗi Server: ' . $e->getMessage()
+        ], 500);
+    }
+}
 
     /**
      * Tạo bộ sưu tập mới cho User hiện tại
