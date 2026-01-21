@@ -24,7 +24,7 @@ class BinhLuanBaiVietController extends Controller
 
         $dsBinhLuan = BinhLuanBaiViet::where('ma_bai_viet', $id)
             ->whereNull('ma_binh_luan_cha') // Chỉ lấy comment gốc
-            ->with(['nguoiDung:ma_nguoi_dung,ho_ten,anh_dai_dien'])
+            ->with(['nguoiDung:ma_nguoi_dung,ho_ten'])
             ->withCount('traLoi') // Đếm số reply
             ->orderByDesc('ngay_gui')
             ->paginate(10);
@@ -44,7 +44,7 @@ class BinhLuanBaiVietController extends Controller
         }
 
         $cauTraLoi = BinhLuanBaiViet::where('ma_binh_luan_cha', $id)
-            ->with(['nguoiDung:ma_nguoi_dung,ho_ten,anh_dai_dien'])
+            ->with(['nguoiDung:ma_nguoi_dung,ho_ten'])
             // --- THÊM DÒNG NÀY ---
             ->withCount('traLoi') // Đếm xem comment con này có comment cháu không
             // ---------------------
@@ -60,7 +60,7 @@ class BinhLuanBaiVietController extends Controller
     // 3. Xem chi tiết 1 bình luận
     public function layBinhLuan($id)
     {
-        $binhLuan = BinhLuanBaiViet::with(['nguoiDung:ma_nguoi_dung,ho_ten,anh_dai_dien'])
+        $binhLuan = BinhLuanBaiViet::with(['nguoiDung:ma_nguoi_dung,ho_ten'])
             ->find($id);
 
         if (!$binhLuan) {
@@ -75,7 +75,7 @@ class BinhLuanBaiVietController extends Controller
     {
         $user = $request->user();
         $lichSu = BinhLuanBaiViet::where('ma_nguoi_dung', $user->ma_nguoi_dung)
-            ->with(['baiViet:ma_bai_viet,tieu_de,hinh_anh_dai_dien'])
+            ->with(['baiViet:ma_bai_viet,tieu_de'])
             ->orderByDesc('ngay_gui')
             ->paginate(20);
 
@@ -117,7 +117,7 @@ class BinhLuanBaiVietController extends Controller
         ]);
 
         // Load thông tin user để trả về frontend hiển thị ngay
-        $binhLuan->load('nguoiDung:ma_nguoi_dung,ho_ten,anh_dai_dien');
+        $binhLuan->load('nguoiDung:ma_nguoi_dung,ho_ten');
         $binhLuan->tra_loi_count = 0; // Gán mặc định số reply là 0
 
         return response()->json([
@@ -150,7 +150,7 @@ class BinhLuanBaiVietController extends Controller
             'ngay_gui' => now(),
         ]);
 
-        $reply->load('nguoiDung:ma_nguoi_dung,ho_ten,anh_dai_dien');
+        $reply->load('nguoiDung:ma_nguoi_dung,ho_ten');
         
         // --- THÊM DÒNG NÀY ---
         // Gán mặc định tra_loi_count = 0 để frontend không bị lỗi undefined khi vừa comment xong
@@ -190,7 +190,7 @@ class BinhLuanBaiVietController extends Controller
         ]);
         
         // Trả về data mới nhất kèm thông tin user để cập nhật UI
-        $binhLuan->load('nguoiDung:ma_nguoi_dung,ho_ten,anh_dai_dien');
+        $binhLuan->load('nguoiDung:ma_nguoi_dung,ho_ten');
 
         return response()->json([
             'message' => 'Cập nhật bình luận thành công',

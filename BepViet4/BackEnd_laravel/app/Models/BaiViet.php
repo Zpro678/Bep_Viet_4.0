@@ -54,7 +54,7 @@ class BaiViet extends Model
                 'nguoiDung:ma_nguoi_dung,ho_ten', 
                 'hinhAnh' 
             ])
-            ->withCount('binhLuan') 
+            ->withCount('binhLuan')
             ->orderByDesc('ngay_dang')
             ->paginate(10);
     }
@@ -63,7 +63,7 @@ class BaiViet extends Model
     public static function chiTiet(int $id): self
     {
         return self::with([
-            'nguoiDung:ma_nguoi_dung,ho_ten,anh_dai_dien',
+            'nguoiDung:ma_nguoi_dung,ho_ten',
             'hinhAnh',
             // Load bình luận: Chỉ lấy comment cha (ma_binh_luan_cha = null)
             'binhLuan' => function($query) {
