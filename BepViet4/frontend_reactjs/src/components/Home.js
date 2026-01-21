@@ -15,7 +15,7 @@ const PostCard = ({ post }) => {
 
   const handleLike = async (e) => {
     e.stopPropagation();
-    
+
     const newStatus = !isLiked;
     setIsLiked(newStatus);
     setLikes(prev => newStatus ? prev + 1 : prev - 1);
@@ -32,10 +32,15 @@ const PostCard = ({ post }) => {
     <div className="post-card">
       {/* Header */}
       <div className="post-header">
-        <img 
-          src={post.user.avatar} 
-          alt={post.user.name} 
-          className="avatar" 
+        <img
+          src={post.user.avatar}
+          alt={post.user.name}
+          className="avatar"
+          style={{ cursor: 'pointer' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/user/${post.user.id}`);
+          }}
         />
         <div className="user-info">
           <span className="username">{post.user.name}</span>
@@ -50,28 +55,28 @@ const PostCard = ({ post }) => {
       </div>
 
       {/* Image */}
-      <img 
-        src={post.image} 
-        alt="Món ăn" 
-        className="post-image" 
-        loading="lazy" 
+      <img
+        src={post.image}
+        alt="Món ăn"
+        className="post-image"
+        loading="lazy"
         onClick={handleDetailClick}
       />
 
       {/* Actions */}
       <div className="post-actions">
         {/* Nút Like: Dùng template literal để thêm class 'liked' nếu isLiked = true */}
-        <span 
-          className={`action-btn ${isLiked ? 'liked' : ''}`} 
+        <span
+          className={`action-btn ${isLiked ? 'liked' : ''}`}
           onClick={handleLike}
         >
           {isLiked ? '❤️' : '🤍'} {likes}
         </span>
-        
+
         <span className="action-btn" onClick={handleDetailClick}>
           💬 {post.comments_count}
         </span>
-        
+
         <span className="action-btn">
           ✈️
         </span>
@@ -103,9 +108,9 @@ const Home = () => {
 
   if (loading) {
     return (
-       <div className="feed">
-          <div className="feed-message loading-spinner">Đang tải bảng tin...</div>
-       </div>
+      <div className="feed">
+        <div className="feed-message loading-spinner">Đang tải bảng tin...</div>
+      </div>
     );
   }
 

@@ -1,22 +1,32 @@
-import React, { useState } from 'react';
-import { 
-  FaUtensils, FaUserCircle, FaSignOutAlt, FaCog, FaUser, 
-  FaSearch, FaFilter, FaTimes 
+import React, { useState, useEffect } from 'react';
+import {
+  FaUtensils, FaUserCircle, FaSignOutAlt, FaCog, FaUser,
+  FaSearch, FaFilter, FaTimes
 } from 'react-icons/fa';
-import './CSS/Navbar.css'; 
+import './CSS/Navbar.css';
 import { Link } from 'react-router-dom'; // Đã có sẵn import này
 
 const Navbar = ({ onLogout, onSearch }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [user, setUser] = useState(null);
   const [keyword, setKeyword] = useState('');
-  
+
+  // load user 
+  useEffect(() => {
+    const storedUser = localStorage.getItem('USER');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+
   const [filters, setFilters] = useState({
-    searchBy: 'name',   
-    region: 'all',      
-    difficulty: 'all',  
-    time: 'all',        
-    category: 'all'     
+    searchBy: 'name',
+    region: 'all',
+    difficulty: 'all',
+    time: 'all',
+    category: 'all'
   });
 
   const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
@@ -27,7 +37,7 @@ const Navbar = ({ onLogout, onSearch }) => {
   };
 
   const handleSearchSubmit = (e) => {
-    e.preventDefault(); 
+    e.preventDefault();
     setShowFilterPanel(false);
     if (onSearch) {
       onSearch({
@@ -48,13 +58,13 @@ const Navbar = ({ onLogout, onSearch }) => {
       {/* --- THANH TÌM KIẾM NÂNG CAO --- */}
       <div className="navbar-search-container">
         <form onSubmit={handleSearchSubmit} className="search-bar">
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder={filters.searchBy === 'name' ? "Tìm tên món ăn..." : "Tìm theo nguyên liệu..."}
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
           />
-          
+
           <button type="button" className="btn-filter-toggle" onClick={toggleFilterPanel}>
             <FaFilter />
           </button>
@@ -75,8 +85,8 @@ const Navbar = ({ onLogout, onSearch }) => {
             <div className="filter-grid">
               <div className="filter-group">
                 <label>Tìm theo:</label>
-                <select 
-                  value={filters.searchBy} 
+                <select
+                  value={filters.searchBy}
                   onChange={(e) => handleFilterChange('searchBy', e.target.value)}
                 >
                   <option value="name">Tên món ăn</option>
@@ -86,8 +96,8 @@ const Navbar = ({ onLogout, onSearch }) => {
 
               <div className="filter-group">
                 <label>Vùng miền:</label>
-                <select 
-                  value={filters.region} 
+                <select
+                  value={filters.region}
                   onChange={(e) => handleFilterChange('region', e.target.value)}
                 >
                   <option value="all">Tất cả</option>
@@ -99,8 +109,8 @@ const Navbar = ({ onLogout, onSearch }) => {
 
               <div className="filter-group">
                 <label>Độ khó:</label>
-                <select 
-                  value={filters.difficulty} 
+                <select
+                  value={filters.difficulty}
                   onChange={(e) => handleFilterChange('difficulty', e.target.value)}
                 >
                   <option value="all">Tất cả</option>
@@ -112,8 +122,8 @@ const Navbar = ({ onLogout, onSearch }) => {
 
               <div className="filter-group">
                 <label>Thời gian:</label>
-                <select 
-                  value={filters.time} 
+                <select
+                  value={filters.time}
                   onChange={(e) => handleFilterChange('time', e.target.value)}
                 >
                   <option value="all">Tất cả</option>
@@ -125,9 +135,9 @@ const Navbar = ({ onLogout, onSearch }) => {
             </div>
 
             <div className="filter-actions">
-              <button 
-                className="btn-apply" 
-                onClick={handleSearchSubmit} 
+              <button
+                className="btn-apply"
+                onClick={handleSearchSubmit}
               >
                 Áp dụng bộ lọc
               </button>
@@ -139,7 +149,9 @@ const Navbar = ({ onLogout, onSearch }) => {
       {/* --- USER AVATAR & DROPDOWN --- */}
       <div className="navbar-user">
         <button onClick={toggleDropdown} className="user-btn">
-          <span className="user-name">Nguyễn Văn A</span>
+          <span className="user-name">
+            {user?.ho_ten || 'Tài khoản'}
+          </span>
           <FaUserCircle className="user-avatar" />
         </button>
 
@@ -153,15 +165,18 @@ const Navbar = ({ onLogout, onSearch }) => {
               <FaCog /> <span>Cài đặt</span>
             </Link>
             <div className="dropdown-divider"></div>
-            <button 
-              className="dropdown-item text-red" 
+
+            <button
+              className="dropdown-item text-red"
               onClick={() => {
                 toggleDropdown();
+                localStorage.clear(); // clear user + token
                 onLogout();
               }}
             >
               <FaSignOutAlt /> <span>Đăng xuất</span>
             </button>
+
           </div>
         )}
       </div>

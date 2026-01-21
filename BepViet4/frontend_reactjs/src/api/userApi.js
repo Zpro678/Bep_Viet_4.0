@@ -28,6 +28,11 @@ const userApi = {
     // 5. Thống kê của user khác (Controller: overview)
     getUserOverview: (id) => {
         return axiosClient.get(`/users/${id}/overview`);
+    },
+
+    // 6. lấy danh sách công thức của người dùng khác
+    getUserRecipes: (id) => {
+        return axiosClient.get(`/users/${id}/recipes`);
     }
 };
 
