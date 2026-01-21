@@ -20,6 +20,8 @@ require __DIR__ . '/apiBinhLuan_DanhGia.php';
 
 require __DIR__ . '/apiHinhAnh.php';
 
+require __DIR__ . '/apiLuotThich.php';
+
 require __DIR__ . '/apiTheoDoi.php';
 
 require __DIR__ . '/apiBaiViet.php';
