@@ -7,8 +7,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Exceptions\ForbiddenException;
 use App\Models\BaiViet;
-use App\Models\LuotThich;
-use App\Models\HinhAnhBaiViet;
+use App\Models\HinhAnhBaiViet; 
 use Illuminate\Support\Facades\Storage; 
 
 class BaiVietController extends Controller
@@ -182,7 +181,4 @@ class BaiVietController extends Controller
             ], 403);
         }
     }
-
-    
-
 }
