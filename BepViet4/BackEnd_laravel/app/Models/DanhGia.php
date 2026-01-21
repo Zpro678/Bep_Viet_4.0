@@ -14,6 +14,7 @@ class DanhGia extends Model
         'ma_nguoi_dung',
         'ma_cong_thuc',
         'so_sao',
+        'trang_thai',
     ];
     public $timestamps = true;
     public function nguoiDung()
