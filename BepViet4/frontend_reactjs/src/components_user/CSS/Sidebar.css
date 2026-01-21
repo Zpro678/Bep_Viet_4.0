@@ -50,3 +50,102 @@
   transition: background 0.2s;
 }
 .btn-post:hover { background-color: #ea580c; }
+
+/* Start = Bảng thông báo đăng nhập */
+/* Lớp phủ mờ nền */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6); /* Đen mờ đậm hơn chút cho sang */
+  backdrop-filter: blur(4px); /* Hiệu ứng làm mờ background phía sau */
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Hộp nội dung chính */
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 16px; /* Bo tròn mềm mại hơn */
+  width: 90%;
+  max-width: 380px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  animation: slideUp 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28); /* Hiệu ứng nảy lên */
+}
+
+/* Icon khóa (nếu có dùng) hoặc Tiêu đề */
+.modal-icon-wrapper {
+  font-size: 40px;
+  color: #f97316;
+  margin-bottom: 10px;
+}
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 10px;
+}
+
+.modal-desc {
+  font-size: 15px;
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+/* Khu vực nút bấm */
+.modal-action {
+  display: flex;
+  justify-content: center; /* Quan trọng nhất: Căn giữa theo chiều ngang */
+  align-items: center;     /* Căn giữa theo chiều dọc */
+  gap: 15px;               /* Khoảng cách giữa 2 nút */
+  width: 100%;             /* Đảm bảo khung chứa rộng 100% để có chỗ mà căn giữa */
+  margin-top: 20px;        /* Cách phần text bên trên ra một chút */
+}
+
+.btn-modal {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-modal-cancel {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.btn-modal-cancel:hover {
+  background-color: #e5e7eb;
+}
+
+.btn-modal-confirm {
+  background-color: #f97316; /* Đồng bộ màu cam với Sidebar */
+  color: white;
+  box-shadow: 0 4px 6px rgba(249, 115, 22, 0.2);
+}
+
+.btn-modal-confirm:hover {
+  background-color: #ea580c;
+  transform: translateY(-1px);
+}
+
+/* Animation Keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px) scale(0.95); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+/* End - Bảng thông báo đăng nhập */

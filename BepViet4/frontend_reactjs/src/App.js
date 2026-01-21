@@ -2,29 +2,29 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'; 
 import './App.css';
 
-
 import AppRouter from './routes/AppRouter';       
 import AdminRouter from './routes/AdminRouter';  
 import authApi from './api/authApi';
 
 function App() {
   
+  // 1. Khởi tạo state dựa trên việc có TOKEN hay không
+  // !!token sẽ trả về true nếu có token, false nếu không có
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    const token = localStorage.getItem('ACCESS_TOKEN');
-    return !!token; 
+    return !!localStorage.getItem('ACCESS_TOKEN');
   });
 
-  
   const handleLogout = async () => {
     try {
         await authApi.logout(); 
     } catch (error) {
         console.log("Lỗi logout server hoặc token đã hết hạn");
     } finally {
+        // 2. Chỉ cần xóa Token và User info là đủ
         localStorage.removeItem('ACCESS_TOKEN');
         localStorage.removeItem('USER');
-        localStorage.removeItem('USER_INFO');
-        localStorage.setItem('isLoggedIn', 'false'); // Cập nhật cả cái này nếu bạn dùng ở AppRouter
+        
+        // Cập nhật State để giao diện tự chuyển về trang Login ngay lập tức
         setIsLoggedIn(false);
     }
   };
@@ -32,11 +32,10 @@ function App() {
   return (
     <Router>
       <div className="App">
-      
         <Routes>
           
-          
-        <Route 
+          {/* Router cho Admin */}
+          <Route 
             path="/admin/*" 
             element={
               <AdminRouter 
@@ -47,7 +46,7 @@ function App() {
             }
           />
 
-   
+          {/* Router cho User thường */}
           <Route 
             path="/*" 
             element={

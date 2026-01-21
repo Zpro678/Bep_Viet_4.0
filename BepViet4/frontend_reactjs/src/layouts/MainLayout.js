@@ -2,12 +2,17 @@ import React from 'react';
 import Navbar from '../components_user/Navbar';
 import Sidebar from '../components_user/Sidebar';
 
-const MainLayout = ({ children, onLogout }) => {
+// 1. Thêm isLoggedIn vào danh sách props nhận vào
+const MainLayout = ({ children, onLogout, isLoggedIn }) => {
   return (
     <div className="app-root">
-      <Navbar onLogout={onLogout} />
+      {/* 2. Truyền isLoggedIn xuống Navbar (để hiện Avatar/Tên) */}
+      <Navbar onLogout={onLogout} isLoggedIn={isLoggedIn} />
+      
       <div className="main-layout">
-        <Sidebar />
+        {/* 3. Truyền isLoggedIn xuống Sidebar (để biết đường cho phép click hay chặn) */}
+        <Sidebar isLoggedIn={isLoggedIn} />
+        
         <div className="content-area">
           {children}
         </div>

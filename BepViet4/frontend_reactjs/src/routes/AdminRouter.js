@@ -10,6 +10,9 @@ import RecipeApproval from '../components_admin/RecipeApproval';
 import AdminProtectedRoute from '../components_admin/AdminProtectedRoute';
 // Các component khác bạn tự import hoặc tạo placeholder như dưới
 
+import UserManagement from '../components_admin/UserManagement'; 
+import CreateUser from '../components_admin/CreateUser';
+
 const AdminRouter = ({ isLoggedIn, onLogout }) => {
     if (!isLoggedIn) {
       return <Navigate to="/login" replace />;
@@ -23,6 +26,8 @@ const AdminRouter = ({ isLoggedIn, onLogout }) => {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="DuyetCongThuc" element={<div><RecipeApproval/></div>} />
+        <Route path="users" element={<UserManagement />} />
+        <Route path="create-user" element={<CreateUser />} />
       </Route>
       </Route>
     </Routes>
