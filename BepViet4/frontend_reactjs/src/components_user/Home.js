@@ -1,17 +1,19 @@
-// src/components/Home.js
-
 import React, { useState, useEffect, useRef } from 'react';
-import { postService } from '../services/postService'; 
+import { postService } from '../services/postService';
 import { useNavigate } from 'react-router-dom';
-import { FaRegHeart, FaHeart, FaComment, FaShare, FaImage, FaTimes } from 'react-icons/fa';
-import './CSS/Home.css'; // Đảm bảo đường dẫn CSS đúng
+import {
+    FaRegHeart, FaHeart, FaComment, FaShare,
+    FaImage, FaTimes, FaEllipsisH, FaTrash, FaEdit
+} from 'react-icons/fa';
+import './CSS/Home.css';
 
 const API_BASE_URL = 'http://localhost:8000';
 
-// --- 1. HELPER FUNCTIONS ---
+// --- CÁC HÀM HỖ TRỢ (HELPER FUNCTIONS) ---
 const getImageUrl = (path) => {
     if (!path) return null;
     if (path.startsWith('http')) return path;
+    if (path.startsWith('blob:')) return path;
     const cleanPath = path.startsWith('/') ? path.substring(1) : path;
     return `${API_BASE_URL}/${cleanPath}`;
 };
@@ -31,55 +33,26 @@ const getInitials = (name) => {
     return name.charAt(0).toUpperCase();
 };
 
-// --- 2. COMPONENT: USER AVATAR ---
+// --- COMPONENT: USER AVATAR ---
 const UserAvatar = ({ src, name, className }) => {
     const hasImage = src && src !== 'null' && src !== 'undefined';
-    
-    // Nếu có ảnh -> Render thẻ img với class được truyền vào (avatar hoặc avatar-small)
-    if (hasImage) {
-        return (
-            <img
-                src={getImageUrl(src)}
-                alt={name}
-                className={className} 
-                loading="lazy"
-                onError={(e) => { e.target.style.display = 'none'; }}
-            />
-        );
-    }
-
-    // Nếu không có ảnh -> Render placeholder
-    // CSS class kết hợp: "user-avatar-placeholder" + class kích thước (avatar/avatar-small)
-    return (
-        <div
-            className={`user-avatar-placeholder ${className}`}
-            style={{ backgroundColor: stringToColor(name) }}
-        >
+    return hasImage ? (
+        <img src={getImageUrl(src)} alt={name} className={className} loading="lazy" onError={(e) => { e.target.style.display = 'none'; }} />
+    ) : (
+        <div className={`user-avatar-placeholder ${className}`} style={{ backgroundColor: stringToColor(name), display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold' }}>
             {getInitials(name)}
         </div>
     );
 };
 
-// --- 3. COMPONENT: IMAGE GRID ---
+// --- COMPONENT: IMAGE GRID (HIỂN THỊ ẢNH KIỂU FACEBOOK) ---
 const ImageGrid = ({ images }) => {
     if (!images || images.length === 0) return null;
-
-    let safeImages = images;
-    if (typeof images === 'string') {
-        try { safeImages = JSON.parse(images); } catch (e) { safeImages = []; }
-    }
-
-    if (!Array.isArray(safeImages) || safeImages.length === 0) return null;
-
+    let safeImages = Array.isArray(images) ? images : [];
     const count = safeImages.length;
     const getPath = (img) => (typeof img === 'string' ? img : img.duong_dan || img.path || '');
     
-    // Logic class khớp với CSS: .grid-1, .grid-2, .grid-3, .grid-4
-    let gridClass = 'grid-1';
-    if (count === 2) gridClass = 'grid-2';
-    else if (count === 3) gridClass = 'grid-3';
-    else if (count >= 4) gridClass = 'grid-4';
-
+    let gridClass = count === 2 ? 'grid-2' : count === 3 ? 'grid-3' : count >= 4 ? 'grid-4' : 'grid-1';
     const displayImages = safeImages.slice(0, 4);
     const remaining = count - 4;
 
@@ -88,7 +61,6 @@ const ImageGrid = ({ images }) => {
             {displayImages.map((img, index) => (
                 <div key={index} className={`grid-item item-${index}`}>
                     <img src={getImageUrl(getPath(img))} alt={`img-${index}`} loading="lazy" />
-                    {/* Overlay hiển thị số ảnh còn lại (+5) */}
                     {index === 3 && remaining > 0 && <div className="more-overlay">+{remaining}</div>}
                 </div>
             ))}
@@ -96,124 +68,7 @@ const ImageGrid = ({ images }) => {
     );
 };
 
-// --- 4. COMPONENT: POST CARD ---
-const PostCard = ({ post }) => {
-    const navigate = useNavigate();
-    
-    // State quản lý Like
-    const [isLiked, setIsLiked] = useState(false);
-    const [likeCount, setLikeCount] = useState(0);
-
-    const postId = post.ma_bai_viet || post.id;
-    
-    // Thông tin user
-    const userAvatar = post.nguoi_dung?.anh_dai_dien || post.user?.avatar;
-    const userName = post.nguoi_dung?.ho_ten || post.user?.name || "Người dùng";
-    const displayDate = post.ngay_dang ? new Date(post.ngay_dang).toLocaleDateString('vi-VN') : 'Vừa xong';
-
-    // Xử lý ảnh bài viết
-    let postImages = [];
-    if (post.hinh_anh) {
-        postImages = post.hinh_anh;
-    } else if (post.hinh_anh_dai_dien) {
-        postImages = [post.hinh_anh_dai_dien];
-    }
-
-    // API: Lấy thông tin Like
-    useEffect(() => {
-        let isMounted = true;
-        const fetchLikeInfo = async () => {
-            if (!postId) return;
-            try {
-                const data = await postService.getPostLikeInfo(postId);
-                if (data && isMounted) {
-                    setLikeCount(Number(data.total_likes) || 0); 
-                    setIsLiked(!!data.has_liked); 
-                }
-            } catch (error) {
-                console.error(`Lỗi lấy like bài ${postId}:`, error);
-            }
-        };
-        fetchLikeInfo();
-        return () => { isMounted = false; };
-    }, [postId]);
-
-    // Handler: Toggle Like
-    const handleToggleLike = async (e) => {
-        e.stopPropagation();
-        
-        const previousLiked = isLiked;
-        const previousCount = likeCount;
-
-        // Optimistic Update
-        const newLikedState = !previousLiked;
-        setIsLiked(newLikedState);
-        setLikeCount(prev => newLikedState ? prev + 1 : (prev > 0 ? prev - 1 : 0));
-
-        try {
-            const response = await postService.toggleLikePost(postId);
-            if (response) {
-                 setIsLiked(!!response.has_liked);
-                 setLikeCount(Number(response.total_likes));
-            }
-        } catch (error) {
-            setIsLiked(previousLiked);
-            setLikeCount(previousCount);
-        }
-    };
-
-    const handleDetailClick = () => navigate(`/post/${postId}`);
-
-    return (
-        <div className="post-card">
-            {/* Header: Avatar + Tên + Ngày */}
-            <div className="post-header">
-                <div className="user-info-wrapper">
-                    <UserAvatar src={userAvatar} name={userName} className="avatar" />
-                    <div className="user-info">
-                        <span className="username">{userName}</span>
-                        <span className="post-date">{displayDate}</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Content: Tiêu đề + Nội dung */}
-            <div className="post-content-area" onClick={handleDetailClick}>
-                {post.tieu_de && <h3 className="post-title">{post.tieu_de}</h3>}
-                <p className="post-caption-text">{post.noi_dung}</p>
-            </div>
-            
-            {/* Media: Grid ảnh */}
-            <div className="post-media-container" onClick={handleDetailClick}>
-                 <ImageGrid images={postImages} />
-            </div>
-
-            {/* Footer: Actions (Like, Comment) */}
-            <div className="post-actions">
-                <button 
-                    // Class "liked-active" sẽ kích hoạt màu đỏ và animation trong CSS
-                    className={`action-btn ${isLiked ? 'liked-active' : ''}`} 
-                    onClick={handleToggleLike}
-                >
-                    {isLiked ? <FaHeart /> : <FaRegHeart />} 
-                    <span>{likeCount > 0 ? likeCount : 'Thích'}</span>
-                </button>
-
-                <button className="action-btn" onClick={handleDetailClick}>
-                    <FaComment /> 
-                    <span>{post.binh_luan_count > 0 ? post.binh_luan_count : 'Bình luận'}</span>
-                </button>
-                
-                <button className="action-btn">
-                    <FaShare />
-                    <span>Chia sẻ</span>
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// --- 5. COMPONENT: CREATE POST MODAL ---
+// --- COMPONENT: MODAL TẠO BÀI VIẾT ---
 const CreatePostModal = ({ isOpen, onClose, onPostCreated, currentUser }) => {
     const [tieuDe, setTieuDe] = useState('');
     const [noiDung, setNoiDung] = useState('');
@@ -222,109 +77,84 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated, currentUser }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const fileInputRef = useRef(null);
 
-    useEffect(() => {
-        return () => { previewUrls.forEach(url => URL.revokeObjectURL(url)); };
-    }, [previewUrls]);
-
     const handleClose = () => {
-        setTieuDe(''); setNoiDung(''); setSelectedImages([]); setPreviewUrls([]);
-        if (fileInputRef.current) fileInputRef.current.value = '';
+        previewUrls.forEach(url => URL.revokeObjectURL(url));
+        setTieuDe('');
+        setNoiDung('');
+        setSelectedImages([]);
+        setPreviewUrls([]);
         onClose();
     };
 
     const handleImageChange = (e) => {
         const files = Array.from(e.target.files);
-        if (files.length > 0) {
-            const validFiles = files.filter(file => file.type.startsWith('image/'));
-            setSelectedImages(prev => [...prev, ...validFiles]);
-            const newUrls = validFiles.map(file => URL.createObjectURL(file));
-            setPreviewUrls(prev => [...prev, ...newUrls]);
-        }
+        const validFiles = files.filter(file => file.type.startsWith('image/'));
+        const newUrls = validFiles.map(file => URL.createObjectURL(file));
+        setSelectedImages(prev => [...prev, ...validFiles]);
+        setPreviewUrls(prev => [...prev, ...newUrls]);
     };
 
     const removeImage = (index) => {
-        const newImages = [...selectedImages]; newImages.splice(index, 1); setSelectedImages(newImages);
-        const newUrls = [...previewUrls]; URL.revokeObjectURL(newUrls[index]); newUrls.splice(index, 1); setPreviewUrls(newUrls);
+        const newFiles = [...selectedImages];
+        newFiles.splice(index, 1);
+        setSelectedImages(newFiles);
+        URL.revokeObjectURL(previewUrls[index]);
+        const newUrls = [...previewUrls];
+        newUrls.splice(index, 1);
+        setPreviewUrls(newUrls);
     };
 
     const handleSubmit = async () => {
-        if (!tieuDe.trim() || !noiDung.trim()) return;
+        if (!tieuDe && !noiDung && selectedImages.length === 0) return;
         setIsSubmitting(true);
         try {
             const formData = new FormData();
             formData.append('tieu_de', tieuDe);
             formData.append('noi_dung', noiDung);
-            selectedImages.forEach((file) => { formData.append('hinh_anh[]', file); });
+            selectedImages.forEach(file => formData.append('hinh_anh[]', file));
 
             const response = await postService.createPost(formData);
+            onPostCreated(response.data || response);
             handleClose();
-            const postData = response.data || response; 
-            if (postData) { onPostCreated(postData); } else { window.location.reload(); }
         } catch (error) {
-            console.error("Lỗi đăng bài:", error);
-            alert('Đăng bài thất bại.');
-        } finally { setIsSubmitting(false); }
+            alert('Thêm bài viết thất bại.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     if (!isOpen) return null;
 
     return (
         <div className="modal-overlay" onClick={handleClose}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
-                    <h3>Tạo bài viết</h3> 
+                    <h3>Tạo bài viết</h3>
                     <button className="close-btn" onClick={handleClose}><FaTimes /></button>
                 </div>
-                
                 <div className="modal-body">
-                    <div className="user-profile-row">
-                        <UserAvatar src={currentUser?.avatar} name={currentUser?.name} className="avatar-small" />
-                        <div className="user-name-bold">{currentUser?.name}</div>
-                    </div>
+                    <input type="text" className="post-title-input" placeholder="Tiêu đề bài viết..." value={tieuDe} onChange={e => setTieuDe(e.target.value)} />
+                    <textarea className="post-input-area" placeholder={`${currentUser.name} ơi, bạn đang nghĩ gì thế?`} value={noiDung} onChange={e => setNoiDung(e.target.value)} />
                     
-                    <input 
-                        type="text" 
-                        className="post-title-input" 
-                        placeholder="Tiêu đề..." 
-                        value={tieuDe} 
-                        onChange={(e) => setTieuDe(e.target.value)} 
-                        autoFocus 
-                    />
-                    
-                    <textarea 
-                        placeholder="Bạn đang nghĩ gì?" 
-                        className="post-input-area" 
-                        value={noiDung} 
-                        onChange={(e) => setNoiDung(e.target.value)} 
-                    />
-                    
-                    {/* Preview Images Grid */}
                     {previewUrls.length > 0 && (
-                        <div className="preview-grid-container">
+                        <div className="edit-preview-container" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
                             {previewUrls.map((url, index) => (
-                                <div key={index} className="preview-item">
-                                    <img src={url} alt="preview" />
-                                    <button className="remove-img-btn" onClick={() => removeImage(index)}><FaTimes /></button>
+                                <div key={index} style={{ position: 'relative', width: '60px', height: '60px' }}>
+                                    <img src={url} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
+                                    <button onClick={() => removeImage(index)} style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'red', color: 'white', border: 'none', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px' }}><FaTimes size={8}/></button>
                                 </div>
                             ))}
                         </div>
                     )}
-                    
+
                     <div className="add-to-post">
-                        <span>Thêm ảnh vào bài viết</span>
-                        <button className="option-btn" onClick={() => fileInputRef.current.click()}>
-                            <FaImage color="#45bd62" size={24} />
-                        </button>
-                        <input type="file" hidden ref={fileInputRef} onChange={handleImageChange} accept="image/*" multiple />
+                        <span>Thêm vào bài viết của bạn</span>
+                        <button className="option-btn" onClick={() => fileInputRef.current.click()}><FaImage color="#45bd62" size={24} /></button>
+                        <input type="file" hidden ref={fileInputRef} onChange={handleImageChange} multiple accept="image/*" />
                     </div>
                 </div>
-                
                 <div className="modal-footer">
-                    <button 
-                        className="submit-post-btn" 
-                        disabled={(!tieuDe.trim() || !noiDung.trim()) || isSubmitting} 
-                        onClick={handleSubmit}
-                    >
+                    <button className="submit-post-btn" disabled={isSubmitting} onClick={handleSubmit}>
                         {isSubmitting ? 'Đang đăng...' : 'Đăng'}
                     </button>
                 </div>
@@ -333,114 +163,258 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated, currentUser }) => {
     );
 };
 
-// --- 6. COMPONENT: HOME (MAIN) ---
-const Home = () => {
-    const [posts, setPosts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+// --- COMPONENT: MODAL CHỈNH SỬA BÀI VIẾT (ĐÃ CẬP NHẬT) ---
+const EditPostModal = ({ isOpen, onClose, onPostUpdated, post }) => {
+    const [tieuDe, setTieuDe] = useState('');
+    const [noiDung, setNoiDung] = useState('');
+    const [selectedImages, setSelectedImages] = useState([]);
+    const [previewUrls, setPreviewUrls] = useState([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const fileInputRef = useRef(null);
 
-    const [currentUser] = useState(() => {
-        const userStored = localStorage.getItem('USER_INFO');
-        if (userStored) {
-            try {
-                let parsed = JSON.parse(userStored);
-                // Tìm thông tin user
-                const findUserObject = (obj) => {
-                    if (!obj) return null;
-                    if (obj.ho_ten || obj.name || obj.ten_dang_nhap) return obj;
-                    if (obj.data) return findUserObject(obj.data);
-                    if (obj.user) return findUserObject(obj.user);
-                    return obj;
-                };
-                const realUser = findUserObject(parsed);
-                return {
-                    name: realUser?.ho_ten || realUser?.name || realUser?.ten_dang_nhap || 'Bạn',
-                    avatar: realUser?.anh_dai_dien || realUser?.avatar || null
-                };
-            } catch (e) {
-                return { name: 'Bạn', avatar: null };
-            }
+    useEffect(() => {
+        if (isOpen && post) {
+            setTieuDe(post.tieu_de || '');
+            setNoiDung(post.noi_dung || '');
+            setPreviewUrls([]);
+            setSelectedImages([]);
         }
-        return { name: 'Bạn', avatar: null };
-    });
+    }, [isOpen, post]);
 
-    // Box kích hoạt Modal
-    const CreatePostBox = ({ onClick }) => (
-        <div className="create-post-box">
-            <div className="cp-top">
-                <UserAvatar src={currentUser?.avatar} name={currentUser?.name} className="avatar" />
-                <div className="cp-input-trigger" onClick={onClick}>
-                    {currentUser?.name} ơi, viết gì đi...
+    const handleClose = () => {
+        previewUrls.forEach(url => URL.revokeObjectURL(url));
+        onClose();
+    };
+
+    const handleImageChange = (e) => {
+        const files = Array.from(e.target.files);
+        const validFiles = files.filter(file => file.type.startsWith('image/'));
+        const newUrls = validFiles.map(file => URL.createObjectURL(file));
+        setSelectedImages(prev => [...prev, ...validFiles]);
+        setPreviewUrls(prev => [...prev, ...newUrls]);
+    };
+
+    const removeImage = (index) => {
+        const newFiles = [...selectedImages];
+        newFiles.splice(index, 1);
+        setSelectedImages(newFiles);
+        URL.revokeObjectURL(previewUrls[index]);
+        const newUrls = [...previewUrls];
+        newUrls.splice(index, 1);
+        setPreviewUrls(newUrls);
+    };
+
+    const handleSubmit = async () => {
+        setIsSubmitting(true);
+        try {
+            const formData = new FormData();
+            formData.append('tieu_de', tieuDe);
+            formData.append('noi_dung', noiDung);
+            selectedImages.forEach(file => formData.append('hinh_anh[]', file));
+
+            const response = await postService.updatePost(post.ma_bai_viet || post.id, formData);
+            onPostUpdated(response.data || response);
+            handleClose();
+        } catch (error) {
+            alert('Cập nhật thất bại.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="modal-overlay" onClick={handleClose}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+                <div className="modal-header">
+                    <h3>Chỉnh sửa bài viết</h3>
+                    <button className="close-btn" onClick={handleClose}><FaTimes /></button>
                 </div>
-            </div>
-            <div className="cp-bottom">
-                <button className="cp-action-btn" onClick={onClick}>
-                   <FaImage color="#45bd62" size={20}/>
-                   <span>Ảnh/Video</span>
-                </button>
+                <div className="modal-body">
+                    <input type="text" className="post-title-input" value={tieuDe} onChange={e => setTieuDe(e.target.value)} />
+                    <textarea className="post-input-area" value={noiDung} onChange={e => setNoiDung(e.target.value)} />
+                    
+                    {previewUrls.length > 0 && (
+                        <div className="edit-preview-container" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                            {previewUrls.map((url, index) => (
+                                <div key={index} style={{ position: 'relative', width: '60px', height: '60px' }}>
+                                    <img src={url} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
+                                    <button onClick={() => removeImage(index)} style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'red', color: 'white', border: 'none', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px' }}><FaTimes size={8}/></button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="add-to-post">
+                        <span>Thay thế/Thêm ảnh mới</span>
+                        <button className="option-btn" onClick={() => fileInputRef.current.click()}><FaImage color="#45bd62" size={24} /></button>
+                        <input type="file" hidden ref={fileInputRef} onChange={handleImageChange} multiple accept="image/*" />
+                    </div>
+                </div>
+                <div className="modal-footer">
+                    <button className="submit-post-btn" disabled={isSubmitting} onClick={handleSubmit}>
+                        {isSubmitting ? '...' : 'Cập nhật'}
+                    </button>
+                </div>
             </div>
         </div>
     );
+};
+
+// --- COMPONENT: POST CARD (THẺ BÀI VIẾT) ---
+const PostCard = ({ post, currentUser, onDeletePost, onUpdatePost }) => {
+    const navigate = useNavigate();
+    const [isLiked, setIsLiked] = useState(false);
+    const [likeCount, setLikeCount] = useState(0);
+    const [showMenu, setShowMenu] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    const postId = post.ma_bai_viet || post.id;
+    const postAuthorId = post.ma_nguoi_dung || post.user_id || post.nguoi_dung?.ma_nguoi_dung || post.user?.id;
+    const isOwner = currentUser?.id && String(currentUser.id) === String(postAuthorId);
+
+    useEffect(() => {
+        const fetchLike = async () => {
+            try {
+                const data = await postService.getPostLikeInfo(postId);
+                if (data) { setLikeCount(Number(data.total_likes)); setIsLiked(!!data.has_liked); }
+            } catch (e) {}
+        };
+        fetchLike();
+    }, [postId]);
+
+    const handleToggleLike = async (e) => {
+        e.stopPropagation();
+        try {
+            const res = await postService.toggleLikePost(postId);
+            if (res) { setIsLiked(!!res.has_liked); setLikeCount(Number(res.total_likes)); }
+        } catch (e) {}
+    };
+
+    return (
+        <div className="post-card">
+            <div className="post-header">
+                <div className="user-info-wrapper">
+                    <UserAvatar src={post.nguoi_dung?.anh_dai_dien || post.user?.avatar} name={post.nguoi_dung?.ho_ten || post.user?.name} className="avatar" />
+                    <div className="user-info">
+                        <span className="username">{post.nguoi_dung?.ho_ten || post.user?.name}</span>
+                        <span className="post-date">{post.ngay_dang ? new Date(post.ngay_dang).toLocaleString('vi-VN') : 'Vừa xong'}</span>
+                    </div>
+                </div>
+                {isOwner && (
+                    <div className="post-options">
+                        <button className="options-btn" onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}>
+                            <FaEllipsisH color="#65676b" />
+                        </button>
+                        {showMenu && (
+                            <div className="options-dropdown">
+                                <button className="dropdown-item" onClick={() => { setShowMenu(false); setIsEditModalOpen(true); }}>
+                                    <FaEdit /> Chỉnh sửa
+                                </button>
+                                <button className="dropdown-item delete-text" onClick={() => onDeletePost(postId)}>
+                                    <FaTrash /> Xóa
+                                </button>
+                            </div>
+                        )}
+                        {showMenu && <div onClick={() => setShowMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 99 }} />}
+                    </div>
+                )}
+            </div>
+            <div className="post-content-area" onClick={() => navigate(`/post/${postId}`)}>
+                {post.tieu_de && <h3 className="post-title">{post.tieu_de}</h3>}
+                <p className="post-caption-text">{post.noi_dung}</p>
+            </div>
+            <div className="post-media-container" onClick={() => navigate(`/post/${postId}`)}>
+                <ImageGrid images={post.hinh_anh || []} />
+            </div>
+            <div className="post-actions">
+                <button className={`action-btn ${isLiked ? 'liked-active' : ''}`} onClick={handleToggleLike}>
+                    {isLiked ? <FaHeart color="red" /> : <FaRegHeart />} <span>{likeCount || 'Thích'}</span>
+                </button>
+                <button className="action-btn" onClick={() => navigate(`/post/${postId}`)}><FaComment /> <span>{post.binh_luan_count || 'Bình luận'}</span></button>
+                <button className="action-btn"><FaShare /> <span>Chia sẻ</span></button>
+            </div>
+            <EditPostModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} post={post} onPostUpdated={onUpdatePost} />
+        </div>
+    );
+};
+
+// --- TRANG CHỦ (MAIN COMPONENT) ---
+const Home = () => {
+    const [posts, setPosts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+    const [currentUser] = useState(() => {
+        const userStored = localStorage.getItem('USER');
+        if (!userStored) return { name: 'Khách', id: null };
+        try {
+            const parsed = JSON.parse(userStored);
+            const user = parsed.data || parsed.user || parsed;
+            return { id: user.ma_nguoi_dung || user.id, name: user.ho_ten || user.name, avatar: user.anh_dai_dien || user.avatar };
+        } catch (e) { return { name: 'Khách', id: null }; }
+    });
 
     useEffect(() => {
         const fetchFeed = async () => {
             try {
-                setLoading(true);
-                const response = await postService.getFeed();
-                
-                let finalData = [];
-                if (Array.isArray(response)) { finalData = response; }
-                else if (response && Array.isArray(response.data)) { finalData = response.data; }
-                else if (response && response.data && Array.isArray(response.data.data)) { finalData = response.data.data; }
-
-                setPosts(finalData);
-            } catch (error) {
-                console.error("Lỗi tải trang chủ:", error);
-                setPosts([]);
-            } finally {
-                setLoading(false);
-            }
+                const res = await postService.getFeed();
+                setPosts(Array.isArray(res) ? res : res.data || []);
+            } catch (e) { setPosts([]); } finally { setLoading(false); }
         };
         fetchFeed();
     }, []);
 
-    const handlePostCreated = (newPostRaw) => {
-        const newPostForUI = {
-            ...newPostRaw,
-            ma_bai_viet: newPostRaw.ma_bai_viet || newPostRaw.id,
-            user: currentUser,
-            nguoi_dung: { 
-                ho_ten: currentUser.name,
-                anh_dai_dien: currentUser.avatar
-            },
-            binh_luan_count: 0,
-            created_at: new Date().toISOString(),
-            hinh_anh: newPostRaw.hinh_anh || []
-        };
-        setPosts([newPostForUI, ...posts]);
+    const handlePostCreated = (newPost) => {
+        setPosts(prev => [newPost, ...prev]);
+    };
+
+    const handlePostDeleted = async (id) => {
+        if (window.confirm("Bạn có chắc chắn muốn xóa bài viết này?")) {
+            try {
+                await postService.deletePost(id);
+                setPosts(prev => prev.filter(p => (p.ma_bai_viet || p.id) !== id));
+            } catch (e) { alert("Không thể xóa bài viết."); }
+        }
+    };
+
+    const handlePostUpdated = (updated) => {
+        setPosts(prev => prev.map(p => (p.ma_bai_viet || p.id) === (updated.ma_bai_viet || updated.id) ? { ...p, ...updated } : p));
     };
 
     return (
         <div className="feed-container">
-            <CreatePostBox onClick={() => setIsModalOpen(true)} />
-            
+            <div className="create-post-box">
+                <div className="cp-top">
+                    <UserAvatar src={currentUser.avatar} name={currentUser.name} className="avatar" />
+                    <div className="cp-input-trigger" onClick={() => setIsCreateModalOpen(true)}>
+                        {currentUser.name} ơi, bạn đang nghĩ gì thế?
+                    </div>
+                </div>
+            </div>
+
             <div className="feed-list">
                 {loading ? (
-                    <div className="feed-message">Đang tải bảng tin...</div>
+                    <div style={{ textAlign: 'center', padding: '20px' }}>Đang tải...</div>
+                ) : posts.length > 0 ? (
+                    posts.map(post => (
+                        <PostCard 
+                            key={post.ma_bai_viet || post.id} 
+                            post={post} 
+                            currentUser={currentUser} 
+                            onDeletePost={handlePostDeleted} 
+                            onUpdatePost={handlePostUpdated} 
+                        />
+                    ))
                 ) : (
-                    posts.length > 0 ? (
-                        posts.map(post => (
-                            <PostCard key={post.ma_bai_viet || post.id} post={post} />
-                        ))
-                    ) : (
-                        <div className="feed-message">Chưa có bài viết nào.</div>
-                    )
+                    <div style={{ textAlign: 'center', color: '#65676b' }}>Chưa có bài viết nào.</div>
                 )}
             </div>
 
             <CreatePostModal 
-                isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)} 
+                isOpen={isCreateModalOpen} 
+                onClose={() => setIsCreateModalOpen(false)} 
                 onPostCreated={handlePostCreated} 
                 currentUser={currentUser} 
             />
