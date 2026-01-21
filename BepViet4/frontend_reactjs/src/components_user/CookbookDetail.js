@@ -8,7 +8,7 @@ import './CSS/CookbookDetail.css';
 const CookbookDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+  const STORAGE_URL = "http://localhost:8000/storage/";
   const [cookbook, setCookbook] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -71,7 +71,8 @@ const CookbookDetail = () => {
   if (!cookbook) return <div className="error-msg">Không tìm thấy Cookbook!</div>;
 
   const recipeList = getRecipes();
-  console.log("Recipe List:", recipeList);
+  console.log("Cookbook detail - recipes:", recipeList);
+
   return (
     <div className="cookbook-detail-container">
       <div className="detail-header">
@@ -117,52 +118,74 @@ const CookbookDetail = () => {
 
       <div className="recipes-grid">
         {recipeList.length > 0 ? (
-          recipeList.map((recipe) => (
-            <div key={recipe.ma_cong_thuc} className="recipe-card-horizontal">
-              <div className="recipe-img">
-                <img 
-                   src={recipe.hinh_anh_bia || 'https://via.placeholder.com/300?text=Food'} 
-                   alt={recipe.ten_mon} 
-                />
-                <div className="play-overlay">
-                   <Link to={`/recipe/${recipe.ma_cong_thuc}`}><FaPlayCircle /></Link>
-                </div>
-              </div>
-              
-              <div className="recipe-info">
-                <Link to={`/recipe/${recipe.ma_cong_thuc}`} className="recipe-name">
-                  {recipe.ten_mon}
-                </Link>
-                
-                <div className="recipe-tags">
-                  <span className="tag-time">
-                    <FaClock /> {recipe.thoi_gian_nau || 0} phút
-                  </span>
-                  <span className="tag-diff">
-                    <FaFire /> Độ khó: {recipe.do_kho || 1}/5
-                  </span>
-                </div>
+          recipeList.map((recipe) => {
+            // --- 2. LOGIC XỬ LÝ HÌNH ẢNH CỦA BẠN TẠI ĐÂY ---
+            let imgSrc = 'https://placehold.co/300x300?text=No+Image';
+            
+            if (recipe.hinh_anh && recipe.hinh_anh.length > 0) {
+                // Vì hinh_anh là mảng, ta lấy phần tử đầu tiên [0] và thuộc tính duong_dan
+                const path = recipe.hinh_anh[0].duong_dan;
 
-                {recipe.pivot && recipe.pivot.ghi_chu && (
-                    <p className="recipe-note" style={{fontSize: '0.9rem', color: '#666', fontStyle: 'italic'}}>
-                        📝 {recipe.pivot.ghi_chu}
-                    </p>
-                )}
+                if (path.startsWith('http')) {
+                    imgSrc = path;
+                } else {
+                    // Kiểm tra xem chuỗi đã có recipes/covers chưa
+                    const subFolder = path.includes('recipes/covers') ? '' : 'recipes/covers/';
+                    imgSrc = `${STORAGE_URL}${subFolder}${path}`;
+                }
+            }
+
+            return (
+              <div key={recipe.ma_cong_thuc} className="recipe-card-horizontal">
+                <div className="recipe-img">
+                  <img 
+                     src={imgSrc} 
+                     alt={recipe.ten_mon} 
+                     // Xử lý nếu link ảnh die
+                     onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://placehold.co/300x300?text=Error+Image';
+                     }}
+                  />
+                  <div className="play-overlay">
+                     <Link to={`/recipe/${recipe.ma_cong_thuc}`}><FaPlayCircle /></Link>
+                  </div>
+                </div>
                 
-                <div className="recipe-actions">
-                  <button 
-                    className="btn-remove-recipe"
-                    onClick={() => handleRemoveRecipe(recipe.ma_cong_thuc)}
-                    title="Xóa khỏi Cookbook"
-                  >
-                    <FaTrashAlt /> Xóa
-                  </button>
+                <div className="recipe-info">
+                  <Link to={`/recipe/${recipe.ma_cong_thuc}`} className="recipe-name">
+                    {recipe.ten_mon}
+                  </Link>
+                  
+                  <div className="recipe-tags">
+                    <span className="tag-time">
+                      <FaClock /> {recipe.thoi_gian_nau || 0} phút
+                    </span>
+                    <span className="tag-diff">
+                      <FaFire /> Độ khó: {recipe.do_kho || 1}/5
+                    </span>
+                  </div>
+
+                  {recipe.pivot && recipe.pivot.ghi_chu && (
+                      <p className="recipe-note" style={{fontSize: '0.9rem', color: '#666', fontStyle: 'italic'}}>
+                          📝 {recipe.pivot.ghi_chu}
+                      </p>
+                  )}
+                  
+                  <div className="recipe-actions">
+                    <button 
+                      className="btn-remove-recipe"
+                      onClick={() => handleRemoveRecipe(recipe.ma_cong_thuc)}
+                      title="Xóa khỏi Cookbook"
+                    >
+                      <FaTrashAlt /> Xóa
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         ) : (
-          /* TRẠNG THÁI TRỐNG: Hiện nút to ở giữa */
           <div className="empty-recipes">
             <p>Cookbook này chưa có món ăn nào.</p>
             <button onClick={handleAddRecipe} className="btn-explore">Tìm món ngay</button>

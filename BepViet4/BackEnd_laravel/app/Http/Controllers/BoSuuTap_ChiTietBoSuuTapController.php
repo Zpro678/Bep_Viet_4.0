@@ -21,22 +21,21 @@ class BoSuuTap_ChiTietBoSuuTapController extends Controller
     }
 
     try {
-        // 1. Lấy danh sách BST kèm theo công thức (để lấy ảnh)
+       
         $boSuuTaps = $user->boSuuTap()
             ->withCount('congThucs')
             ->with(['congThucs' => function ($query) {
-                // Sắp xếp theo ngày thêm vào BST mới nhất để lấy ảnh mới nhất
-                // Lưu ý: bảng trung gian là chi_tiet_bo_suu_tap
+               
                 $query->orderBy('chi_tiet_bo_suu_tap.ngay_them', 'desc')
-                      ->select('cong_thuc.ma_cong_thuc', 'cong_thuc.ten_mon') // Chỉ lấy cột cần thiết cho nhẹ
-                      ->with('hinhAnh'); // Eager load bảng hinh_anh
+                      ->select('cong_thuc.ma_cong_thuc', 'cong_thuc.ten_mon')
+                      ->with('hinhAnh'); 
             }])
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // 2. Xử lý dữ liệu: Lấy ảnh từ công thức đầu tiên gán vào biến 'hinh_anh_bia'
+        
         $boSuuTaps->transform(function ($bst) {
-            $firstRecipe = $bst->congThucs->first(); // Lấy công thức mới nhất
+            $firstRecipe = $bst->congThucs->first(); 
             $image = null;
 
             if ($firstRecipe && $firstRecipe->hinhAnh->isNotEmpty()) {
@@ -66,9 +65,7 @@ class BoSuuTap_ChiTietBoSuuTapController extends Controller
     }
 }
 
-    /**
-     * Tạo bộ sưu tập mới cho User hiện tại
-     */
+   
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -86,14 +83,14 @@ class BoSuuTap_ChiTietBoSuuTapController extends Controller
             ], 422);
         }
 
-        // Lấy User hiện tại
+       
         $user = $request->user();
 
         try {
-            // Tạo mới và gán ma_nguoi_dung tự động
+         
             $boSuuTap = BoSuuTap::create([
                 'ten_bo_suu_tap' => $request->ten_bo_suu_tap,
-                'ma_nguoi_dung'  => $user->ma_nguoi_dung, // Lấy ID từ token
+                'ma_nguoi_dung'  => $user->ma_nguoi_dung, 
             ]);
 
             return response()->json([
@@ -110,9 +107,7 @@ class BoSuuTap_ChiTietBoSuuTapController extends Controller
         }
     }
 
-    /**
-     * Đổi tên bộ sưu tập (Chỉ chủ sở hữu mới đổi được)
-     */
+    
     public function updateName(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
@@ -125,8 +120,7 @@ class BoSuuTap_ChiTietBoSuuTapController extends Controller
 
         $user = $request->user();
 
-        // Tìm bộ sưu tập nhưng PHẢI thuộc về user này
-        // Cách này đảm bảo User A không sửa được của User B dù biết ID
+        
         $boSuuTap = $user->boSuuTap()->find($id);
 
         if (!$boSuuTap) {
@@ -146,14 +140,11 @@ class BoSuuTap_ChiTietBoSuuTapController extends Controller
         ], 200);
     }
 
-    /**
-     * Xóa bộ sưu tập (Chỉ chủ sở hữu mới xóa được)
-     */
-    public function delete(Request $request, $id) // Thêm Request để lấy user
+   
+    public function delete(Request $request, $id) 
     {
         $user = $request->user();
 
-        // Tìm bộ sưu tập thuộc quyền sở hữu của user
         $boSuuTap = $user->boSuuTap()->find($id);
 
         if (!$boSuuTap) {
@@ -163,10 +154,10 @@ class BoSuuTap_ChiTietBoSuuTapController extends Controller
             ], 404);
         }
 
-        // Xóa chi tiết trước
+        
         ChiTietBoSuuTap::where('ma_bo_suu_tap', $id)->delete();
         
-        // Xóa bộ sưu tập
+       
         $boSuuTap->delete();
 
         return response()->json([
@@ -175,13 +166,10 @@ class BoSuuTap_ChiTietBoSuuTapController extends Controller
         ], 200);
     }
 
-    /**
-     * Xem chi tiết (Có thể cho phép xem của người khác hoặc không tùy logic)
-     * Ở đây mình để logic: Ai cũng xem được nếu có ID (Public)
-     */
+   
     public function show($id)
     {
-        $boSuuTap = BoSuuTap::with('congThucs')->find($id);
+        $boSuuTap = BoSuuTap::with('congThucs.hinhAnh')->find($id);
 
         if (!$boSuuTap) {
             return response()->json(['message' => 'Không tìm thấy bộ sưu tập'], 404);
@@ -194,9 +182,7 @@ class BoSuuTap_ChiTietBoSuuTapController extends Controller
         ], 200);
     }
 
-    /**
-     * Thêm món ăn vào bộ sưu tập (Chỉ chủ sở hữu mới thêm được)
-     */
+   
     public function addRecipe(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
@@ -210,14 +196,14 @@ class BoSuuTap_ChiTietBoSuuTapController extends Controller
 
         $user = $request->user();
         
-        // Kiểm tra quyền sở hữu bộ sưu tập
+       
         $boSuuTap = $user->boSuuTap()->find($id);
         
         if (!$boSuuTap) {
             return response()->json(['status' => false, 'message' => 'Bộ sưu tập không tồn tại hoặc không chính chủ'], 404);
         }
 
-        // Kiểm tra trùng lặp món ăn
+       
         $exists = $boSuuTap->congThucs()
                            ->where('chi_tiet_bo_suu_tap.ma_cong_thuc', $request->ma_cong_thuc)
                            ->exists();
@@ -226,7 +212,7 @@ class BoSuuTap_ChiTietBoSuuTapController extends Controller
             return response()->json(['status' => false, 'message' => 'Món này đã có trong bộ sưu tập'], 409);
         }
 
-        // Thêm vào
+       
         $boSuuTap->congThucs()->attach($request->ma_cong_thuc, [
             'ngay_them' => now(),
             'ghi_chu'   => $request->ghi_chu
@@ -235,21 +221,18 @@ class BoSuuTap_ChiTietBoSuuTapController extends Controller
         return response()->json(['status' => true, 'message' => 'Thêm thành công'], 201);
     }
 
-    /**
-     * Xóa món ăn khỏi bộ sưu tập (Chỉ chủ sở hữu)
-     */
     public function removeRecipe(Request $request, $id, $recipeId)
     {
         $user = $request->user();
 
-        // Kiểm tra quyền sở hữu
+      
         $boSuuTap = $user->boSuuTap()->find($id);
 
         if (!$boSuuTap) {
             return response()->json(['status' => false, 'message' => 'Không tìm thấy bộ sưu tập'], 404);
         }
 
-        // Xóa liên kết
+      
         $result = $boSuuTap->congThucs()->detach($recipeId);
 
         if ($result === 0) {
