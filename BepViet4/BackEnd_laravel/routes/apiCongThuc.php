@@ -18,10 +18,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/recipes', [CongThucController::class, 'store']);
 
     // 17. Cập nhật công thức
-    Route::put('/recipes/{id}', [CongThucController::class, 'update']);
+    Route::post('/recipes/{id}/update', [CongThucController::class, 'update']);
 
     // 18. Xóa công thức
-    Route::delete('/recipes/{id}', [CongThucController::class, 'destroy']);
+    Route::delete('/recipes/{id}/destroy', [CongThucController::class, 'destroy']);
 
     // 21. Thêm / sửa nguyên liệu cho công thức
     Route::post('/recipes/{id}/ingredients', [CongThucController::class, 'syncIngredients']);

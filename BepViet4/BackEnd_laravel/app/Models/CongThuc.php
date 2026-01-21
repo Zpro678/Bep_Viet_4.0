@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use App\Models\The;
 use App\Exceptions\ForbiddenException;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CongThuc extends Model
 {
+    use SoftDeletes;
     protected $table = 'cong_thuc';
     protected $primaryKey = 'ma_cong_thuc';
     public $timestamps = false; // Xử lý thủ công cột 'ngay_tao'
@@ -25,6 +27,18 @@ class CongThuc extends Model
         'do_kho',
         'ngay_tao'
     ];
+
+    protected static function boot() {
+        parent::boot();
+        static::deleting(function ($congThuc) {
+            if ($congThuc->the()) {
+                $congThuc->the()->detach(); 
+            }
+            if ($congThuc->nguyenLieu()) {
+                $congThuc->nguyenLieu()->detach();
+            }
+        });
+    }
     public function luotThich()
     {
         return $this->morphMany(LuotThich::class, 'thich');
