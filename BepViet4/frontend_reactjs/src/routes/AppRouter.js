@@ -52,11 +52,11 @@ const PublicRoute = ({ children, isLoggedIn, onLogout }) => {
 // PHẦN 2: LOGIC LOGIN/REGISTER
 // =========================================================================
 
-const LoginWrapper = ({ setIsLoggedIn,onLogout, children}) => {
+const LoginWrapper = ({ setIsLoggedIn, onLogout, children}) => {
   const navigate = useNavigate();
   const handleLoginSuccess = (role) => {
     setIsLoggedIn(true);
-    if (role && role.toUpperCase() === 'ADMIN') {
+    if (role && role.toLowerCase() === 'admin') {
         navigate('/admin/dashboard');
     } else {
         navigate('/');
