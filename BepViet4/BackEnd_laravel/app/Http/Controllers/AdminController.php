@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\CongThuc;
 use App\Models\NguoiDung;
 use Illuminate\Support\Facades\DB;
-use App\Models\NguoiDung;
+
 
 class AdminController extends Controller
 {
@@ -72,7 +72,7 @@ public function getStatistical()
             
         return response()->json($data);
     }
-}
+
 
 public function getDanhSachNguoiDung(Request $request)
     {
