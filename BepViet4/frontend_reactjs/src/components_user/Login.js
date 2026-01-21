@@ -11,33 +11,33 @@ const Login = ({ onLogin, onSwitchToRegister, onSwitchToForgotPassword }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); // Reset lỗi cũ trước khi gửi yêu cầu mới
+    setError(''); 
   
     try {
       const res = await authApi.login({ ten_dang_nhap, mat_khau });
 
       const { access_token, user } = res.data;
-      //console.log("User Data từ API:", user.vai_tro);
+    
       const userRole = user.vai_tro ? user.vai_tro.toUpperCase() : '';
       console.log("User Data từ API:", userRole);
-      localStorage.setItem('ACCESS_TOKEN', access_token);
+      localStorage.setItem('access_token', access_token);
       localStorage.setItem('USER', JSON.stringify(user));
       onLogin(userRole);
   
     } catch (err) {
 
-      console.error("Lỗi đăng nhập:", err); // In lỗi ra console để dev kiểm tra
+      console.error("Lỗi đăng nhập:", err); 
 
-      // 1. Kiểm tra nếu Server có trả về tin nhắn lỗi cụ thể
+      
       if (err.response && err.response.data && err.response.data.message) {
-          // Hiển thị chính xác câu server nói (VD: "Tài khoản chưa kích hoạt")
+     
           setError(err.response.data.message);
       } 
-      // 2. Kiểm tra lỗi mất kết nối (Server không phản hồi)
+    
       else if (!err.response) {
           setError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng.');
       }
-      // 3. Các lỗi khác không xác định
+    
       else {
           setError('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
       }

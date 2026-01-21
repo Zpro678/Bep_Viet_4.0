@@ -3,7 +3,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 
 const AdminProtectedRoute = () => {
   // 1. Lấy thông tin từ LocalStorage
-  const token = localStorage.getItem('ACCESS_TOKEN');
+  const token = localStorage.getItem('access_token');
   const userInfoStr = localStorage.getItem('USER');
   
   let user = null;

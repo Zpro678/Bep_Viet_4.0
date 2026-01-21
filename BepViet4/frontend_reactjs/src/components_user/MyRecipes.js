@@ -89,19 +89,18 @@ const MyRecipes = () => {
           recipes.map((recipe) => {
              const recipeId = recipe.id || recipe.ma_cong_thuc;
              
-             // --- [LOGIC ẢNH MỚI CẬP NHẬT] ---
+             
              let imgSrc = 'https://placehold.co/600x400/e0e0e0/333333?text=No+Image';
              if (recipe.hinh_anh) {
                  if (recipe.hinh_anh.startsWith('http')) {
                      imgSrc = recipe.hinh_anh;
                  } else {
-                     // Nếu DB chỉ lưu tên file (vd: anh.jpg) -> thêm folder path vào
-                     // Nếu DB lưu full (vd: recipes/covers/anh.jpg) -> không thêm nữa
+                    
                      const subFolder = recipe.hinh_anh.includes('recipes/covers') ? '' : 'recipes/covers/';
                      imgSrc = `${STORAGE_URL}${subFolder}${recipe.hinh_anh}`;
                  }
              }
-             // ---------------------------------
+            
 
             return (
               <div key={recipeId} className="recipe-row">
@@ -115,7 +114,7 @@ const MyRecipes = () => {
                  </div>
                  
                  <div className="recipe-row-info">
-                    {/* Đường dẫn này nên trỏ về trang chi tiết ID */}
+                  
                     <Link to={`/recipe/${recipeId}`} className="recipe-name">{recipe.ten_mon}</Link>
                     <div className="recipe-meta">
                        <span><FaClock /> {recipe.thoi_gian || recipe.thoi_gian_nau + ' phút'}</span>

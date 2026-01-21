@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { mealPlannerService, MEAL_TYPES } from '../services/mealPlannerService';
-import './CSS/MealPlanner.css'; // File CSS ở bước 3
+import './CSS/MealPlanner.css'; 
 import { FaChevronLeft, FaChevronRight, FaCalendarAlt, FaPlus } from 'react-icons/fa';
 
 const MealPlanner = () => {
-  const [currentDate, setCurrentDate] = useState(new Date()); // Ngày hiện tại đang xem
+  const [currentDate, setCurrentDate] = useState(new Date()); 
   const [weekDays, setWeekDays] = useState([]);
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Hàm tiện ích: Lấy danh sách 7 ngày trong tuần dựa trên currentDate
   const getDaysOfWeek = (date) => {
     const startOfWeek = new Date(date);
     const day = startOfWeek.getDay();
-    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // Điều chỉnh để Thứ 2 là đầu tuần
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); 
     startOfWeek.setDate(diff);
 
     const days = [];
@@ -25,12 +24,12 @@ const MealPlanner = () => {
     return days;
   };
 
-  // Hàm tiện ích: Format date sang YYYY-MM-DD để so sánh với dữ liệu API
+  
   const formatDateISO = (date) => {
     return date.toISOString().split('T')[0];
   };
 
-  // Load dữ liệu khi tuần thay đổi
+
   useEffect(() => {
     const days = getDaysOfWeek(currentDate);
     setWeekDays(days);
@@ -52,20 +51,20 @@ const MealPlanner = () => {
     fetchMeals();
   }, [currentDate]);
 
-  // Điều hướng tuần
+ 
   const changeWeek = (offset) => {
     const newDate = new Date(currentDate);
     newDate.setDate(newDate.getDate() + (offset * 7));
     setCurrentDate(newDate);
   };
 
-  // Helper: Tìm món ăn trong state dựa vào ngày và loại bữa
+  
   const findMeal = (dateObj, type) => {
     const dateStr = formatDateISO(dateObj);
     return meals.find(m => m.date === dateStr && m.meal_type === type);
   };
 
-  // Render một ô món ăn
+  
   const renderMealCell = (date, type) => {
     const meal = findMeal(date, type);
 

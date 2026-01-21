@@ -41,16 +41,15 @@ export const postService = {
       // Gọi API
       const response = await axiosClient.get(`/posts/${id}`);
       
-      // Axios trả về object response, dữ liệu thực nằm trong response.data
-      // Backend Laravel (nếu dùng Model::find) sẽ trả về JSON object của bài viết
+      
       return response.data; 
     } catch (error) {
       console.error("Lỗi lấy chi tiết:", error);
-      return null; // Trả về null để bên Component biết mà hiển thị lỗi
+      return null; 
     }
   },
 
-  // 4. LIKE
+
   likePost: async (id) => {
     // await axiosClient.post(`/posts/${id}/like`);
     return true; 

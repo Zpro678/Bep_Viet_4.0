@@ -22,7 +22,7 @@ const MyCookbooks = () => {
       
       if (error.response && error.response.status === 401) {
           alert("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
-          localStorage.removeItem('ACCESS_TOKEN');
+          localStorage.removeItem('access_token');
           navigate('/login');
       }
     } finally {
@@ -31,7 +31,7 @@ const MyCookbooks = () => {
   }, [navigate]);
 
   useEffect(() => {
-    const token = localStorage.getItem('ACCESS_TOKEN');
+    const token = localStorage.getItem('access_token');
     if (!token) {
         alert("Vui lòng đăng nhập để xem bộ sưu tập!");
         navigate('/login');
@@ -41,7 +41,7 @@ const MyCookbooks = () => {
     fetchCookbooks(false);
   }, [navigate, fetchCookbooks]);
 
-  // --- XỬ LÝ SỰ KIỆN ---
+ 
   const handleCreateNew = async () => {
     const name = prompt("Nhập tên bộ sưu tập mới:");
     if (name) {

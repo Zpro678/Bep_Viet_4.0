@@ -12,7 +12,6 @@ const getImageUrl = (path) => {
     return `${API_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
 };
 
-// ... (Giữ nguyên component ImageGrid) ...
 const ImageGrid = ({ images }) => {
     if (!images || images.length === 0) return null;
     const count = images.length;
@@ -35,7 +34,7 @@ const ImageGrid = ({ images }) => {
     );
 };
 
-// ... (Giữ nguyên component CreatePostModal) ...
+
 const CreatePostModal = ({ isOpen, onClose, onPostCreated, currentUser }) => {
     const [tieuDe, setTieuDe] = useState(''); 
     const [noiDung, setNoiDung] = useState('');

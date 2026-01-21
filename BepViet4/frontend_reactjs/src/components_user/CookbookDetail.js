@@ -23,7 +23,7 @@ const CookbookDetail = () => {
       console.error("Lỗi:", error);
       if (error.response && error.response.status === 401) {
           alert("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
-          localStorage.removeItem('ACCESS_TOKEN');
+          localStorage.removeItem('access_token');
           navigate('/login');
       }
     } finally {
@@ -32,7 +32,7 @@ const CookbookDetail = () => {
   }, [id, navigate]);
 
   useEffect(() => {
-    const token = localStorage.getItem('ACCESS_TOKEN');
+    const token = localStorage.getItem('access_token');
     if (!token) {
         alert("Vui lòng đăng nhập để xem chi tiết!");
         navigate('/login');
@@ -42,12 +42,11 @@ const CookbookDetail = () => {
     fetchDetail(false);
   }, [fetchDetail, navigate]);
 
-  // --- 2. CHUYỂN HƯỚNG SANG TRANG KHÁM PHÁ ---
   const handleAddRecipe = () => {
     navigate('/explore');
   };
 
-  // --- 3. XÓA MÓN KHỎI COOKBOOK ---
+
   const handleRemoveRecipe = async (recipeId) => {
     if (window.confirm("Bạn muốn xóa món này khỏi Cookbook?")) {
       try {
@@ -72,7 +71,7 @@ const CookbookDetail = () => {
   if (!cookbook) return <div className="error-msg">Không tìm thấy Cookbook!</div>;
 
   const recipeList = getRecipes();
-
+  console.log("Recipe List:", recipeList);
   return (
     <div className="cookbook-detail-container">
       <div className="detail-header">
@@ -122,7 +121,7 @@ const CookbookDetail = () => {
             <div key={recipe.ma_cong_thuc} className="recipe-card-horizontal">
               <div className="recipe-img">
                 <img 
-                   src={recipe.hinh_anh || 'https://via.placeholder.com/300?text=Food'} 
+                   src={recipe.hinh_anh_bia || 'https://via.placeholder.com/300?text=Food'} 
                    alt={recipe.ten_mon} 
                 />
                 <div className="play-overlay">

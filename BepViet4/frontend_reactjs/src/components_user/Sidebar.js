@@ -4,14 +4,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 import { FaLock } from 'react-icons/fa';
 
-// Component Modal Thông báo Login (Nhúng trực tiếp vào đây cho gọn)
+
 const LoginPromptModal = ({ onClose, onConfirm }) => {
   return (
     <div className="modal-overlay" onClick={onClose}>
-      {/* e.stopPropagation để click vào hộp modal không bị đóng */}
+     
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         
-        {/* Thêm cái icon cho sinh động */}
+      
         <div className="modal-icon-wrapper">
           <FaLock />
         </div>
@@ -36,27 +36,27 @@ const LoginPromptModal = ({ onClose, onConfirm }) => {
   );
 };
 
-// --- SIDEBAR CHÍNH ---
-const Sidebar = ({ isLoggedIn }) => { // Nhận prop isLoggedIn từ MainLayout truyền xuống
+
+const Sidebar = ({ isLoggedIn }) => { 
   const navigate = useNavigate();
   const location = useLocation(); 
   const [showLoginModal, setShowLoginModal] = useState(false);
 
-  // Hàm kiểm tra active
+ 
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/' ? 'active' : '';
     return location.pathname.startsWith(path) ? 'active' : '';
   };
 
-  // HÀM XỬ LÝ ĐIỀU HƯỚNG THÔNG MINH
+ 
   const handleNavigation = (path) => {
-    const publicPaths = ['/', '/explore']; // Danh sách trang công khai
+    const publicPaths = ['/', '/explore']; 
 
-    // Nếu đã đăng nhập HOẶC trang đó là công khai -> Cho đi luôn
+   
     if (isLoggedIn || publicPaths.includes(path)) {
       navigate(path);
     } else {
-      // Chưa đăng nhập mà đòi vào trang riêng tư -> Hiện Modal
+    
       setShowLoginModal(true);
     }
   };

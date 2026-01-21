@@ -62,7 +62,7 @@ const RecipeDetail = () => {
   
   // Mở modal và check đăng nhập
   const handleOpenModal = async () => {
-      const token = localStorage.getItem('ACCESS_TOKEN');
+      const token = localStorage.getItem('access_token');
       if (!token) {
           alert("Vui lòng đăng nhập để lưu món ăn!");
           navigate('/login');
