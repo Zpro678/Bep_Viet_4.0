@@ -547,7 +547,7 @@ public function index(Request $request)
                     );
                     $tagIds[] = $tag->ma_the;
                 }
-                $congThuc->the()->sync($tagIds); // sync sẽ tự động xóa tag cũ không có trong mảng mới
+                $congThuc->the()->sync($tagIds); 
             }
     
             // --- BƯỚC 5: XỬ LÝ NGUYÊN LIỆU ---
@@ -569,8 +569,7 @@ public function index(Request $request)
     
             // --- BƯỚC 6: XỬ LÝ CÁC BƯỚC THỰC HIỆN (Xóa cũ tạo mới cho đơn giản) ---
             if ($request->has('cac_buoc')) {
-                // Cách đơn giản nhất để update các bước phức tạp là xóa đi tạo lại
-                // Nếu muốn tối ưu hơn, bạn cần so sánh ID từng bước
+    
                 $congThuc->cacBuoc()->delete(); 
     
                 foreach ($request->cac_buoc as $index => $stepData) {

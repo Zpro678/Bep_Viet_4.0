@@ -87,7 +87,7 @@ class BaiVietController extends Controller
                         'mo_ta' => 'Ảnh số ' . ($index + 1)
                     ]);
 
-                    // (Tùy chọn) Cập nhật ảnh đại diện là ảnh đầu tiên để hiển thị thumbnail ở nơi khác
+                    
                     if ($index === 0) {
                         $post->hinh_anh_dai_dien = $fullPath;
                         $post->save();
