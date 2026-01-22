@@ -32,7 +32,7 @@ const CookbookDetail = () => {
   }, [id, navigate]);
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem('ACCESS_TOKEN');
     if (!token) {
         alert("Vui lòng đăng nhập để xem chi tiết!");
         navigate('/login');
