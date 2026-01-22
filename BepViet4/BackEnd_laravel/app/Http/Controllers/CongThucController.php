@@ -185,7 +185,7 @@ public function store(Request $request)
         'thoi_gian_nau' => 'required|integer|min:1',
         'khau_phan' => 'required|integer|min:1',
         'do_kho' => 'required|integer|between:1,5',
-        'hinh_anh_bia' => 'nullable|image|max:5120',
+        'hinh_anh_bia' => 'required|image|max:5120',
         
         // Validate mảng nguyên liệu
         'nguyen_lieu' => 'required|array',
