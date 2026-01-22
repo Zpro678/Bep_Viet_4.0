@@ -11,6 +11,9 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get('/users/{id}/recipes',[CongThucController::class, 'getDanhSachCongThuc'])->where('id', '[0-9]+');
     Route::get('/feed', [CongThucController::class, 'getNewsFeed']);
 
+    // (Trang Công thức cá nhân)
+    Route::get('/users/{id}/my-recipes', [CongThucController::class, 'getCongThucCuaToi']);
+
     // EXPLORE(Trang Khám phá) – CHỈ CÔNG THỨC – ƯU TIÊN NGƯỜI THEO DÕI
     Route::get(
         '/users/{id}/explore/recipes',
