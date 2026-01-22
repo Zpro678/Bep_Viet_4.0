@@ -13,6 +13,8 @@ const CATEGORY_ITEMS = [
   // { label: 'Bữa ăn', path: '/admin/categories/meals', icon: 'schedule' },
   // { label: 'Chế độ ăn', path: '/admin/categories/diets', icon: 'spa' },
   { label: 'Nguyên liệu', path: '/admin/categories/ingredients', icon: 'egg' },
+  { label: 'Danh mục', path: '/admin/categories/category', icon: 'category' }, 
+  { label: 'Vùng miền', path: '/admin/categories/regions', icon: 'public' },
 ];
 
 const AdminLayout = ({ onLogout }) => {
