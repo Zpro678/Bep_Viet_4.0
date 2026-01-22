@@ -141,13 +141,11 @@ const CreateRecipe = () => {
     });
 
     try {
-<<<<<<< HEAD
+
       const response = await createRecipeService.create(formData);
       console.log("Server response:", response);
       
-=======
-      const response = await createRecipeServiceApi.create(formData);
->>>>>>> 10d4873241a77dd7840b218c82dcb9b0927221fd
+
       if(response.status === 'success' || response.status === 201) {
           alert("Công thức đang chờ duyệt!");
           navigate('/profile'); 
