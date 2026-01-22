@@ -30,12 +30,11 @@ class NguoiDungController extends Controller
 
         $validator = Validator::make($request->all(), [
             'ho_ten' => 'required|string|max:255',
-           
-            'email' => [
+            'email'     => [
                 'required', 
-                'email', 
-                Rule::unique(NguoiDung::class)->ignore($user->id) // Email phải là duy nhất, nhưng trừ user hiện tại
-            ],
+                'email',
+                Rule::unique('nguoi_dung')->ignore($user->ma_nguoi_dung, 'ma_nguoi_dung')
+        ],
             'mat_khau' => 'nullable|string|min:6',
         ]);
 
@@ -49,7 +48,36 @@ class NguoiDungController extends Controller
         $user->ho_ten = $request->ho_ten;
         $user->email = $request->email;
 
+        if ($request->has('ngay_sinh')) {
+            $user->ngay_sinh = $request->ngay_sinh;
+        }
+        
+        if ($request->has('gioi_tinh')) {
+            $user->gioi_tinh = $request->gioi_tinh;
+        }
+
+        // --- 3. LOGIC ĐỔI MẬT KHẨU (SỬA ĐOẠN NÀY) ---
         if ($request->filled('mat_khau')) {
+            // A. Kiểm tra xem người dùng có gửi mật khẩu cũ lên không?
+            if (!$request->filled('mat_khau_cu')) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Vui lòng nhập mật khẩu hiện tại để thay đổi mật khẩu mới.'
+                ], 422);
+            }
+
+            // B. Kiểm tra mật khẩu cũ có khớp với Database không?
+            // Hash::check(mật_khau_nhập_vào, mật_khau_trong_db)
+            if (!Hash::check($request->mat_khau_cu, $user->mat_khau)) {
+                return response()->json([
+                    'status' => 'error',
+                    // Trả về lỗi dạng này để Frontend dễ bắt
+                    'message' => 'Mật khẩu hiện tại không chính xác.',
+                    'errors' => ['mat_khau_cu' => ['Mật khẩu hiện tại không đúng']] 
+                ], 422);
+            }
+
+            // C. Nếu đúng hết thì mới đổi
             $user->mat_khau = Hash::make($request->mat_khau);
         }
 

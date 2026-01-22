@@ -15,7 +15,7 @@ const MyRecipes = () => {
 
   const fetchMyRecipes = useCallback(async () => {
     try {
-      const storedUser = localStorage.getItem('user') || localStorage.getItem('user_info'); 
+      const storedUser = localStorage.getItem('USER');
       
       if (!storedUser) {
         alert("Bạn chưa đăng nhập!");
@@ -32,6 +32,9 @@ const MyRecipes = () => {
       }
 
       const response = await myRecipeServiceApi.getDanhSachCongThuc(userId);
+
+      console.log("🟢 Response full từ API:", response);
+      console.log("🟢 response.data:", response.data);
 
       if (response.data) {
          const list = response.data.data ? response.data.data : response.data;

@@ -13,7 +13,7 @@ const CreateUser = () => {
     email: '',
     mat_khau: '',
     confirm_mat_khau: '', // Thêm trường xác nhận
-    vai_tro: 'user', 
+    vai_tro: 'member', 
     gioi_tinh: 'khac'
   });
 
