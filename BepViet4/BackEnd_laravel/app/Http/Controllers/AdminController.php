@@ -39,12 +39,31 @@ class AdminController extends Controller
     }
     
 
-public function DuyetCongThuc($id) 
+// Thêm Request vào tham số
+public function DuyetCongThuc(Request $request, $id) 
 {
     $recipe = CongThuc::find($id);
-    if ($recipe) {
+
+    if (!$recipe) {
+        return response()->json(['message' => 'Không tìm thấy bài viết'], 404);
+    }
+
+    // 1. Lấy trạng thái từ React gửi lên ('cong_khai' hoặc 'tu_choi')
+    $status = $request->input('status'); 
+
+    // 2. Kiểm tra logic
+    if ($status === 'tu_choi') {
+        // Trường hợp TỪ CHỐI:
+        // Ta thực hiện xóa mềm (Soft Delete). 
+        // Khi xóa mềm, deleted_at sẽ được set ngày giờ, Eloquent sẽ tự động loại nó ra khỏi các thống kê.
+        $recipe->delete(); 
+        
+        return response()->json(['message' => 'Đã từ chối bài viết']);
+    } else {
+        // Trường hợp DUYỆT:
         $recipe->trang_thai = 'cong_khai'; 
         $recipe->save();
+        
         return response()->json(['message' => 'Đã duyệt bài viết']);
     }
 }
@@ -164,57 +183,70 @@ public function getDanhSachNguoiDung(Request $request)
     public function getDashboardStats()
 {
     try {
+        // 1. Đếm User
         $totalUsers = NguoiDung::count();
-        
-        // --- SỬA Ở ĐÂY ---
-        // Chỉ đếm công thức đã công khai
-        $totalRecipes = CongThuc::where('trang_thai', 'cong_khai')->count(); 
-        
-        $pendingRecipes = CongThuc::where('trang_thai', 'cho_duyet')->count();
-        $totalBlogs = BaiViet::count(); 
 
+        // 2. Đếm công thức CÔNG KHAI
+        $totalRecipes = CongThuc::where('trang_thai', 'cong_khai')->count();
+
+        // 3. Đếm công thức CHỜ DUYỆT
+        $pendingRecipes = CongThuc::where('trang_thai', 'cho_duyet')->count();
+
+        // 4. Đếm Blog
+        $totalBlogs = BaiViet::count();
+
+        // 5. Đếm báo cáo (Dùng try-catch riêng để tránh sập web nếu chưa có bảng này)
+        $violationReports = 0;
         try {
             $violationReports = DB::table('bao_cao')->count();
         } catch (Exception $e) {
-            $violationReports = 0;
+            $violationReports = 0; // Nếu lỗi bảng báo cáo thì coi như là 0
         }
 
-        // Xử lý biểu đồ (Cũng nên filter chỉ lấy cái đã duyệt nếu muốn chính xác tuyệt đối)
+        // --- XỬ LÝ BIỂU ĐỒ ---
+        // Kiểm tra xem bảng có dữ liệu không để tránh lỗi lấy mẫu
         $sample = CongThuc::first();
-        $columnDate = 'created_at';
-        if ($sample && !$sample->created_at && $sample->ngay_tao) {
-            $columnDate = 'ngay_tao';
+        
+        // Mặc định là created_at, nếu không có mới check ngay_tao
+        $columnDate = 'created_at'; 
+        if ($sample) {
+            // Kiểm tra an toàn: nếu model có thuộc tính ngay_tao và created_at bị null
+            if (!isset($sample->created_at) && isset($sample->ngay_tao)) {
+                $columnDate = 'ngay_tao';
+            }
         }
 
+        // Dùng now() thay vì Carbon::now() để đỡ phải import thư viện
         $chartData = CongThuc::select(
-                DB::raw("DATE($columnDate) as date"), 
+                DB::raw("DATE($columnDate) as date"),
                 DB::raw('count(*) as value')
             )
-            ->where('trang_thai', 'cong_khai') // <--- NÊN THÊM: Chỉ thống kê biểu đồ cho bài đã duyệt
-            ->where($columnDate, '>=', Carbon::now()->subDays(365)) 
-            ->groupBy('date')
+            ->where('trang_thai', 'cong_khai') // Chỉ lấy bài đã duyệt
+            ->where($columnDate, '>=', now()->subDays(30)) 
+            ->groupBy(DB::raw("DATE($columnDate)")) // Sửa lại: Group by trực tiếp lệnh gốc để tránh lỗi SQL strict
             ->orderBy('date', 'ASC')
             ->get();
 
+        // --- XỬ LÝ DANH MỤC ---
+        $popularCategories = collect([]);
         try {
-            // Xử lý danh mục (Cũng filter theo trạng thái công khai)
             $popularCategories = DB::table('danh_muc')
                 ->join('cong_thuc', 'danh_muc.ma_danh_muc', '=', 'cong_thuc.ma_danh_muc')
-                ->where('cong_thuc.trang_thai', 'cong_khai') // <--- NÊN THÊM
+                ->where('cong_thuc.trang_thai', 'cong_khai') // Chỉ tính bài đã duyệt
                 ->select(
-                    'danh_muc.ten_danh_muc as name', 
+                    'danh_muc.ten_danh_muc as name',
                     DB::raw('count(cong_thuc.ma_cong_thuc) as count')
                 )
                 ->groupBy('danh_muc.ma_danh_muc', 'danh_muc.ten_danh_muc')
                 ->orderByDesc('count')
-                ->limit(4)
+                ->limit(5)
                 ->get();
         } catch (Exception $e) {
-            $popularCategories = collect([]); 
+            // Bỏ qua lỗi nếu bảng danh mục có vấn đề
         }
 
-        $popularCategories = $popularCategories->map(function($item) use ($totalRecipes) {
-            // Tránh chia cho 0
+        // Tính phần trăm
+        $popularCategories = $popularCategories->map(function ($item) use ($totalRecipes) {
             $item->percent = $totalRecipes > 0 ? round(($item->count / $totalRecipes) * 100) : 0;
             return $item;
         });
@@ -224,7 +256,7 @@ public function getDanhSachNguoiDung(Request $request)
                 'users' => $totalUsers,
                 'recipes' => $totalRecipes,
                 'pending' => $pendingRecipes,
-                'blogs' => $totalBlogs, 
+                'blogs' => $totalBlogs,
                 'reports' => $violationReports
             ],
             'chart' => $chartData,
@@ -232,10 +264,11 @@ public function getDanhSachNguoiDung(Request $request)
         ]);
 
     } catch (Exception $e) {
+        // Log lỗi ra để bạn debug trong Laravel log
+        \Log::error("Dashboard Error: " . $e->getMessage());
+        
         return response()->json([
-            'message' => 'Lỗi Backend: ' . $e->getMessage(),
-            'line' => $e->getLine(),
-            'file' => $e->getFile()
+            'message' => 'Lỗi Backend: ' . $e->getMessage()
         ], 500);
     }
 }
