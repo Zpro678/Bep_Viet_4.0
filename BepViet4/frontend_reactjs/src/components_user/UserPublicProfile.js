@@ -50,8 +50,8 @@ const UserPublicProfile = () => {
                 setOverview(overviewData);
 
                 // 3. Lấy danh sách công thức 
-                if (recipeRes && recipeRes.data) {
-                    setRecipes(recipeRes.data || []);
+                if (recipeRes && recipeRes.data.data) {
+                    setRecipes(recipeRes.data.data || []);
                 }
                 console.log("Công thức đã lấy:", recipeRes.data.data || []);
 

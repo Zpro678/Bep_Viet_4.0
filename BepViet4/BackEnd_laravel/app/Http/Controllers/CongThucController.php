@@ -22,74 +22,74 @@ use Illuminate\Auth\Access\AuthorizationException as ForbiddenException;
 class CongThucController extends Controller
 {
     // ========================= Lấy danh sách công thức của người dùng theo id ===================================
-    // public function getDanhSachCongThuc(Request $request, $id) 
-    // {
-    //     // 1. Kiểm tra user tồn tại
-    //     $userToCheck = NguoiDung::where('ma_nguoi_dung', $id)->first();
-    //     if (!$userToCheck) {
-    //         return response()->json(['status' => 'error', 'message' => 'Người dùng không tồn tại'], 404);
-    //     }
+    public function getDanhSachCongThuc(Request $request, $id) 
+    {
+        // 1. Kiểm tra user tồn tại
+        $userToCheck = NguoiDung::where('ma_nguoi_dung', $id)->first();
+        if (!$userToCheck) {
+            return response()->json(['status' => 'error', 'message' => 'Người dùng không tồn tại'], 404);
+        }
     
-    //     // 2. Khởi tạo Query
-    //     $query = CongThuc::where('ma_nguoi_dung', $id);
+        // 2. Khởi tạo Query
+        $query = CongThuc::where('ma_nguoi_dung', $id);
     
-    //     // 3. Kiểm tra người xem
-    //     $currentUserId = $request->user('sanctum')
-    //         ? $request->user('sanctum')->ma_nguoi_dung
-    //         : null;
+        // 3. Kiểm tra người xem
+        $currentUserId = $request->user('sanctum')
+            ? $request->user('sanctum')->ma_nguoi_dung
+            : null;
     
-    //     if ($currentUserId != $id) {
-    //         $query->where('trang_thai', 'cong_khai');
-    //     }
+        if ($currentUserId != $id) {
+            $query->where('trang_thai', 'cong_khai');
+        }
     
        
-    //     $query->whereExists(function ($q) {
-    //         $q->select(DB::raw(1))
-    //           ->from('hinh_anh_cong_thuc as hinh_anh')
-    //           ->whereColumn('hinh_anh.ma_cong_thuc', 'cong_thuc.ma_cong_thuc');
-    //     });
+        $query->whereExists(function ($q) {
+            $q->select(DB::raw(1))
+              ->from('hinh_anh_cong_thuc as hinh_anh')
+              ->whereColumn('hinh_anh.ma_cong_thuc', 'cong_thuc.ma_cong_thuc');
+        });
     
-    //     // 4. Query + eager loading 
-    //     $recipes = $query
-    //         ->with(['hinhAnh' => function ($q) {
-    //             $q->select('ma_cong_thuc', 'duong_dan');
-    //         }])
-    //         ->select(
-    //             'ma_cong_thuc',
-    //             'ten_mon',
-    //             'mo_ta',
-    //             'trang_thai',
-    //             'thoi_gian_nau',
-    //             'do_kho',
-    //             'ngay_tao'
-    //         )
-    //         ->orderBy('ngay_tao', 'desc')
-    //         ->paginate(10);
+        // 4. Query + eager loading 
+        $recipes = $query
+            ->with(['hinhAnh' => function ($q) {
+                $q->select('ma_cong_thuc', 'duong_dan');
+            }])
+            ->select(
+                'ma_cong_thuc',
+                'ten_mon',
+                'mo_ta',
+                'trang_thai',
+                'thoi_gian_nau',
+                'do_kho',
+                'ngay_tao'
+            )
+            ->orderBy('ngay_tao', 'desc')
+            ->paginate(10);
     
-    //     // 5. Transform dữ liệu 
-    //     $recipes->getCollection()->transform(function ($recipe) {
-    //         return [
-    //             'id' => $recipe->ma_cong_thuc,
-    //             'ten_mon' => $recipe->ten_mon,
-    //             'mo_ta_ngan' => $recipe->mo_ta,
-    //             'trang_thai' => $recipe->trang_thai,
-    //             'thoi_gian' => $recipe->thoi_gian_nau . ' phút',
-    //             'do_kho' => $recipe->do_kho . '/5',
-    //             'hinh_anh' => $recipe->hinhAnh->first()
-    //                 ? $recipe->hinhAnh->first()->duong_dan
-    //                 : 'default.jpg',
-    //             'ngay_dang' => $recipe->ngay_tao,
-    //         ];
-    //     });
+        // 5. Transform dữ liệu 
+        $recipes->getCollection()->transform(function ($recipe) {
+            return [
+                'id' => $recipe->ma_cong_thuc,
+                'ten_mon' => $recipe->ten_mon,
+                'mo_ta_ngan' => $recipe->mo_ta,
+                'trang_thai' => $recipe->trang_thai,
+                'thoi_gian' => $recipe->thoi_gian_nau . ' phút',
+                'do_kho' => $recipe->do_kho . '/5',
+                'hinh_anh' => $recipe->hinhAnh->first()
+                    ? $recipe->hinhAnh->first()->duong_dan
+                    : 'default.jpg',
+                'ngay_dang' => $recipe->ngay_tao,
+            ];
+        });
     
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'data' => $recipes
-    //     ], 200);
-    // }
+        return response()->json([
+            'status' => 'success',
+            'data' => $recipes
+        ], 200);
+    }
 
     //
-    public function getDanhSachCongThuc(Request $request, $id = null)
+    public function getDanhSachCongThuc_KhamPha(Request $request, $id = null)
     {
         // Lấy user hiện tại (có thể null nếu là khách)
         $currentUser = $request->user('sanctum');

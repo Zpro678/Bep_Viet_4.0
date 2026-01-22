@@ -21,7 +21,7 @@ Route::get('/users/{id}/recipes',[CongThucController::class, 'getDanhSachCongThu
 // EXPLORE(Trang Khám phá) – CHỈ CÔNG THỨC – ƯU TIÊN NGƯỜI THEO DÕI
 Route::get(
     '/explore/recipes',
-    [CongThucController::class, 'getDanhSachCongThuc']
+    [CongThucController::class, 'getDanhSachCongThuc_KhamPha']
 );
 
 
