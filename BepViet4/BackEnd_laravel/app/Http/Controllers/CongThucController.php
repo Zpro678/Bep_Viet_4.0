@@ -597,30 +597,55 @@ public function index(Request $request)
     //    20. GET /recipes/search
     public function search(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'keyword' => 'nullable|string|max:255',
-            'ma_danh_muc' => 'nullable|integer|exists:danh_muc,ma_danh_muc',
-            'ma_vung_mien' => 'nullable|integer|exists:vung_mien,ma_vung_mien',
-            'do_kho' => 'nullable|integer|min:1|max:5',
-            'page' => 'nullable|integer|min:1'
-        ]);
+        // 1. Lấy tham số
+        $filters = [
+            'keyword'       => $request->input('keyword'),
+            'ma_vung_mien'  => $request->input('ma_vung_mien'),
+            'do_kho'        => $request->input('do_kho'),
+            'thoi_gian_nau' => $request->input('thoi_gian_nau'),
+            'limit'         => $request->input('limit', 12)
+        ];
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Tham số tìm kiếm không hợp lệ',
-                'errors' => $validator->errors()
-            ], 422);
-        }
+        // 2. Gọi Model để lấy dữ liệu thô (đang phân trang)
+        $paginator = CongThuc::searchAdvanced($filters);
 
-        $filters = $validator->validated();
+        // 3. QUAN TRỌNG: Map dữ liệu để xử lý Link Ảnh chuẩn
+        // Hàm through() giúp sửa từng item trong danh sách phân trang mà không làm hỏng cấu trúc phân trang
+        $paginator->through(function ($item) {
+            
+            // --- Logic xử lý ảnh giống hàm getExplore ---
+            $imgUrl = 'https://placehold.co/600x400?text=No+Image'; // Ảnh mặc định
 
-        $result = CongThuc::searchAdvanced($filters);
+            // Kiểm tra quan hệ hinhAnh có dữ liệu không
+            if ($item->hinhAnh && $item->hinhAnh->isNotEmpty()) {
+                $firstImg = $item->hinhAnh->first();
+                
+                if (!empty($firstImg->duong_dan)) {
+                    if (str_contains($firstImg->duong_dan, 'http')) {
+                        // Nếu là link online (firebase, s3...)
+                        $imgUrl = $firstImg->duong_dan;
+                    } else {
+                        // Nếu là ảnh local, dùng asset() để tạo full URL
+                        // Hàm asset() sẽ tự thêm http://localhost:8000...
+                        $imgUrl = asset('storage/' . ltrim($firstImg->duong_dan, '/'));
+                    }
+                }
+            }
 
+            // Ghi đè thuộc tính 'hinh_anh' của item thành chuỗi URL
+            // Để Frontend có thể dùng item.hinh_anh trực tiếp
+            $item->hinh_anh = $imgUrl;
+            
+            // (Tùy chọn) Ẩn relation gốc đi cho JSON gọn nhẹ
+            $item->unsetRelation('hinhAnh'); 
+
+            return $item;
+        });
+
+        // 4. Trả về kết quả
         return response()->json([
-            'status' => true,
-            'message' => 'Kết quả tìm kiếm công thức',
-            'data' => $result
+            'status' => 'success',
+            'data'   => $paginator
         ]);
     }
 

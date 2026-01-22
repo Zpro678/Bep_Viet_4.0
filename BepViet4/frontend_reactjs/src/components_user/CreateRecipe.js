@@ -198,11 +198,11 @@ const CreateRecipe = () => {
             <div className="form-group">
               <label>Độ khó</label>
               <select name="difficulty" value={info.difficulty} onChange={handleChangeInfo}>
-                <option value="1">1 - Rất Dễ</option>
-                <option value="2">2 - Dễ</option>
-                <option value="3">3 - Vừa</option>
-                <option value="4">4 - Khó</option>
-                <option value="5">5 - Rất Khó</option>
+                <option value="1">Rất Dễ</option>
+                <option value="2">Dễ</option>
+                <option value="3">Vừa</option>
+                <option value="4">Khó</option>
+                <option value="5">Rất Khó</option>
               </select>
             </div>
           </div>
