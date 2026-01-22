@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import feedApi from '../api/explore_feedApi';
+import searchBarApi from '../api/searchBarApi'; // Đã sửa đường dẫn import đúng
 import './CSS/Explore.css';
 
 const Explore = () => {
@@ -9,59 +10,88 @@ const Explore = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 2. State phân trang
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12; // 12 món 1 trang
+  // Hook lấy params từ URL
+  const [searchParams] = useSearchParams();
 
+  // State phân trang
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
+
+  // Lấy thông tin user (để gợi ý món ăn phù hợp nếu cần)
   const user = JSON.parse(localStorage.getItem('USER'));
   const userId = user?.ma_nguoi_dung;
 
-  // 3. Gọi API
+  // 2. Gọi API
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
         setLoading(true);
-        // userId có thể là null (khách) hoặc ID (user), API vẫn chạy tốt
-        const response = await feedApi.getExploreRecipes(userId); 
+        setError(null);
+        let response;
 
-        console.log("🔍 API Response:", response);
+        // Kiểm tra: Đang tìm kiếm hay đang xem Explore mặc định?
+        const currentParams = Object.fromEntries([...searchParams]);
+        const isSearching = Object.keys(currentParams).length > 0;
 
+        if (isSearching) {
+            console.log("🔍 Đang tìm kiếm với params:", currentParams);
+            // Gọi API Search với limit lớn để FE tự phân trang
+            response = await searchBarApi.search({ ...currentParams, limit: 100 }); 
+        } else {
+            console.log("🌍 Đang tải News Feed mặc định");
+            // Gọi API Explore Feed
+            response = await feedApi.getExploreRecipes(userId); 
+        }
+
+        // --- Chuẩn hóa dữ liệu trả về (Xử lý trường hợp data lồng nhau) ---
         let rawList = [];
-        // (Giữ nguyên đoạn xử lý data của bạn ở đây...)
         if (response?.data?.data && Array.isArray(response.data.data)) {
             rawList = response.data.data;
         } else if (response?.data && Array.isArray(response.data)) {
             rawList = response.data;
         } else if (Array.isArray(response)) {
             rawList = response;
-        } else if (response?.data && typeof response.data === 'object' && Array.isArray(response.data)) {
-            rawList = response.data;
         }
 
-        const mappedRecipes = rawList.map(item => ({
-          id: item.ma_cong_thuc,
-          title: item.ten_mon,
-          author: item.ten_nguoi_tao,
-          image: (item.hinh_anh && item.hinh_anh.startsWith('http')) 
-                 ? item.hinh_anh 
-                 : `http://localhost:8000/storage/${item.hinh_anh}`,
-          originalData: item
-        }));
+        // --- MAP DỮ LIỆU (Đoạn quan trọng đã sửa lỗi hình ảnh) ---
+        const mappedRecipes = rawList.map(item => {
+          // Xử lý an toàn cho hình ảnh
+          let imageUrl = 'https://placehold.co/600x400?text=No+Image';
+          
+          if (item.hinh_anh) {
+             // Kiểm tra kỹ: phải là chuỗi mới dùng startsWith
+             if (typeof item.hinh_anh === 'string' && item.hinh_anh.startsWith('http')) {
+                 imageUrl = item.hinh_anh;
+             } else {
+                 // Nếu là chuỗi tên file hoặc object, nối domain vào
+                 imageUrl = `http://localhost:8000/storage/${item.hinh_anh}`;
+             }
+          }
+
+          return {
+            id: item.ma_cong_thuc,
+            title: item.ten_mon,
+            // Ưu tiên lấy tên từ object quan hệ nguoi_tao, nếu không có thì lấy ten_nguoi_tao
+            author: item.nguoi_tao?.ho_ten || item.ten_nguoi_tao || "Ẩn danh",
+            image: imageUrl,
+            originalData: item
+          };
+        });
 
         setRecipes(mappedRecipes);
-        setCurrentPage(1); 
+        setCurrentPage(1); // Reset về trang 1 khi dữ liệu thay đổi
+
       } catch (err) {
-        console.error('❌ Lỗi:', err);
-        setError('Không thể tải danh sách món ăn.');
+        console.error('❌ Lỗi tải dữ liệu:', err);
+        setError('Không thể tải danh sách món ăn. Vui lòng thử lại sau.');
       } finally {
-        setLoading(false); // Dù lỗi hay không cũng phải tắt loading
+        setLoading(false);
       }
     };
 
-    // --- SỬA Ở ĐÂY: Bỏ if(userId), gọi luôn! ---
-    fetchRecipes(); 
+    fetchRecipes();
     
-  }, [userId]);
+  }, [userId, searchParams]); // Chạy lại khi userId hoặc URL params thay đổi
 
   const handleSave = (e, recipeId) => {
     e.preventDefault();
@@ -69,87 +99,67 @@ const Explore = () => {
     alert(`Đã lưu công thức #${recipeId}`);
   };
 
-  // 4. Tính toán phân trang
+  // 3. Logic Phân trang Frontend
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentRecipes = recipes.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(recipes.length / itemsPerPage);
 
-  // Hàm chuyển trang
   const paginate = (pageNumber) => {
     setCurrentPage(pageNumber);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const goToNextPage = () => {
-    if (currentPage < totalPages) paginate(currentPage + 1);
-  };
+  const goToNextPage = () => { if (currentPage < totalPages) paginate(currentPage + 1); };
+  const goToPrevPage = () => { if (currentPage > 1) paginate(currentPage - 1); };
 
-  const goToPrevPage = () => {
-    if (currentPage > 1) paginate(currentPage - 1);
-  };
-
-  // --- HÀM RENDER SỐ TRANG (LOGIC MỚI Ở ĐÂY) ---
+  // Render các nút phân trang (có dấu ...)
   const renderPaginationButtons = () => {
     const pageNumbers = [];
-
-    // Nếu ít trang (<= 5) thì hiện hết
     if (totalPages <= 5) {
-      for (let i = 1; i <= totalPages; i++) {
-        pageNumbers.push(i);
-      }
+      for (let i = 1; i <= totalPages; i++) pageNumbers.push(i);
     } else {
-      // Nếu nhiều trang (> 5), xử lý rút gọn
       if (currentPage <= 3) {
-        // Đang ở đầu: 1 2 3 4 ... Cuối
         pageNumbers.push(1, 2, 3, 4, '...', totalPages);
       } else if (currentPage >= totalPages - 2) {
-        // Đang ở cuối: 1 ... 17 18 19 20
         pageNumbers.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
       } else {
-        // Đang ở giữa: 1 ... 9 10 11 ... 20
         pageNumbers.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
       }
     }
-
-    // Map mảng pageNumbers thành nút HTML
     return pageNumbers.map((number, index) => {
-      if (number === '...') {
-        return <span key={`dots-${index}`} className="pagination-dots">...</span>;
-      }
+      if (number === '...') return <span key={`dots-${index}`} className="pagination-dots">...</span>;
       return (
-        <button
-          key={number}
-          onClick={() => paginate(number)}
-          className={`page-btn ${currentPage === number ? 'active' : ''}`}
-        >
+        <button key={number} onClick={() => paginate(number)} className={`page-btn ${currentPage === number ? 'active' : ''}`}>
           {number}
         </button>
       );
     });
   };
-  // ---------------------------------------------
 
-  // 5. Render giao diện
+  // 4. Render Giao diện
   if (loading) {
     return (
-      <div className="explore-container" style={{ textAlign: 'center', marginTop: 50 }}>
-        ⏳ Đang tải món ngon...
-      </div>
+        <div className="explore-container" style={{ textAlign: 'center', marginTop: 50 }}>
+            <h3>⏳ Đang tải món ngon...</h3>
+        </div>
     );
   }
 
   if (error) {
     return (
-      <div className="explore-container" style={{ textAlign: 'center', color: 'red' }}>
-        {error}
-      </div>
+        <div className="explore-container" style={{ textAlign: 'center', color: 'red', marginTop: 50 }}>
+            <h3>⚠️ {error}</h3>
+        </div>
     );
   }
 
   return (
     <div className="explore-container">
-      <h2 className="page-title">Khám phá món ngon 🍳</h2>
+      {/* Tiêu đề thay đổi dựa theo trạng thái tìm kiếm */}
+      <h2 className="page-title">
+        {[...searchParams].length > 0 ? `Kết quả tìm kiếm 🔍` : `Khám phá món ngon 🍳`}
+      </h2>
 
       <div className="explore-grid">
         {currentRecipes.length > 0 ? (
@@ -167,16 +177,12 @@ const Explore = () => {
                   alt={recipe.title}
                   className="explore-image"
                   loading="lazy"
-                  onError={(e) => {
-                    e.target.src = 'https://placehold.co/600x400?text=No+Image';
+                  onError={(e) => { 
+                      e.target.onerror = null; 
+                      e.target.src = 'https://placehold.co/600x400?text=No+Image'; 
                   }}
                 />
-                <button
-                  className="save-btn"
-                  onClick={(e) => handleSave(e, recipe.id)}
-                >
-                  🔖
-                </button>
+                <button className="save-btn" onClick={(e) => handleSave(e, recipe.id)}>🔖</button>
               </div>
 
               <div className="explore-info">
@@ -186,33 +192,19 @@ const Explore = () => {
             </Link>
           ))
         ) : (
-          <div style={{ gridColumn: '1 / -1', textAlign: 'center' }}>
-            📭 Chưa có công thức nào
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '50px' }}>
+             <h3>📭 Không tìm thấy công thức nào!</h3>
+             <p>Hãy thử thay đổi từ khóa hoặc bộ lọc tìm kiếm.</p>
           </div>
         )}
       </div>
 
-      {/* UI Phân trang */}
+      {/* Thanh phân trang */}
       {recipes.length > itemsPerPage && (
         <div className="pagination">
-          <button 
-            onClick={goToPrevPage} 
-            disabled={currentPage === 1}
-            className="page-btn arrow-btn"
-          >
-            &laquo;
-          </button>
-
-          {/* GỌI HÀM RENDER LOGIC MỚI TẠI ĐÂY */}
+          <button onClick={goToPrevPage} disabled={currentPage === 1} className="page-btn arrow-btn">&laquo;</button>
           {renderPaginationButtons()}
-
-          <button 
-            onClick={goToNextPage} 
-            disabled={currentPage === totalPages}
-            className="page-btn arrow-btn"
-          >
-            &raquo;
-          </button>
+          <button onClick={goToNextPage} disabled={currentPage === totalPages} className="page-btn arrow-btn">&raquo;</button>
         </div>
       )}
     </div>

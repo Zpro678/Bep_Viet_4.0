@@ -1,54 +1,43 @@
-import React, { useState, useEffect } from 'react'; // 1. Thêm useEffect
+import React, { useState, useEffect } from 'react';
 import { 
   FaUtensils, FaUserCircle, FaSignOutAlt, FaCog, FaUser, 
   FaSearch, FaFilter, FaTimes, FaSignInAlt 
 } from 'react-icons/fa';
 import './CSS/Navbar.css'; 
-import { Link, useNavigate } from 'react-router-dom';
-import userApi from '../api/userApi'; // 2. Import API
+import { Link, useNavigate, createSearchParams } from 'react-router-dom';
+import userApi from '../api/userApi'; 
 
-const Navbar = ({ onLogout, onSearch, isLoggedIn }) => {
+const Navbar = ({ onLogout, isLoggedIn }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
-  const [keyword, setKeyword] = useState('');
   
-  // 3. State để lưu thông tin user
+  // State user
   const [userInfo, setUserInfo] = useState(null);
 
   const navigate = useNavigate();
   
+  // State tìm kiếm và lọc
+  const [keyword, setKeyword] = useState('');
   const [filters, setFilters] = useState({
-    searchBy: 'name',   
-    region: 'all',      
-    difficulty: 'all',  
-    time: 'all',        
-    category: 'all'     
+    ma_vung_mien: '',   // Backend: ma_vung_mien
+    do_kho: '',         // Backend: do_kho (1, 2, 3, 4, 5)
+    thoi_gian_nau: ''   // Backend: thoi_gian_nau
   });
 
- 
+  // Lấy thông tin user
   useEffect(() => {
     const fetchProfile = async () => {
       if (isLoggedIn) {
         try {
-         
           const response = await userApi.getProfile();
-          
-          console.log("User Info:", response); 
-          if (response.data) {
-             setUserInfo(response.data);
-          } else {
-             setUserInfo(response); 
-          }
-
+          setUserInfo(response.data || response);
         } catch (error) {
-          console.error("Lỗi lấy thông tin user:", error);
+          console.error("Lỗi user:", error);
         }
       } else {
-  
         setUserInfo(null);
       }
     };
-
     fetchProfile();
   }, [isLoggedIn]); 
 
@@ -59,15 +48,31 @@ const Navbar = ({ onLogout, onSearch, isLoggedIn }) => {
     setFilters(prev => ({ ...prev, [field]: value }));
   };
 
+  // --- XỬ LÝ TÌM KIẾM ---
   const handleSearchSubmit = (e) => {
     e.preventDefault(); 
     setShowFilterPanel(false);
-    if (onSearch) {
-      onSearch({ keyword: keyword, ...filters });
-    }
+
+    // Tạo object params, loại bỏ các giá trị rỗng
+    const params = {
+        keyword: keyword,
+        ...filters
+    };
+
+    // Loại bỏ các key có giá trị rỗng để URL đẹp hơn
+    Object.keys(params).forEach(key => {
+        if (params[key] === '' || params[key] === 'all') {
+            delete params[key];
+        }
+    });
+
+    // Điều hướng sang trang Explore kèm query params
+    navigate({
+        pathname: '/explore',
+        search: `?${createSearchParams(params)}`,
+    });
   };
 
- 
   const getDisplayName = () => {
     if (!userInfo) return "Người dùng";
     return userInfo.ho_ten || userInfo.name || userInfo.email || "Người dùng";
@@ -81,12 +86,12 @@ const Navbar = ({ onLogout, onSearch, isLoggedIn }) => {
         <h1>Bếp Việt 4.0</h1>
       </Link>
 
-      {/* --- THANH TÌM KIẾM --- */}
+      {/* --- SEARCH BAR --- */}
       <div className="navbar-search-container">
         <form onSubmit={handleSearchSubmit} className="search-bar">
           <input 
             type="text" 
-            placeholder={filters.searchBy === 'name' ? "Tìm tên món ăn..." : "Tìm theo nguyên liệu..."}
+            placeholder="Tìm tên món ăn..."
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
           />
@@ -98,27 +103,65 @@ const Navbar = ({ onLogout, onSearch, isLoggedIn }) => {
           </button>
         </form>
 
-        {/* --- PANEL BỘ LỌC --- */}
+        {/* --- FILTER PANEL --- */}
         {showFilterPanel && (
           <div className="filter-panel">
             <div className="filter-header">
               <h3>Bộ lọc tìm kiếm</h3>
               <FaTimes className="close-icon" onClick={() => setShowFilterPanel(false)} />
             </div>
-            {/* ... Giữ nguyên phần nội dung bộ lọc của bạn ... */}
-             <div className="filter-grid">
-               {/* Copy lại phần select options ở đây nhé cho gọn */}
+            
+            <div className="filter-grid">
+               {/* 1. Vùng miền */}
                <div className="filter-group">
-                 <label>Tìm theo:</label>
-                 <select value={filters.searchBy} onChange={(e) => handleFilterChange('searchBy', e.target.value)}>
-                   <option value="name">Tên món ăn</option>
-                   <option value="ingredient">Nguyên liệu</option>
+                 <label>Vùng miền:</label>
+                 <select 
+                   value={filters.ma_vung_mien} 
+                   onChange={(e) => handleFilterChange('ma_vung_mien', e.target.value)}
+                 >
+                   <option value="">Tất cả</option>
+                   <option value="1">Miền Bắc</option>
+                   <option value="2">Miền Trung</option>
+                   <option value="3">Miền Nam</option>
                  </select>
                </div>
-               {/* ...các select khác... */}
+
+               {/* 2. Độ khó (Đã sửa theo yêu cầu) */}
+               <div className="filter-group">
+                 <label>Độ khó:</label>
+                 <select 
+                   value={filters.do_kho} 
+                   onChange={(e) => handleFilterChange('do_kho', e.target.value)}
+                 >
+                   <option value="">Tất cả</option>
+                   <option value="1">Rất Dễ</option>
+                   <option value="2">Dễ</option>
+                   <option value="3">Vừa</option>
+                   <option value="4">Khó</option>
+                   <option value="5">Rất Khó</option>
+                 </select>
+               </div>
+
+               {/* 3. Thời gian nấu (Đã mở rộng phạm vi) */}
+               <div className="filter-group">
+                 <label>Thời gian nấu:</label>
+                 <select 
+                   value={filters.thoi_gian_nau} 
+                   onChange={(e) => handleFilterChange('thoi_gian_nau', e.target.value)}
+                 >
+                   <option value="">Tất cả</option>
+                   <option value="15">Dưới 15 phút (Siêu nhanh)</option>
+                   <option value="30">Dưới 30 phút</option>
+                   <option value="60">Dưới 60 phút (1 tiếng)</option>
+                   <option value="90">Dưới 90 phút</option>
+                   <option value="120">Dưới 2 tiếng</option>
+                   <option value="180">Dưới 3 tiếng (Hầm/Ninh)</option>
+                 </select>
+               </div>
             </div>
+
             <div className="filter-actions">
-              <button className="btn-apply" onClick={handleSearchSubmit}>Áp dụng bộ lọc</button>
+              <button className="btn-apply" onClick={handleSearchSubmit}>Áp dụng</button>
             </div>
           </div>
         )}
@@ -133,10 +176,7 @@ const Navbar = ({ onLogout, onSearch, isLoggedIn }) => {
         ) : (
           <>
             <button onClick={toggleDropdown} className="user-btn">
-              {/* 5. HIỂN THỊ TÊN THẬT TỪ API */}
               <span className="user-name">{getDisplayName()}</span>
-              
-              {/* Nếu API có trả về avatar_url thì dùng, không thì dùng icon mặc định */}
               {userInfo?.avatar ? (
                  <img src={userInfo.avatar} alt="Avatar" className="user-avatar-img" style={{width: 30, height: 30, borderRadius: '50%'}} />
               ) : (
@@ -149,9 +189,12 @@ const Navbar = ({ onLogout, onSearch, isLoggedIn }) => {
                 <Link to="/profile" className="dropdown-item" onClick={toggleDropdown}>
                   <FaUser /> <span>Hồ sơ</span>
                 </Link>
-                <Link to="/settings" className="dropdown-item" onClick={toggleDropdown}>
-                  <FaCog /> <span>Cài đặt</span>
-                </Link>
+                {/* Check role admin nếu cần */}
+                {userInfo?.role === 'admin' && (
+                    <Link to="/admin" className="dropdown-item">
+                        <FaCog /> <span>Trang Admin</span>
+                    </Link>
+                )}
                 <div className="dropdown-divider"></div>
                 <button 
                   className="dropdown-item text-red" 

@@ -199,31 +199,36 @@ class CongThuc extends Model
     public static function searchAdvanced(array $filters)
     {
         return self::query()
-            ->when($filters['keyword'] ?? null, function (Builder $q, $v) {
-                $q->where('ten_mon', 'like', "%$v%");
+            // --- 1. SEARCH BAR (REAL-TIME) ---
+            ->when($filters['keyword'] ?? null, function ($q, $keyword) {
+                $q->where('ten_mon', 'like', "%{$keyword}%");
             })
-            ->when(
-                $filters['ma_danh_muc'] ?? null,
-                fn($q, $v) =>
-                $q->where('ma_danh_muc', $v)
-            )
-            ->when(
-                $filters['ma_vung_mien'] ?? null,
-                fn($q, $v) =>
-                $q->where('ma_vung_mien', $v)
-            )
-            ->when(
-                $filters['do_kho'] ?? null,
-                fn($q, $v) =>
-                $q->where('do_kho', $v)
-            )
+
+            // --- 2. LỌC KẾT HỢP ---
+            // Lọc theo Vùng miền
+            ->when($filters['ma_vung_mien'] ?? null, function ($q, $id) {
+                $q->where('ma_vung_mien', $id);
+            })
+            // Lọc theo Độ khó (Dễ/Trung bình/Khó)
+            ->when($filters['do_kho'] ?? null, function ($q, $level) {
+                $q->where('do_kho', $level);
+            })
+            // Lọc theo Thời gian (Lấy các món nấu nhanh hơn hoặc bằng thời gian chọn)
+            ->when($filters['thoi_gian_nau'] ?? null, function ($q, $minutes) {
+                $q->where('thoi_gian_nau', '<=', $minutes);
+            })
+
+            // Chỉ lấy bài đã Công khai
+            ->where('trang_thai', 'cong_khai')
+            
+            // Eager Load để hiển thị ra thẻ bài viết
             ->with([
-                'nguoiTao:ma_nguoi_dung,ho_ten',
+                'nguoiTao:ma_nguoi_dung,ho_ten', 
                 'danhMuc:ma_danh_muc,ten_danh_muc',
-                'vungMien:ma_vung_mien,ten_vung_mien'
+                'hinhAnh' // Để lấy ảnh bìa
             ])
             ->orderByDesc('ngay_tao')
-            ->paginate(10);
+            ->paginate($filters['limit'] ?? 10);
     }
 
     // 17. Cập nhật công thức

@@ -167,12 +167,16 @@ const CreateRecipe = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+
         const formErrors = validateForm();
         if (Object.keys(formErrors).length > 0) {
             setErrors(formErrors);
             window.scrollTo(0, 0);
             return;
         }
+
+         
+
 
         if (!imageFile) {
             alert("Vui lòng chọn ảnh bìa cho món ăn!");
@@ -309,16 +313,26 @@ const CreateRecipe = () => {
                             />
                             {errors.cooking_time && <span style={errorStyle}>{errors.cooking_time}</span>}
                         </div>
-                        <div className="form-group">
-                            <label>Độ khó</label>
-                            <select name="difficulty" value={info.difficulty} onChange={handleChangeInfo}>
-                                <option value="1">1 - Rất Dễ</option>
-                                <option value="2">2 - Dễ</option>
-                                <option value="3">3 - Vừa</option>
-                                <option value="4">4 - Khó</option>
-                                <option value="5">5 - Rất Khó</option>
-                            </select>
-                        </div>
+                        <div className="form-row">
+            <div className="form-group">
+              <label>Khẩu phần (người)</label>
+              <input type="number" name="servings" value={info.servings} onChange={handleChangeInfo} required min="1" />
+            </div>
+            <div className="form-group">
+              <label>Thời gian (phút)</label>
+              <input type="number" name="cooking_time" value={info.cooking_time} onChange={handleChangeInfo} required min="1" />
+            </div>
+            <div className="form-group">
+              <label>Độ khó</label>
+              <select name="difficulty" value={info.difficulty} onChange={handleChangeInfo}>
+                <option value="1">Rất Dễ</option>
+                <option value="2">Dễ</option>
+                <option value="3">Vừa</option>
+                <option value="4">Khó</option>
+                <option value="5">Rất Khó</option>
+              </select>
+            </div>
+          </div>
                     </div>
 
                     {/* Danh mục & Vùng miền */}
