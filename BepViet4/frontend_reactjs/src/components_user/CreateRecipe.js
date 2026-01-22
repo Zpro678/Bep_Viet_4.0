@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect, useRef } from 'react'; 
 import { useNavigate } from 'react-router-dom';
 import createRecipeService  from '../api/createRecipeServiceApi';
 import './CSS/CreateRecipe.css';
@@ -8,44 +8,38 @@ const CreateRecipe = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   
+  const imageSectionRef = useRef(null);
+  const activeUrlsRef = useRef([]);
+
   const [info, setInfo] = useState({
-    title: '',            // -> ten_mon
-    description: '',      // -> mo_ta
-    cooking_time: '',     // -> thoi_gian_nau
-    servings: '',         // -> khau_phan
-    difficulty: '1',      // -> do_kho
-    category: '1',        // -> ma_danh_muc
-    region: '1',          // -> ma_vung_mien
-    video_url: '',        // -> video_url
-    tags: ''              // -> tags
+    title: '', description: '', cooking_time: '', servings: '', 
+    difficulty: '1', category: '1', region: '1', video_url: '', tags: ''
   });
 
-  // Ảnh bìa
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
 
-  // Nguyên liệu
   const [ingredients, setIngredients] = useState([
     { name: '', quantity: '', unit: '' }
   ]);
 
-  // Các bước
   const [steps, setSteps] = useState([
     { instruction: '', image: null, imagePreview: null }
   ]);
 
-  // --- 2. HÀM CLEANUP (QUAN TRỌNG) ---
-  // Tự động xóa URL preview khi component unmount hoặc file thay đổi để tránh rò rỉ bộ nhớ
   useEffect(() => {
+    const urlsToCleanup = activeUrlsRef.current;
     return () => {
-      if (imagePreview) URL.revokeObjectURL(imagePreview);
-      steps.forEach(step => {
-        if (step.imagePreview) URL.revokeObjectURL(step.imagePreview);
-      });
+      urlsToCleanup.forEach(url => URL.revokeObjectURL(url));
     };
-  }, [imageFile, steps]);
+  }, []); 
 
-  // --- HÀM XỬ LÝ INPUT ---
+  const createPreviewUrl = (file) => {
+    const url = URL.createObjectURL(file);
+    activeUrlsRef.current.push(url);
+    return url;
+  };
+
   const handleChangeInfo = (e) => {
     const { name, value } = e.target;
     setInfo(prev => ({ ...prev, [name]: value }));
@@ -55,31 +49,30 @@ const CreateRecipe = () => {
     const file = e.target.files[0];
     if (file) {
       setImageFile(file);
-      // Tạo URL preview
-      setImagePreview(URL.createObjectURL(file));
+      setImagePreview(createPreviewUrl(file));
     }
   };
 
   const removeCoverImage = (e) => {
-    e.preventDefault(); // Chặn sự kiện click nhầm vào input file
+    e.preventDefault(); 
     setImageFile(null);
     setImagePreview(null);
   }
 
-  // --- LOGIC NGUYÊN LIỆU ---
   const handleIngredientChange = (index, field, value) => {
     const newList = [...ingredients];
     newList[index][field] = value;
     setIngredients(newList);
   };
+
   const addIngredient = () => setIngredients([...ingredients, { name: '', quantity: '', unit: '' }]);
+  
   const removeIngredient = (index) => {
     if (ingredients.length > 1) {
       setIngredients(ingredients.filter((_, i) => i !== index));
     }
   };
 
-  // --- LOGIC CÁC BƯỚC ---
   const handleStepChange = (index, value) => {
     const newList = [...steps];
     newList[index].instruction = value;
@@ -91,26 +84,33 @@ const CreateRecipe = () => {
     if (file) {
       const newList = [...steps];
       newList[index].image = file;
-      newList[index].imagePreview = URL.createObjectURL(file);
+      newList[index].imagePreview = createPreviewUrl(file);
       setSteps(newList);
     }
   };
 
   const addStep = () => setSteps([...steps, { instruction: '', image: null, imagePreview: null }]);
+  
   const removeStep = (index) => {
     if (steps.length > 1) {
       setSteps(steps.filter((_, i) => i !== index));
     }
   };
 
-  // --- SUBMIT FORM ---
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!imageFile) {
+        alert("Vui lòng chọn ảnh bìa cho món ăn!");
+        if (imageSectionRef.current) {
+            imageSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+    }
+
     setLoading(true);
 
     const formData = new FormData();
-
-    // 1. Map thông tin
     formData.append('ten_mon', info.title);
     formData.append('mo_ta', info.description);
     formData.append('thoi_gian_nau', info.cooking_time);
@@ -120,25 +120,19 @@ const CreateRecipe = () => {
     formData.append('ma_vung_mien', info.region);
     
     if (info.video_url) formData.append('video_url', info.video_url);
-
     if (info.tags) {
       const tagArray = info.tags.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
       tagArray.forEach(tag => formData.append('tags[]', tag));
     }
 
-    // 2. Ảnh bìa
-    if (imageFile) {
-      formData.append('hinh_anh_bia', imageFile);
-    }
+    formData.append('hinh_anh_bia', imageFile);
 
-    // 3. Nguyên liệu (Dùng dinh_luong)
     ingredients.forEach((ing, index) => {
       formData.append(`nguyen_lieu[${index}][ten_nguyen_lieu]`, ing.name);
       formData.append(`nguyen_lieu[${index}][dinh_luong]`, ing.quantity);
       formData.append(`nguyen_lieu[${index}][don_vi_tinh]`, ing.unit);
     });
 
-    // 4. Các bước
     steps.forEach((step, index) => {
       formData.append(`cac_buoc[${index}][noi_dung]`, step.instruction);
       if (step.image) {
@@ -147,9 +141,13 @@ const CreateRecipe = () => {
     });
 
     try {
+<<<<<<< HEAD
       const response = await createRecipeService.create(formData);
       console.log("Server response:", response);
       
+=======
+      const response = await createRecipeServiceApi.create(formData);
+>>>>>>> 10d4873241a77dd7840b218c82dcb9b0927221fd
       if(response.status === 'success' || response.status === 201) {
           alert("Công thức đang chờ duyệt!");
           navigate('/profile'); 
@@ -168,11 +166,10 @@ const CreateRecipe = () => {
       <h2>Tạo Công Thức Mới 🍳</h2>
 
       <form onSubmit={handleSubmit}>
-        {/* 1. THÔNG TIN CƠ BẢN */}
         <div className="form-section">
           <h3>Thông tin chung</h3>
           <div className="form-group">
-            <label>Tên món ăn (*)</label>
+            <label>Tên món ăn <span style={{color:'red'}}>(*)</span></label>
             <input required type="text" name="title" value={info.title} onChange={handleChangeInfo} placeholder="Ví dụ: Phở Bò Nam Định" />
           </div>
 
@@ -232,16 +229,14 @@ const CreateRecipe = () => {
             </div>
           </div>
 
-          {/* UPLOAD ẢNH BÌA - Đã chỉnh sửa UI để dễ thay đổi ảnh */}
-          <div className="form-group">
-            <label>Ảnh bìa món ăn</label>
-            <div className={`image-upload-box ${imagePreview ? 'has-image' : ''}`}>
+          <div className="form-group" ref={imageSectionRef}>
+            <label>Ảnh bìa món ăn <span style={{color:'red'}}>(*)</span></label>
+            <div className={`image-upload-box ${imagePreview ? 'has-image' : ''}`} style={!imagePreview ? {border: '2px dashed #ccc'} : {}}>
               <input type="file" id="recipe-img" accept="image/*" onChange={handleImageChange} hidden />
               <label htmlFor="recipe-img" className="upload-label">
                 {imagePreview ? (
                   <div className="preview-container" style={{position: 'relative', width: '100%', height: '100%'}}>
                     <img src={imagePreview} alt="Preview" className="img-preview" />
-                    {/* Overlay hướng dẫn đổi ảnh */}
                     <div className="image-overlay" style={{
                         position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
                         background: 'rgba(0,0,0,0.5)', color: 'white',
@@ -262,8 +257,6 @@ const CreateRecipe = () => {
                   </div>
                 )}
               </label>
-              
-              {/* Nút xóa ảnh nếu đã chọn */}
               {imagePreview && (
                   <button 
                     type="button" 
@@ -282,7 +275,6 @@ const CreateRecipe = () => {
           </div>
         </div>
 
-        {/* 2. NGUYÊN LIỆU */}
         <div className="form-section">
           <h3>Nguyên liệu</h3>
           {ingredients.map((ing, index) => (
@@ -321,7 +313,6 @@ const CreateRecipe = () => {
           <button type="button" className="btn-add-more" onClick={addIngredient}><FaPlus /> Thêm nguyên liệu</button>
         </div>
 
-        {/* 3. CÁC BƯỚC THỰC HIỆN */}
         <div className="form-section">
           <h3>Các bước thực hiện</h3>
           {steps.map((step, index) => (

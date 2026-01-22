@@ -28,11 +28,15 @@ class BaiViet extends Model
     {
         return $this->belongsTo(NguoiDung::class, 'ma_nguoi_dung');
     }
+   
+    // Model: NguoiDung
+    
     public function binhLuan()
     {
         // Quan hệ 1-N với bảng bình luận
         return $this->hasMany(BinhLuanBaiViet::class, 'ma_bai_viet');
     }
+    
     public function hinhAnh()
     {
         return $this->hasMany(HinhAnhBaiViet::class, 'ma_bai_viet');
@@ -50,19 +54,26 @@ class BaiViet extends Model
                 'nguoiDung:ma_nguoi_dung,ho_ten', 
                 'hinhAnh' 
             ])
-            ->withCount('binhLuan') 
+            ->withCount('binhLuan')
             ->orderByDesc('ngay_dang')
             ->paginate(10);
     }
 
+    // [ĐÃ SỬA 100%]: Chỉ lấy bình luận GỐC (không lấy câu trả lời) khi xem chi tiết
     public static function chiTiet(int $id): self
     {
         return self::with([
-            'nguoiDung:ma_nguoi_dung,ho_ten,anh_dai_dien',
-            'binhLuan.nguoiDung:ma_nguoi_dung,ho_ten,anh_dai_dien', // Load thêm người bình luận
-            'hinhAnh'
+            'nguoiDung:ma_nguoi_dung,ho_ten',
+            'hinhAnh',
+            // Load bình luận: Chỉ lấy comment cha (ma_binh_luan_cha = null)
+            'binhLuan' => function($query) {
+                $query->whereNull('ma_binh_luan_cha') // <--- QUAN TRỌNG: Lọc bỏ các câu reply
+                      ->orderByDesc('ngay_gui') 
+                      ->with('nguoiDung:ma_nguoi_dung,ho_ten')
+                      ->withCount('traLoi'); // Đếm số câu trả lời để hiển thị "Xem x câu trả lời"
+            }
         ])
-        ->withCount('binhLuan') // Đếm bình luận cho chi tiết luôn
+        ->withCount('binhLuan') 
         ->findOrFail($id);
     }
 

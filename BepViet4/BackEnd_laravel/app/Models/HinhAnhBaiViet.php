@@ -9,4 +9,8 @@ class HinhAnhBaiViet extends Model {
     protected $primaryKey = 'ma_hinh_anh';
     public $timestamps = false;
     protected $fillable = ['ma_bai_viet', 'duong_dan', 'mo_ta'];
+
+    public function baiViet() {
+        return $this->belongsTo(BaiViet::class, 'ma_bai_viet');
+    }
 }

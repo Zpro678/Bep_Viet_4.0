@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   FaBookmark,
   FaCalendarAlt,
@@ -15,135 +15,153 @@ import {
 } from 'react-icons/fa';
 import { useNavigate, useParams } from 'react-router-dom';
 
-// Import API
-import  recipeDetailService  from '../api/recipeDetailService';
+import recipeDetailService from '../api/recipeDetailService';
 import { cookbookService } from '../services/cookbookService';
+import { ratingService } from '../services/ratingService';
 
 import './CSS/RecipeDetail.css';
 
 const STORAGE_URL = 'http://localhost:8000/storage/';
 
 const RecipeDetail = () => {
-  // --- HOOKS ---
   const { id } = useParams();
   const navigate = useNavigate();
   
-  // --- STATE DỮ LIỆU MÓN ---
   const [recipe, setRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  // --- STATE XỬ LÝ MODAL & COOKBOOK (ĐÃ THÊM LẠI PHẦN NÀY) ---
   const [showModal, setShowModal] = useState(false);
   const [myCookbooks, setMyCookbooks] = useState([]);
   const [selectedCookbookId, setSelectedCookbookId] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [ratingStats, setRatingStats] = useState({
+    trung_binh: 0,
+    tong_so_luot: 0,
+    diem_cua_toi: 0, 
+  });
+  const [hoverStar, setHoverStar] = useState(0); 
+  const [isRating, setIsRating] = useState(false);
 
-  // Helper: Chuyển độ khó (1-5) sang chữ
   const getDifficultyText = (level) => {
     const map = { 1: "Rất Dễ", 2: "Dễ", 3: "Vừa", 4: "Khó", 5: "Rất Khó" };
     return map[level] || "Vừa";
   };
 
-  // --- 1. LOAD CHI TIẾT MÓN ---
-  useEffect(() => {
-    const fetchDetail = async () => {
-      try {
-        setLoading(true);
-        const response = await recipeDetailService.getById(id);
-        
-        if (response && response.data) {
-            setRecipe(response.data);
-        } else {
-            console.error("Cấu trúc dữ liệu không khớp:", response);
-        }
-      } catch (error) {
-        console.error("❌ Lỗi tải dữ liệu hoặc ID không tồn tại:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchData = useCallback(async (showLoading = true) => {
+    try {
+      if (showLoading) setLoading(true);
+      const [detailRes, ratingRes] = await Promise.all([
+        recipeDetailService.getById(id),
+        ratingService.getRecipeRatingStats(id)
+      ]);
 
-    fetchDetail();
-    window.scrollTo(0, 0);
+      if (detailRes && detailRes.data) {
+        setRecipe(detailRes.data);
+      }
+
+      if (ratingRes) {
+        setRatingStats({
+          trung_binh: ratingRes.trung_binh || 0,
+          tong_so_luot: ratingRes.tong_so_luot || 0,
+          diem_cua_toi: ratingRes.diem_cua_toi || 0
+        });
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
 
-  // --- 2. CÁC HÀM XỬ LÝ MODAL ---
-  
-  // Mở modal và check đăng nhập
-  const handleOpenModal = async () => {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-          alert("Vui lòng đăng nhập để lưu món ăn!");
-          navigate('/login');
-          return;
-      }
+  useEffect(() => {
+    fetchData(true);
+    window.scrollTo(0, 0);
+  }, [fetchData]);
 
-      setShowModal(true);
+  const handleSubmitRating = async (starValue) => {
+    const token = localStorage.getItem('ACCESS_TOKEN'); 
+    if (!token) {
+      if(window.confirm("Bạn cần đăng nhập để đánh giá. Đi đến trang đăng nhập?")) {
+        navigate('/login');
+      }
+      return;
+    }
+
+    try {
+      setIsRating(true);
+      await ratingService.submitRating({
+        ma_cong_thuc: id,
+        so_sao: starValue
+      });
       
-      // Nếu chưa có danh sách thì mới gọi API lấy BST
-      if (myCookbooks.length === 0) {
-          try {
-              const data = await cookbookService.getAll();
-              setMyCookbooks(data);
-              // Mặc định chọn cái đầu tiên nếu có
-              if (data.length > 0) setSelectedCookbookId(data[0].ma_bo_suu_tap);
-          } catch (error) {
-              console.error("Lỗi lấy danh sách BST:", error);
-              if (error.response?.status === 401) {
-                  navigate('/login');
-              }
-          }
-      }
+      await fetchData(false);
+      alert(`Cảm ơn! Bạn đã đánh giá ${starValue} sao.`);
+    } catch (error) {
+      alert("Lỗi khi gửi đánh giá: " + (error.response?.data?.message || "Vui lòng thử lại"));
+    } finally {
+      setIsRating(false);
+      setHoverStar(0);
+    }
   };
 
-  // Lưu vào cookbook
-  const handleSaveToCookbook = async () => {
-      if (!selectedCookbookId) {
-          alert("Vui lòng chọn hoặc tạo bộ sưu tập mới!");
-          return;
-      }
-
+  const handleOpenModal = async () => {
+    const token = localStorage.getItem('ACCESS_TOKEN');
+    if (!token) {
+      alert("Vui lòng đăng nhập để lưu món ăn!");
+      navigate('/login');
+      return;
+    }
+    setShowModal(true);
+    if (myCookbooks.length === 0) {
       try {
-          setIsSaving(true);
-          await cookbookService.addRecipe(selectedCookbookId, id, ""); 
-          
-          alert("Đã lưu thành công!");
-          setShowModal(false);
+        const data = await cookbookService.getAll();
+        setMyCookbooks(data);
+        if (data.length > 0) setSelectedCookbookId(data[0].ma_bo_suu_tap);
       } catch (error) {
-          const msg = error.response?.data?.message || "Có lỗi xảy ra!";
-          alert("Lỗi: " + msg);
-      } finally {
-          setIsSaving(false);
+        console.error(error);
       }
+    }
   };
 
-  // Tạo nhanh cookbook mới trong modal
+  const handleSaveToCookbook = async () => {
+    if (!selectedCookbookId) {
+      alert("Vui lòng chọn hoặc tạo bộ sưu tập mới!");
+      return;
+    }
+    try {
+      setIsSaving(true);
+      await cookbookService.addRecipe(selectedCookbookId, id, ""); 
+      alert("Đã lưu thành công!");
+      setShowModal(false);
+    } catch (error) {
+      const msg = error.response?.data?.message || "Có lỗi xảy ra!";
+      alert("Lỗi: " + msg);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleCreateQuick = async () => {
-      const name = prompt("Nhập tên bộ sưu tập mới:");
-      if (name) {
-          try {
-              const newCollection = await cookbookService.create(name);
-              alert("Đã tạo mới!");
-              // Reload lại danh sách và chọn cái mới tạo
-              const all = await cookbookService.getAll();
-              setMyCookbooks(all);
-              
-              if (newCollection && newCollection.ma_bo_suu_tap) {
-                  setSelectedCookbookId(newCollection.ma_bo_suu_tap);
-              } else {
-                  setSelectedCookbookId(all[all.length - 1].ma_bo_suu_tap); 
-              }
-          } catch (e) {
-              alert("Lỗi tạo mới");
-          }
+    const name = prompt("Nhập tên bộ sưu tập mới:");
+    if (name) {
+      try {
+        const newCollection = await cookbookService.create(name);
+        alert("Đã tạo mới!");
+        const all = await cookbookService.getAll();
+        setMyCookbooks(all);
+        if (newCollection && newCollection.ma_bo_suu_tap) {
+          setSelectedCookbookId(newCollection.ma_bo_suu_tap);
+        } else {
+          setSelectedCookbookId(all[all.length - 1].ma_bo_suu_tap); 
+        }
+      } catch (e) {
+        alert("Lỗi tạo mới");
       }
+    }
   }
 
-  // --- RENDER ---
   if (loading) return <div className="loading-spinner">Đang tải công thức...</div>;
   if (!recipe) return <div className="error-msg">Không tìm thấy công thức!</div>;
 
-  // Xử lý hiển thị an toàn
   const coverImage = recipe.hinh_anh && recipe.hinh_anh.length > 0 
     ? `${STORAGE_URL}${recipe.hinh_anh[0].duong_dan}` 
     : 'https://via.placeholder.com/1200x600?text=No+Image';
@@ -153,8 +171,6 @@ const RecipeDetail = () => {
 
   return (
     <div className="recipe-detail-container">
-      
-      {/* --- HEADER --- */}
       <div className="recipe-hero">
         <img src={coverImage} alt={recipe.ten_mon} className="recipe-hero-img" />
         <div className="recipe-overlay">
@@ -178,17 +194,17 @@ const RecipeDetail = () => {
               <span className="meta-date">
                 <FaCalendarAlt /> {recipe.ngay_tao ? new Date(recipe.ngay_tao).toLocaleDateString('vi-VN') : 'Mới cập nhật'}
               </span>
-              <span className="meta-rating"><FaStar className="star-icon"/> 5.0/5</span>
+              <span className="meta-rating">
+                  <FaStar className="star-icon-fixed"/> {ratingStats.trung_binh}/5 ({ratingStats.tong_so_luot} đánh giá)
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* --- NỘI DUNG CHÍNH --- */}
       <div className="recipe-content-wrapper">
         <div className="recipe-main">
           
-          {/* Thông số nhanh */}
           <div className="recipe-stats-bar">
             <div className="stat-item">
                <span className="stat-label">Thời gian</span>
@@ -204,12 +220,38 @@ const RecipeDetail = () => {
             </div>
           </div>
 
-          {/* Mô tả & Actions */}
+          <section className="rating-section">
+              <h2 className="section-title" style={{fontSize: '18px', marginBottom:'15px'}}>
+                {ratingStats.diem_cua_toi > 0 ? "Đánh giá của bạn" : "Đánh giá món ăn này"}
+              </h2>
+              <div className={`star-rating-wrapper ${ratingStats.diem_cua_toi > 0 ? 'rated' : ''}`}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                      <FaStar
+                          key={star}
+                          className={`star-item ${star <= (hoverStar || ratingStats.diem_cua_toi) ? 'active' : ''} ${ratingStats.diem_cua_toi > 0 ? 'read-only' : ''}`}
+                          onMouseEnter={() => ratingStats.diem_cua_toi === 0 && setHoverStar(star)}
+                          onMouseLeave={() => ratingStats.diem_cua_toi === 0 && setHoverStar(0)}
+                          onClick={() => !isRating && ratingStats.diem_cua_toi === 0 && handleSubmitRating(star)}
+                          title={ratingStats.diem_cua_toi > 0 ? `Bạn đã đánh giá ${ratingStats.diem_cua_toi} sao` : `Đánh giá ${star} sao`}
+                      />
+                  ))}
+                  
+                  {isRating ? (
+                      <span className="rating-text">Đang gửi...</span>
+                  ) : (
+                      <span className="rating-text">
+                          {ratingStats.diem_cua_toi > 0 
+                              ? `Bạn đã đánh giá ${ratingStats.diem_cua_toi}/5 sao` 
+                              : "Hãy để lại đánh giá của bạn"}
+                      </span>
+                  )}
+              </div>
+          </section>
+
           <section className="section-block">
             <h2 className="section-title">Giới thiệu</h2>
             <p className="recipe-desc">{recipe.mo_ta}</p>
             
-            {/* Hiển thị Tags */}
             {recipe.the && recipe.the.length > 0 && (
                 <div className="recipe-tags-list">
                     {recipe.the.map(tag => (
@@ -218,14 +260,12 @@ const RecipeDetail = () => {
                 </div>
             )}
             
-            {/* Link Video */}
             {mainVideo && (
               <a href={mainVideo.duong_dan_video} target="_blank" rel="noopener noreferrer" className="btn-video-link">
                 <FaPlayCircle /> Xem Video Hướng Dẫn ({mainVideo.nen_tang})
               </a>
             )}
 
-            {/* BUTTONS ACTION */}
             <div className="recipe-actions">
               <button className="btn-action btn-save" onClick={handleOpenModal}>
                 <FaBookmark /> Thêm vào Bộ Sưu Tập
@@ -238,7 +278,6 @@ const RecipeDetail = () => {
 
           <div className="divider"></div>
 
-          {/* --- NGUYÊN LIỆU --- */}
           <section className="section-block">
             <h2 className="section-title">Nguyên liệu chuẩn bị</h2>
             <div className="ingredients-list">
@@ -258,7 +297,6 @@ const RecipeDetail = () => {
 
           <div className="divider"></div>
 
-          {/* --- CÁC BƯỚC --- */}
           <section className="section-block">
             <h2 className="section-title">Cách làm chi tiết</h2>
             <div className="steps-list">
@@ -288,7 +326,6 @@ const RecipeDetail = () => {
 
           <div className="divider"></div>
 
-          {/* --- BÌNH LUẬN --- */}
           <section className="section-block">
             <h2 className="section-title">Bình luận ({recipe.binh_luan?.length || 0})</h2>
             <div className="comments-list">
@@ -309,7 +346,6 @@ const RecipeDetail = () => {
         </div>
       </div>
 
-      {/* --- MODAL POPUP --- */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-box-save">
@@ -319,7 +355,6 @@ const RecipeDetail = () => {
             
             <h3>Lưu công thức vào...</h3>
             
-            {/* Preview nhỏ */}
             <div className="modal-preview">
                 <img src={coverImage} alt="" />
                 <p>{recipe.ten_mon}</p>

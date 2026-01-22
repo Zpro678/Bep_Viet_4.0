@@ -28,7 +28,7 @@ class NguoiDung extends Authenticatable
     {
         return $this->mat_khau;
     }
-
+    
     // Quan hệ 1-N: Người dùng có nhiều Công thức [cite: 302]
     public function congThuc()
     {

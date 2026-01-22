@@ -185,7 +185,7 @@ public function store(Request $request)
         'thoi_gian_nau' => 'required|integer|min:1',
         'khau_phan' => 'required|integer|min:1',
         'do_kho' => 'required|integer|between:1,5',
-        'hinh_anh_bia' => 'nullable|image|max:5120',
+        'hinh_anh_bia' => 'required|image|max:5120',
         
         // Validate mảng nguyên liệu
         'nguyen_lieu' => 'required|array',
@@ -211,7 +211,7 @@ public function store(Request $request)
         $congThuc = CongThuc::create([
             'ma_nguoi_dung' => $user->ma_nguoi_dung,
             'ma_danh_muc'   => $request->ma_danh_muc,
-            'ma_vung_mien'  => $request->ma_vung_mien, // Có thể null
+            'ma_vung_mien'  => $request->ma_vung_mien, 
             'ten_mon'       => $request->ten_mon,
             'mo_ta'         => $request->mo_ta,
             'trang_thai' => 'cho_duyet',
@@ -261,10 +261,8 @@ public function store(Request $request)
         if ($request->filled('tags')) {
             $tagIds = [];
             foreach ($request->tags as $tagName) {
-                // Logic: Tìm thẻ theo tên, nếu chưa có thì tạo mới
                 $tag = The::firstOrCreate(
                     ['ten_the' => trim($tagName)],
-                    // Nếu tạo mới thì thêm slug hoặc thuộc tính khác
                     ['slug' => Str::slug($tagName)] 
                 );
                 $tagIds[] = $tag->ma_the;
@@ -273,12 +271,9 @@ public function store(Request $request)
         }
 
         // --- BƯỚC 5: XỬ LÝ NGUYÊN LIỆU (Bảng trung gian cong_thuc_nguyen_lieu) ---
-        // Dữ liệu client gửi lên: [{ ten_nguyen_lieu: "Thịt bò", so_luong: 500, don_vi_tinh: "g" }, ...]
         foreach ($request->nguyen_lieu as $nlItem) {
-            // 5.1 Tìm hoặc Tạo mới nguyên liệu trong kho
             $nguyenLieu = NguyenLieu::firstOrCreate(
                 ['ten_nguyen_lieu' => trim($nlItem['ten_nguyen_lieu'])],
-                // Nếu cần thêm thuộc tính mặc định cho nguyen lieu moi thì them vao mang thu 2 nay
                 ['loai_nguyen_lieu' => $nlItem['loai_nguyen_lieu'] ?? 'Khác']
             );
 
@@ -291,7 +286,6 @@ public function store(Request $request)
         }
 
         // --- BƯỚC 6: XỬ LÝ CÁC BƯỚC THỰC HIỆN + ẢNH BƯỚC ---
-        // Lưu ý: Client cần gửi dạng array object. Nếu có file ảnh trong mảng thì hơi phức tạp với FormData.
         // Giả sử client gửi dạng: cac_buoc[0][noi_dung], cac_buoc[0][hinh_anh] (file)
         
         if ($request->has('cac_buoc')) {
@@ -299,13 +293,12 @@ public function store(Request $request)
                 // 6.1 Tạo bước
                 $buoc = BuocThucHien::create([
                     'ma_cong_thuc' => $congThuc->ma_cong_thuc,
-                    'so_thu_tu'       => $index + 1, // Tự động tăng thứ tự 1, 2, 3...
+                    'so_thu_tu'       => $index + 1, 
                     'noi_dung'     => $stepData['noi_dung']
                 ]);
 
                 // 6.2 Kiểm tra xem bước này có ảnh không
                 // Trong FormData: cac_buoc[0][hinh_anh]
-                // Laravel Request sẽ hứng được file 
                 if (isset($stepData['hinh_anh']) && $request->hasFile("cac_buoc.$index.hinh_anh")) {
                     $files = $request->file("cac_buoc.$index.hinh_anh");
                     
@@ -554,7 +547,7 @@ public function index(Request $request)
                     );
                     $tagIds[] = $tag->ma_the;
                 }
-                $congThuc->the()->sync($tagIds); // sync sẽ tự động xóa tag cũ không có trong mảng mới
+                $congThuc->the()->sync($tagIds); 
             }
     
             // --- BƯỚC 5: XỬ LÝ NGUYÊN LIỆU ---
@@ -576,8 +569,7 @@ public function index(Request $request)
     
             // --- BƯỚC 6: XỬ LÝ CÁC BƯỚC THỰC HIỆN (Xóa cũ tạo mới cho đơn giản) ---
             if ($request->has('cac_buoc')) {
-                // Cách đơn giản nhất để update các bước phức tạp là xóa đi tạo lại
-                // Nếu muốn tối ưu hơn, bạn cần so sánh ID từng bước
+    
                 $congThuc->cacBuoc()->delete(); 
     
                 foreach ($request->cac_buoc as $index => $stepData) {
