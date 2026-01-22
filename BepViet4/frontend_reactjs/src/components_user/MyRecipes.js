@@ -15,7 +15,7 @@ const MyRecipes = () => {
 
   const fetchMyRecipes = useCallback(async () => {
     try {
-      const storedUser = localStorage.getItem('user') || localStorage.getItem('user_info'); 
+      const storedUser = localStorage.getItem('USER');
       
       if (!storedUser) {
         alert("Bạn chưa đăng nhập!");

@@ -22,7 +22,7 @@ const MyCookbooks = () => {
       
       if (error.response && error.response.status === 401) {
           alert("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
-          localStorage.removeItem('access_token');
+          localStorage.removeItem('ACCESS_TOKEN');
           navigate('/login');
       }
     } finally {
@@ -31,7 +31,7 @@ const MyCookbooks = () => {
   }, [navigate]);
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem('ACCESS_TOKEN');
     if (!token) {
         alert("Vui lòng đăng nhập để xem bộ sưu tập!");
         navigate('/login');

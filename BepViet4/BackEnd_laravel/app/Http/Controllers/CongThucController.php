@@ -175,6 +175,71 @@ class CongThucController extends Controller
     ]);
 }
 
+public function exploreCongThuc($id)
+{
+    $maNguoiDung = $id;
+
+    $congThucs = CongThuc::query()
+        ->daDuyet() // scope cong_khai
+
+        ->with([
+            'nguoiTao:ma_nguoi_dung,ho_ten',
+            'hinhAnh' => function ($q) {
+                $q->orderBy('ma_hinh_anh')->limit(1);
+            }
+        ])
+
+        // kiểm tra người dùng hiện tại có follow người tạo không
+        ->withExists([
+            'nguoiTao as is_followed' => function ($q) use ($maNguoiDung) {
+                $q->whereExists(function ($sub) use ($maNguoiDung) {
+                    $sub->selectRaw(1)
+                        ->from('theo_doi')
+                        ->whereColumn(
+                            'theo_doi.ma_nguoi_duoc_theo_doi',
+                            'nguoi_dung.ma_nguoi_dung'
+                        )
+                        ->where('theo_doi.ma_nguoi_theo_doi', $maNguoiDung)
+                        ->where('theo_doi.trang_thai', 1);
+                });
+            }
+        ])
+
+        // ưu tiên người đang theo dõi
+        ->orderByDesc('is_followed')
+
+        ->orderByDesc('ngay_tao')
+
+        ->get()
+
+        // map lại dữ liệu trả cho FE
+        ->map(function ($ct) {
+            return [
+                'ma_cong_thuc'   => $ct->ma_cong_thuc,
+                'ten_mon'        => $ct->ten_mon,
+                'ten_nguoi_tao'  => $ct->nguoiTao->ho_ten ?? 'Ẩn danh',
+                'ngay_tao'       => $ct->ngay_tao,
+
+                // 🔥 xử lý ảnh ở đây
+                'hinh_anh' => (
+                    $ct->hinhAnh->first()
+                    && !empty($ct->hinhAnh->first()->duong_dan)
+                )
+                    ? $ct->hinhAnh->first()->duong_dan
+                    : 'https://images.unsplash.com/photo-1504674900247-0877df9cc836',
+
+            ];
+        });
+
+    return response()->json([
+        'status' => 'success',
+        'data'   => $congThucs
+    ]);
+}
+
+
+
+
 public function store(Request $request)
 {
     
