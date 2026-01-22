@@ -140,7 +140,7 @@ const AppRouter = ({ isLoggedIn, setIsLoggedIn, onLogout }) => {
       <Route path="/shopping-list" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><ShoppingList /></ProtectedRoute>} />
       <Route path="/create-recipe" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><CreateRecipe /></ProtectedRoute>} />
       <Route path="/edit-recipe/:id" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><EditRecipe /></ProtectedRoute>} />
-      <Route path="/user/:id" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><div>Trang xem user khác</div></ProtectedRoute>} />
+      <Route path="/user/:id" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><UserPublicProfile /></ProtectedRoute>} />
 
 
 
@@ -180,11 +180,11 @@ const AppRouter = ({ isLoggedIn, setIsLoggedIn, onLogout }) => {
         </ProtectedRoute>
       } />
 
-      <Route path="/user/:id" element={
+      {/* <Route path="/user/:id" element={
         <ProtectedRoute isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn}>
           <UserPublicProfile />
         </ProtectedRoute>
-      } />
+      } /> */}
 
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

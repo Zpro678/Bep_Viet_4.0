@@ -12,31 +12,23 @@ class TheoDoiController extends Controller
     {
         $currentUser = $request->user();
 
-        // Chưa đăng nhập
+        // Nếu không login hoặc tự xem chính mình thì luôn trả về false
         if (!$currentUser) {
-            return response()->json([
-                'status' => true,
-                'data' => [
-                    'is_following' => false
-                ]
-            ]);
+            return response()->json(['message' => 'Chưa login'], 401); // Nếu trả về 401 là do Token chưa tới được đây
         }
-
-        // Không cho tự check chính mình
+        
         if ($currentUser->ma_nguoi_dung == $id) {
             return response()->json([
-                'status' => true,
-                'data' => [
-                    'is_following' => false,
-                    'is_self' => true
-                ]
+                'status' => 'success',
+                'data' => ['is_following' => false]
             ]);
         }
 
+        // Gọi hàm từ Model đã viết ở trên
         $isFollowing = $currentUser->isFollowing($id);
 
         return response()->json([
-            'status' => true,
+            'status' => 'success',
             'data' => [
                 'is_following' => $isFollowing
             ]

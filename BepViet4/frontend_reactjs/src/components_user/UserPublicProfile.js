@@ -4,7 +4,7 @@ import { FaUserPlus } from 'react-icons/fa';
 import PostCard from './PostCard';
 import RecipeCard from './RecipeCard_1';
 import userApi from '../api/userApi';
-import postService  from '../services/postService';
+import postService from '../services/postService';
 import './CSS/UserPublicProfile.css';
 
 const TABS = {
@@ -13,46 +13,74 @@ const TABS = {
 };
 
 const UserPublicProfile = () => {
-    const { id } = useParams();
+    const { id } = useParams(); // lấy id từ url
 
-    const [user, setUser] = useState(null);
-    const [overview, setOverview] = useState(null);
-    const [posts, setPosts] = useState([]);
-    const [recipes, setRecipes] = useState([]);
-    const [activeTab, setActiveTab] = useState(TABS.RECIPES);
-    const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState(null); // user 
+    const [overview, setOverview] = useState(null); // thống kê
+    const [posts, setPosts] = useState([]); // bài viết
+    const [recipes, setRecipes] = useState([]); // công thức
+    const [isFollowing, setIsFollowing] = useState(false); // trạng tháo theo dõi
+    const [activeTab, setActiveTab] = useState(TABS.RECIPES); // tab được mở
+    const [loading, setLoading] = useState(true); // trạng thái tải dữ liệu
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                
+
+                const [userRes, overviewRes, recipeRes, followRes] = await Promise.all([
+                    userApi.getUserById(id),
+                    userApi.getUserOverview(id),
+                    userApi.getUserRecipes(id),
+                    userApi.checkFollowStatus(id)
+                ]);
+
+                // // lấy trạng thái theo dõi 
+                console.log("Dữ liệu follow trả về:", followRes);
+                setIsFollowing(Boolean(followRes?.data?.is_following));
+
+
                 // 1. Lấy thông tin chi tiết user
-                const userRes = await userApi.getUserById(id);
-                const userData = userRes.data; 
+                const userData = userRes.data;
                 setUser(userData);
 
                 // 2. Lấy Overview (Thống kê)
-                const overviewRes = await userApi.getUserOverview(id);
                 const overviewData = overviewRes.data?.ThongKe;
                 setOverview(overviewData);
 
-                // 3. Lấy danh sách công thức (Dựa trên API và Response bạn vừa gửi)
-                const recipeRes = await userApi.getUserRecipes(id);
-                // Vì response có cấu trúc: { status: "success", data: { data: [...] } }
-                // Nên ta lấy recipeRes.data.data
+                // 3. Lấy danh sách công thức 
                 if (recipeRes && recipeRes.data) {
                     setRecipes(recipeRes.data.data || []);
                 }
 
-                // 4. Kiểm tra vai trò: Nếu không phải member thì mới lấy bài viết
-                if (userData.vai_tro !== 'member') {
-                    const postRes = await postService.getPostByUser(id);
-                    setPosts(postRes.data || []);
+                // 4. Kiểm tra vai trò: Nếu là blogger thì mới lấy bài viết
+                if (userData.vai_tro === 'blogger') {
+                    const postRes = await userApi.getUserPosts(id);
+
+                    // lấy mảng bài viết
+                    if (postRes && postRes.data) {
+                        const postList = postRes.data.data || [];
+
+                        const mappedPosts = postList.map(post => ({
+                            id: post.id,
+                            content: post.noi_dung,
+                            image: post.hinh_anh,
+                            created_at: post.ngay_dang,
+                            likes_count: post.luot_yeu_thich,
+                            comments_count: post.luot_chia_se,
+                            user: {
+                                id: post.nguoi_dung.id,
+                                name: post.nguoi_dung.ho_ten,
+                                avatar: 'https://via.placeholder.com/40'
+                            }
+                        }));
+
+                        setPosts(mappedPosts);
+                    }
                 } else {
                     setActiveTab(TABS.RECIPES);
                 }
-                
+
             } catch (err) {
                 console.error("Lỗi khi tải hồ sơ:", err);
             } finally {
@@ -66,8 +94,46 @@ const UserPublicProfile = () => {
     if (loading) return <p>Đang tải hồ sơ người dùng...</p>;
     if (!user) return <p>Không tìm thấy người dùng</p>;
 
-    const isNotMember = user.vai_tro !== 'member';
+    const isNotMember = user.vai_tro === 'blogger';
 
+    // Lấy ID của tôi từ LocalStorage (Lưu ý: Key phải khớp với lúc bạn lưu khi Login)
+    const myData = JSON.parse(localStorage.getItem('user'));
+    const myId = myData?.ma_nguoi_dung || myData?.id;
+
+    // So sánh ID của tôi với ID trên URL (người đang xem)
+    const isSelf = String(myId) === String(id);
+
+    // xử lí nút follow
+    const handleFollow = async () => {
+        try {
+            if (isFollowing) {
+                await userApi.unfollowUser(id); // đang theo dõi -> hủy
+                setIsFollowing(false);
+
+                setOverview(prev => ({ // cập nhật thống kê
+                    ...prev,
+                    tong_nguoi_theo_doi: prev.tong_nguoi_theo_doi - 1
+                }));
+            } else {
+                await userApi.followUser(id);
+                setIsFollowing(true);
+
+                setOverview(prev => ({ // cập nhật thống kê
+                    ...prev,
+                    tong_nguoi_theo_doi: prev.tong_nguoi_theo_doi + 1
+                }));
+            }
+        } catch (err) {
+            const message =
+                err.response?.data?.message ||
+                'Có lỗi xảy ra, vui lòng thử lại';
+
+            alert(message);
+        }
+    };
+
+    //test
+    console.log("Render lại component với isFollowing =", isFollowing)
     return (
         <div className="public-profile">
             {/* ===== HEADER ===== */}
@@ -90,9 +156,14 @@ const UserPublicProfile = () => {
                         </div>
                     )}
 
-                    <button className="btn-follow">
-                        <FaUserPlus /> Theo dõi
+                    <button
+                        disabled={isSelf}
+                        className={`btn-follow ${isFollowing ? 'following' : ''}`}
+                        onClick={handleFollow}
+                    >
+                        {isSelf ? 'Đây là bạn' : isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
                     </button>
+
                 </div>
             </div>
 
@@ -120,12 +191,12 @@ const UserPublicProfile = () => {
                 {/* Tab Bài viết */}
                 {activeTab === TABS.POSTS && isNotMember && (
                     <div className="post-list">
-                        {posts.length ? (
+                        {posts.length > 0 ? (
                             posts.map(post => (
                                 <PostCard key={post.id} post={post} />
                             ))
                         ) : (
-                            <p>Chưa có bài viết</p>
+                            <p>sao Chưa có bài viết</p>
                         )}
                     </div>
                 )}

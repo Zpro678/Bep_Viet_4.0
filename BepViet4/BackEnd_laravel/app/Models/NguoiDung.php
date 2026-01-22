@@ -101,7 +101,7 @@ class NguoiDung extends Authenticatable
     public function isFollowing($userId)
     {
         return $this->dangTheoDoi()
-            ->where('nguoi_dung.ma_nguoi_dung', $userId)
+            ->where('ma_nguoi_duoc_theo_doi', $userId)
             ->exists();
     }
 }
