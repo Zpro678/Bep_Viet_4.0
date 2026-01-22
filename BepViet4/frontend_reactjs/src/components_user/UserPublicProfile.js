@@ -7,11 +7,12 @@ import userApi from '../api/userApi';
 import postService from '../services/postService';
 import './CSS/UserPublicProfile.css';
 
+const API_BASE_URL = 'http://127.0.0.1:8000'; 
+
 const TABS = {
     POSTS: 'posts',
     RECIPES: 'recipes',
 };
-
 const UserPublicProfile = () => {
     const { id } = useParams(); // lấy id từ url
 
@@ -34,7 +35,7 @@ const UserPublicProfile = () => {
                     userApi.getUserRecipes(id),
                     userApi.checkFollowStatus(id)
                 ]);
-
+               // console.log("Dữ liệu user trả về:", id);
                 // // lấy trạng thái theo dõi 
                 console.log("Dữ liệu follow trả về:", followRes);
                 setIsFollowing(Boolean(followRes?.data?.is_following));
@@ -50,8 +51,9 @@ const UserPublicProfile = () => {
 
                 // 3. Lấy danh sách công thức 
                 if (recipeRes && recipeRes.data) {
-                    setRecipes(recipeRes.data.data || []);
+                    setRecipes(recipeRes.data || []);
                 }
+                console.log("Công thức đã lấy:", recipeRes.data.data || []);
 
                 // 4. Kiểm tra vai trò: Nếu là blogger thì mới lấy bài viết
                 if (userData.vai_tro === 'blogger') {
@@ -74,6 +76,7 @@ const UserPublicProfile = () => {
                                 avatar: 'https://via.placeholder.com/40'
                             }
                         }));
+                      //  console.log("Bài viết đã map:", mappedPosts);
 
                         setPosts(mappedPosts);
                     }
@@ -190,33 +193,72 @@ const UserPublicProfile = () => {
             <div className="profile-content">
                 {/* Tab Bài viết */}
                 {activeTab === TABS.POSTS && isNotMember && (
-                    <div className="post-list">
-                        {posts.length > 0 ? (
-                            posts.map(post => (
-                                <PostCard key={post.id} post={post} />
-                            ))
-                        ) : (
-                            <p>sao Chưa có bài viết</p>
-                        )}
-                    </div>
-                )}
+    <div className="post-list">
+        {posts.length > 0 ? (
+            posts.map(post => {
+                // --- XỬ LÝ ĐƯỜNG DẪN ẢNH BÀI VIẾT ---
+                // Nếu API trả về đường dẫn tương đối (/storage/...) thì nối thêm domain vào
+                // Nếu null hoặc rỗng thì để null
+                const imageUrl = post.image 
+                    ? (post.image.startsWith('http') ? post.image : `${API_BASE_URL}${post.image}`)
+                    : null;
+
+                return (
+                    <PostCard 
+                        key={post.id} 
+                        post={{
+                            ...post,
+                            // Ghi đè lại trường image bằng link tuyệt đối
+                            image: imageUrl,
+                            // Đảm bảo các trường khác khớp với PostCard mong đợi
+                            // Ví dụ nếu PostCard dùng 'hinh_anh' thay vì 'image' thì map lại ở đây:
+                            // hinh_anh: imageUrl 
+                        }} 
+                    />
+                );
+            })
+        ) : (
+            <div className="empty-state">
+                <p>Chưa có bài viết nào</p>
+            </div>
+        )}
+    </div>
+)}
 
                 {/* Tab Công thức */}
                 {activeTab === TABS.RECIPES && (
-                    <div className="recipe-list-container">
-                        <div className="recipe-grid">
-                            {recipes.length > 0 ? (
-                                recipes.map(recipe => (
-                                    /* Truyền dữ liệu recipe vào Card */
-                                    /* Lưu ý: Card của bạn cần dùng đúng các trường: ten_mon, hinh_anh, do_kho... */
-                                    <RecipeCard key={recipe.id} recipe={recipe} />
-                                ))
-                            ) : (
-                                <p>Chưa có công thức nào</p>
-                            )}
-                        </div>
-                    </div>
-                )}
+    <div className="recipe-list-container">
+        <div className="recipe-grid">
+            {recipes.length > 0 ? (
+                recipes.map(recipe => {
+               
+                    const imageUrl = recipe.hinh_anh
+                        ? (recipe.hinh_anh.startsWith('http')
+                            ? recipe.hinh_anh
+                            : `${API_BASE_URL}/storage/${recipe.hinh_anh}`)
+                        : 'https://via.placeholder.com/300'; // Ảnh mặc định nếu null
+
+                    return (
+                        <RecipeCard
+                          
+                            key={recipe.ma_cong_thuc} 
+                            
+                            recipe={{
+                                ...recipe,
+                             
+                                hinh_anh: imageUrl 
+                            }}
+                        />
+                    );
+                })
+            ) : (
+                <div className="empty-state" style={{ width: '100%', gridColumn: '1 / -1' }}>
+                    <p>Chưa có công thức nào</p>
+                </div>
+            )}
+        </div>
+    </div>
+)}
             </div>
         </div>
     );

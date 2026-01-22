@@ -135,9 +135,11 @@ const UserProfile = () => {
       await userApi.updateProfile({
         ho_ten: userInfo.fullName,
         email: userInfo.email,
+        mat_khau_cu: passwords.current,
         // so_dien_thoai: userInfo.phone,
         // ngay_sinh: userInfo.birthDate,
         mat_khau: passwords.new
+
       });
 
       alert('Đổi mật khẩu thành công');

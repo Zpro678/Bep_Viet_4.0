@@ -29,10 +29,10 @@ class NguoiDungController extends Controller
         $user = $request->user(); // Lấy user hiện tại từ Token
 
         $validator = Validator::make($request->all(), [
-            'ho_ten' => 'required|string|max:255',
+            'ho_ten' => 'nullable|string|max:255',
            
            'email' => [
-                'required',
+                'nullable',
                 'email',
                 // Rule::unique(NguoiDung::class)->ignore($user->id) // Email phải là duy nhất, nhưng trừ user hiện tại
                 Rule::unique('nguoi_dung', 'email')
@@ -50,11 +50,14 @@ class NguoiDungController extends Controller
             ], 422);
         }
 
-        $user->ho_ten = $request->ho_ten;
-        $user->email = $request->email;
-        // $user->so_dien_thoai = $request->so_dien_thoai;
-        $user->ngay_sinh = $request->ngay_sinh;
-
+        if ($request->has('ho_ten')) {
+            $user->ho_ten = $request->ho_ten;
+        }
+        
+        if ($request->has('email')) {
+            $user->email = $request->email;
+        }
+        
         if ($request->has('ngay_sinh')) {
             $user->ngay_sinh = $request->ngay_sinh;
         }
