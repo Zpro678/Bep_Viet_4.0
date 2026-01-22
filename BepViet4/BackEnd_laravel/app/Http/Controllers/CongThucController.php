@@ -150,91 +150,194 @@ class CongThucController extends Controller
             'data'   => $data
         ]);
     }
+
+
+    public function exploreCongThuc($id)
+    {
+        $maNguoiDung = $id;
+
+        $congThucs = CongThuc::query()
+            ->daDuyet() // scope cong_khai
+
+            ->with([
+                'nguoiTao:ma_nguoi_dung,ho_ten',
+                'hinhAnh' => function ($q) {
+                    $q->orderBy('ma_hinh_anh')->limit(1);
+                }
+            ])
+
+            // kiểm tra người dùng hiện tại có follow người tạo không
+            ->withExists([
+                'nguoiTao as is_followed' => function ($q) use ($maNguoiDung) {
+                    $q->whereExists(function ($sub) use ($maNguoiDung) {
+                        $sub->selectRaw(1)
+                            ->from('theo_doi')
+                            ->whereColumn(
+                                'theo_doi.ma_nguoi_duoc_theo_doi',
+                                'nguoi_dung.ma_nguoi_dung'
+                            )
+                            ->where('theo_doi.ma_nguoi_theo_doi', $maNguoiDung)
+                            ->where('theo_doi.trang_thai', 1);
+                    });
+                }
+            ])
+
+            // ưu tiên người đang theo dõi
+            ->orderByDesc('is_followed')
+
+            ->orderByDesc('ngay_tao')
+
+            ->get()
+
+            // map lại dữ liệu trả cho FE
+            ->map(function ($ct) {
+                return [
+                    'ma_cong_thuc'  => $ct->ma_cong_thuc,
+                    'ten_mon'       => $ct->ten_mon,
+                    'ten_nguoi_tao' => $ct->nguoiTao->ho_ten ?? 'Ẩn danh',
+                    'ngay_tao'      => $ct->ngay_tao,
+                    'hinh_anh'      => optional($ct->hinhAnh->first())->duong_dan
+                        ?? 'https://images.unsplash.com/photo-1504674900247-0877df9cc836',
+                ];
+            });
+
+        return response()->json([
+            'status' => 'success',
+            'data'   => $congThucs
+        ]);
+    }
+
     
 
     // ========================= Lấy bảng tin (news feed) cho người dùng theo dõi ===================================
     public function getNewsFeed(Request $request)
+    {
+        $currentUser = $request->user();
+        
+        // Lấy danh sách ID người đang theo dõi
+        $followingIds = $currentUser->dangTheoDoi()->pluck('nguoi_dung.ma_nguoi_dung')->toArray();
+        $idsString = !empty($followingIds) ? implode(',', $followingIds) : '0';
+
+        
+        $recipesQuery = DB::table('cong_thuc')
+            ->select(
+                'ma_cong_thuc as id', 
+                'ma_nguoi_dung', 
+                'created_at', 
+                DB::raw('"CongThuc" as type')
+            )
+            ->where('ma_nguoi_dung', '!=', $currentUser->ma_nguoi_dung)
+            ->where('trang_thai', 'cong_khai'); 
+
+    
+        $postsQuery = DB::table('bai_viet')
+            ->select(
+                'ma_bai_viet as id', 
+                'ma_nguoi_dung', 
+                'created_at', 
+                DB::raw('"BaiViet" as type') 
+            )
+            ->where('ma_nguoi_dung', '!=', $currentUser->ma_nguoi_dung);
+            // ->where('trang_thai', 'cong_khai');
+
+        // Union và Sắp xếp 
+        $combinedQuery = $recipesQuery->union($postsQuery)
+            ->orderByRaw("CASE WHEN ma_nguoi_dung IN ($idsString) THEN 1 ELSE 0 END DESC") 
+            ->orderBy('created_at', 'desc');
+
+        $paginatedFeed = $combinedQuery->paginate(10);
+
+        // Transform dữ liệu
+        $paginatedFeed->getCollection()->transform(function ($item) use ($currentUser) {
+            if ($item->type === 'CongThuc') {
+                
+                // Lấy chi tiết công thức
+                $fullData = CongThuc::with('nguoiTao')
+                    ->withCount('luotThich')
+                    ->where('trang_thai', 'cong_khai')
+                    ->find($item->id);
+                    
+                if ($fullData) {
+                    $fullData->is_liked = $fullData->luotThich()
+                        ->where('ma_nguoi_dung', $currentUser->ma_nguoi_dung)
+                        ->exists();
+                    $fullData->type = 'CongThuc';
+                    
+                    // Clean up output (chỉ lấy hình đầu tiên )
+                    $fullData->hinh_anh_dau_tien = $fullData->hinhAnh->first() ? $fullData->hinhAnh->first()->duong_dan : null;
+                    unset($fullData->hinhAnh); // Xóa mảng hình ảnh gốc cho gọn JSON
+                }
+                return $fullData;
+                
+            } else {
+                
+                $fullData = BaiViet::with('nguoiTao')
+                    ->withCount('luotThich')
+                    ->find($item->id);
+                    
+                if ($fullData) {
+                    $fullData->is_liked = $fullData->luotThich()
+                        ->where('ma_nguoi_dung', $currentUser->ma_nguoi_dung)
+                        ->exists();
+                    $fullData->type = 'BaiViet';
+                }
+                return $fullData;
+            }
+        });
+
+        
+        $cleanData = $paginatedFeed->getCollection()->filter()->values();
+        $paginatedFeed->setCollection($cleanData);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $paginatedFeed
+        ]);
+    }
+
+    // CongThucController.php
+
+public function getCongThucCuaToi($id)
 {
-    $currentUser = $request->user();
-    
-    // Lấy danh sách ID người đang theo dõi
-    $followingIds = $currentUser->dangTheoDoi()->pluck('nguoi_dung.ma_nguoi_dung')->toArray();
-    $idsString = !empty($followingIds) ? implode(',', $followingIds) : '0';
-
-    
-    $recipesQuery = DB::table('cong_thuc')
-        ->select(
-            'ma_cong_thuc as id', 
-            'ma_nguoi_dung', 
-            'created_at', 
-            DB::raw('"CongThuc" as type')
-        )
-        ->where('ma_nguoi_dung', '!=', $currentUser->ma_nguoi_dung)
-        ->where('trang_thai', 'cong_khai'); 
-
-   
-    $postsQuery = DB::table('bai_viet')
-        ->select(
-            'ma_bai_viet as id', 
-            'ma_nguoi_dung', 
-            'created_at', 
-            DB::raw('"BaiViet" as type') 
-        )
-        ->where('ma_nguoi_dung', '!=', $currentUser->ma_nguoi_dung);
-        // ->where('trang_thai', 'cong_khai');
-
-    // Union và Sắp xếp 
-    $combinedQuery = $recipesQuery->union($postsQuery)
-        ->orderByRaw("CASE WHEN ma_nguoi_dung IN ($idsString) THEN 1 ELSE 0 END DESC") 
-        ->orderBy('created_at', 'desc');
-
-    $paginatedFeed = $combinedQuery->paginate(10);
-
-    // Transform dữ liệu
-    $paginatedFeed->getCollection()->transform(function ($item) use ($currentUser) {
-        if ($item->type === 'CongThuc') {
-            
-            // Lấy chi tiết công thức
-            $fullData = CongThuc::with('nguoiTao')
-                ->withCount('luotThich')
-                ->where('trang_thai', 'cong_khai')
-                ->find($item->id);
-                
-            if ($fullData) {
-                 $fullData->is_liked = $fullData->luotThich()
-                     ->where('ma_nguoi_dung', $currentUser->ma_nguoi_dung)
-                     ->exists();
-                 $fullData->type = 'CongThuc';
-                 
-                 // Clean up output (chỉ lấy hình đầu tiên )
-                 $fullData->hinh_anh_dau_tien = $fullData->hinhAnh->first() ? $fullData->hinhAnh->first()->duong_dan : null;
-                 unset($fullData->hinhAnh); // Xóa mảng hình ảnh gốc cho gọn JSON
+    // 1. Query: Lấy công thức CỦA NGƯỜI DÙNG ĐÓ ($id)
+    // Lưu ý: Không dùng scope daDuyet() vì mình muốn xem cả bài đang chờ duyệt của mình
+    $query = CongThuc::where('ma_nguoi_dung', $id)
+        ->with([
+            'hinhAnh' => function ($q) {
+                $q->orderBy('ma_hinh_anh')->limit(1);
             }
-            return $fullData;
-            
-        } else {
-            
-            $fullData = BaiViet::with('nguoiTao')
-                ->withCount('luotThich')
-                ->find($item->id);
-                
-            if ($fullData) {
-                 $fullData->is_liked = $fullData->luotThich()
-                     ->where('ma_nguoi_dung', $currentUser->ma_nguoi_dung)
-                     ->exists();
-                 $fullData->type = 'BaiViet';
+        ])
+        ->orderByDesc('ngay_tao'); // Bài mới nhất lên đầu
+
+    $congThucs = $query->get();
+
+    // 2. Map dữ liệu để trả về format JSON
+    $data = $congThucs->map(function ($ct) {
+        // Xử lý ảnh
+        $imgUrl = null; // Mặc định null hoặc link ảnh placeholder
+        if ($ct->hinhAnh && $ct->hinhAnh->isNotEmpty()) {
+            $firstImg = $ct->hinhAnh->first();
+            if (!empty($firstImg->duong_dan)) {
+                $imgUrl = $firstImg->duong_dan;
             }
-            return $fullData;
         }
-    });
 
-    
-    $cleanData = $paginatedFeed->getCollection()->filter()->values();
-    $paginatedFeed->setCollection($cleanData);
+        return [
+            'id'            => $ct->ma_cong_thuc, // Map sang 'id' cho tiện frontend
+            'ma_cong_thuc'  => $ct->ma_cong_thuc,
+            'ten_mon'       => $ct->ten_mon,
+            'thoi_gian_nau' => $ct->thoi_gian_nau, // Frontend cần field này
+            'do_kho'        => $ct->do_kho,        // Frontend cần field này
+            'ngay_tao'      => $ct->ngay_tao,
+            'created_at'    => $ct->created_at,
+            'hinh_anh'      => $imgUrl,
+            'trang_thai'    => $ct->trang_thai,    // Cần để biết bài đã duyệt chưa
+        ];
+    });
 
     return response()->json([
         'status' => 'success',
-        'data' => $paginatedFeed
+        'data'   => $data
     ]);
 }
 
@@ -885,58 +988,58 @@ public function index(Request $request)
     }
 
     
-    public function exploreCongThuc($id)
-{
-    $maNguoiDung = $id;
+//     public function exploreCongThuc($id)
+// {
+//     $maNguoiDung = $id;
 
-    $congThucs = CongThuc::query()
-        ->daDuyet() // scope cong_khai
+//     $congThucs = CongThuc::query()
+//         ->daDuyet() // scope cong_khai
 
-        ->with([
-            'nguoiTao:ma_nguoi_dung,ho_ten',
-            'hinhAnh' => function ($q) {
-                $q->orderBy('ma_hinh_anh')->limit(1);
-            }
-        ])
+//         ->with([
+//             'nguoiTao:ma_nguoi_dung,ho_ten',
+//             'hinhAnh' => function ($q) {
+//                 $q->orderBy('ma_hinh_anh')->limit(1);
+//             }
+//         ])
 
-        // kiểm tra người dùng hiện tại có follow người tạo không
-        ->withExists([
-            'nguoiTao as is_followed' => function ($q) use ($maNguoiDung) {
-                $q->whereExists(function ($sub) use ($maNguoiDung) {
-                    $sub->selectRaw(1)
-                        ->from('theo_doi')
-                        ->whereColumn(
-                            'theo_doi.ma_nguoi_duoc_theo_doi',
-                            'nguoi_dung.ma_nguoi_dung'
-                        )
-                        ->where('theo_doi.ma_nguoi_theo_doi', $maNguoiDung)
-                        ->where('theo_doi.trang_thai', 1);
-                });
-            }
-        ])
+//         // kiểm tra người dùng hiện tại có follow người tạo không
+//         ->withExists([
+//             'nguoiTao as is_followed' => function ($q) use ($maNguoiDung) {
+//                 $q->whereExists(function ($sub) use ($maNguoiDung) {
+//                     $sub->selectRaw(1)
+//                         ->from('theo_doi')
+//                         ->whereColumn(
+//                             'theo_doi.ma_nguoi_duoc_theo_doi',
+//                             'nguoi_dung.ma_nguoi_dung'
+//                         )
+//                         ->where('theo_doi.ma_nguoi_theo_doi', $maNguoiDung)
+//                         ->where('theo_doi.trang_thai', 1);
+//                 });
+//             }
+//         ])
 
-        // ưu tiên người đang theo dõi
-        ->orderByDesc('is_followed')
+//         // ưu tiên người đang theo dõi
+//         ->orderByDesc('is_followed')
 
-        ->orderByDesc('ngay_tao')
+//         ->orderByDesc('ngay_tao')
 
-        ->get()
+//         ->get()
 
-        // map lại dữ liệu trả cho FE
-        ->map(function ($ct) {
-            return [
-                'ma_cong_thuc'  => $ct->ma_cong_thuc,
-                'ten_mon'       => $ct->ten_mon,
-                'ten_nguoi_tao' => $ct->nguoiTao->ho_ten ?? 'Ẩn danh',
-                'ngay_tao'      => $ct->ngay_tao,
-                'hinh_anh'      => optional($ct->hinhAnh->first())->duong_dan
-                    ?? 'https://images.unsplash.com/photo-1504674900247-0877df9cc836',
-            ];
-        });
+//         // map lại dữ liệu trả cho FE
+//         ->map(function ($ct) {
+//             return [
+//                 'ma_cong_thuc'  => $ct->ma_cong_thuc,
+//                 'ten_mon'       => $ct->ten_mon,
+//                 'ten_nguoi_tao' => $ct->nguoiTao->ho_ten ?? 'Ẩn danh',
+//                 'ngay_tao'      => $ct->ngay_tao,
+//                 'hinh_anh'      => optional($ct->hinhAnh->first())->duong_dan
+//                     ?? 'https://images.unsplash.com/photo-1504674900247-0877df9cc836',
+//             ];
+//         });
 
-    return response()->json([
-        'status' => 'success',
-        'data'   => $congThucs
-    ]);
-}
+//     return response()->json([
+//         'status' => 'success',
+//         'data'   => $congThucs
+//     ]);
+// }
 }
