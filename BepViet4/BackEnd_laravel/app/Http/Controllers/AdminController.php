@@ -8,8 +8,10 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App\Models\CongThuc;
 use App\Models\NguoiDung;
+use App\Models\BaiViet;
 use Illuminate\Support\Facades\DB;
-
+use Carbon\Carbon;
+use Exception;
 
 class AdminController extends Controller
 {
@@ -92,8 +94,6 @@ public function getDanhSachNguoiDung(Request $request)
             $query->where('vai_tro', $request->role);
         }
 
-        // 3. Lọc theo trạng thái (giả sử bảng có cột trang_thai: 'active', 'blocked')
-        // Nếu bảng chưa có cột này, bạn cần thêm vào DB hoặc bỏ qua
         if ($request->status && $request->status !== 'All') {
             $query->where('trang_thai', $request->status);
         }
@@ -129,21 +129,13 @@ public function getDanhSachNguoiDung(Request $request)
     $user->mat_khau      = Hash::make($request->mat_khau);
     $user->ho_ten        = $request->ho_ten;
     $user->vai_tro       = $request->vai_tro;
-    
-    // 3. Xử lý giới tính (DB cho phép NULL, React gửi 'nam'/'nu'/'khac')
-    // Chú ý: Kiểm tra xem DB enum giới tính là 'Nam', 'Nữ' (có dấu) hay không dấu?
-    // Nếu DB là 'Nam', 'Nữ' mà React gửi 'nam' (thường) cũng có thể bị lỗi.
-    // Tốt nhất nên chuẩn hóa:
+
     $gioi_tinh_map = [
         'nam' => 'Nam',
-        'nu' => 'Nữ', // Nếu DB lưu tiếng Việt có dấu
+        'nu' => 'Nữ', 
         'khac' => 'Khác'
     ];
     $user->gioi_tinh     = $gioi_tinh_map[$request->gioi_tinh] ?? 'Khác';
-
-    // BỎ DÒNG NÀY ĐI VÌ DB KHÔNG CÓ CỘT trang_thai
-    // $user->trang_thai    = 'active'; 
-
     $user->save();
 
     return response()->json(['message' => 'Tạo người dùng thành công!', 'user' => $user]);
@@ -154,7 +146,6 @@ public function getDanhSachNguoiDung(Request $request)
         $user = NguoiDung::find($id);
         if (!$user) return response()->json(['message' => 'Không tìm thấy user'], 404);
 
-        // Toggle: active <-> blocked
         $user->trang_thai = ($user->trang_thai === 'active') ? 'blocked' : 'active';
         $user->save();
 
@@ -169,4 +160,85 @@ public function getDanhSachNguoiDung(Request $request)
         $user->delete();
         return response()->json(['message' => 'Đã xóa người dùng vĩnh viễn']);
     }
+
+    public function getDashboardStats()
+{
+    try {
+        $totalUsers = NguoiDung::count();
+        
+        // --- SỬA Ở ĐÂY ---
+        // Chỉ đếm công thức đã công khai
+        $totalRecipes = CongThuc::where('trang_thai', 'cong_khai')->count(); 
+        
+        $pendingRecipes = CongThuc::where('trang_thai', 'cho_duyet')->count();
+        $totalBlogs = BaiViet::count(); 
+
+        try {
+            $violationReports = DB::table('bao_cao')->count();
+        } catch (Exception $e) {
+            $violationReports = 0;
+        }
+
+        // Xử lý biểu đồ (Cũng nên filter chỉ lấy cái đã duyệt nếu muốn chính xác tuyệt đối)
+        $sample = CongThuc::first();
+        $columnDate = 'created_at';
+        if ($sample && !$sample->created_at && $sample->ngay_tao) {
+            $columnDate = 'ngay_tao';
+        }
+
+        $chartData = CongThuc::select(
+                DB::raw("DATE($columnDate) as date"), 
+                DB::raw('count(*) as value')
+            )
+            ->where('trang_thai', 'cong_khai') // <--- NÊN THÊM: Chỉ thống kê biểu đồ cho bài đã duyệt
+            ->where($columnDate, '>=', Carbon::now()->subDays(365)) 
+            ->groupBy('date')
+            ->orderBy('date', 'ASC')
+            ->get();
+
+        try {
+            // Xử lý danh mục (Cũng filter theo trạng thái công khai)
+            $popularCategories = DB::table('danh_muc')
+                ->join('cong_thuc', 'danh_muc.ma_danh_muc', '=', 'cong_thuc.ma_danh_muc')
+                ->where('cong_thuc.trang_thai', 'cong_khai') // <--- NÊN THÊM
+                ->select(
+                    'danh_muc.ten_danh_muc as name', 
+                    DB::raw('count(cong_thuc.ma_cong_thuc) as count')
+                )
+                ->groupBy('danh_muc.ma_danh_muc', 'danh_muc.ten_danh_muc')
+                ->orderByDesc('count')
+                ->limit(4)
+                ->get();
+        } catch (Exception $e) {
+            $popularCategories = collect([]); 
+        }
+
+        $popularCategories = $popularCategories->map(function($item) use ($totalRecipes) {
+            // Tránh chia cho 0
+            $item->percent = $totalRecipes > 0 ? round(($item->count / $totalRecipes) * 100) : 0;
+            return $item;
+        });
+
+        return response()->json([
+            'counts' => [
+                'users' => $totalUsers,
+                'recipes' => $totalRecipes,
+                'pending' => $pendingRecipes,
+                'blogs' => $totalBlogs, 
+                'reports' => $violationReports
+            ],
+            'chart' => $chartData,
+            'categories' => $popularCategories
+        ]);
+
+    } catch (Exception $e) {
+        return response()->json([
+            'message' => 'Lỗi Backend: ' . $e->getMessage(),
+            'line' => $e->getLine(),
+            'file' => $e->getFile()
+        ], 500);
+    }
 }
+
+}
+

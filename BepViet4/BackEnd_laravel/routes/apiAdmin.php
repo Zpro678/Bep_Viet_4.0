@@ -12,6 +12,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/users', [AdminController::class, 'taoNguoiDung']);        // Tạo mới
     Route::put('/admin/users/{id}/status', [AdminController::class, 'doiTrangThaiNguoiDung']); // Khóa/Mở khóa
     Route::delete('/admin/users/{id}', [AdminController::class, 'xoaNguoiDung']);
-
+    Route::get('/admin/dashboard-stats', [AdminController::class, 'getDashboardStats']);
 });
 

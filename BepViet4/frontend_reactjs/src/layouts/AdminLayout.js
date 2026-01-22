@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
+import { FaUtensils } from 'react-icons/fa';
 import './CSS/AdminLayout.css'; 
 
 const SIDEBAR_ITEMS = [
@@ -9,9 +10,6 @@ const SIDEBAR_ITEMS = [
 ];
 
 const CATEGORY_ITEMS = [
-  // { label: 'Loại món ăn', path: '/admin/categories/types', icon: 'restaurant' },
-  // { label: 'Bữa ăn', path: '/admin/categories/meals', icon: 'schedule' },
-  // { label: 'Chế độ ăn', path: '/admin/categories/diets', icon: 'spa' },
   { label: 'Nguyên liệu', path: '/admin/categories/ingredients', icon: 'egg' },
 ];
 
@@ -23,21 +21,25 @@ const AdminLayout = ({ onLogout }) => {
 
   return (
     <div className="admin-wrapper">
-      {/* SIDEBAR */}
       <aside className={`admin-sidebar ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-        {/* Logo */}
         <div className="sidebar-header">
-          <div className="logo-icon">
-            <span className="material-icons-round">soup_kitchen</span>
-          </div>
-          <span className="logo-text">CookSpace</span>
-          {/* Nút đóng menu trên mobile */}
+          <Link 
+            to="/admin/dashboard" 
+            className="logo-section" 
+            style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '10px' }}
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <FaUtensils size={24} color="#f97316" /> 
+            </div>
+            <span className="logo-text" style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>Bếp Việt 4.0</span>
+          </Link>
+
           <button className="btn-close-mobile" onClick={() => setIsMobileMenuOpen(false)}>
              <span className="material-icons-round">close</span>
           </button>
         </div>
 
-        {/* Menu Items */}
         <nav className="sidebar-nav">
           {SIDEBAR_ITEMS.map((item) => (
             <Link
@@ -67,7 +69,6 @@ const AdminLayout = ({ onLogout }) => {
           ))}
         </nav>
 
-        {/* Footer Sidebar */}
         <div className="sidebar-footer">
           <Link to="/admin/settings" className="nav-item footer-link">
             <span className="material-icons-round">settings</span>
@@ -91,23 +92,21 @@ const AdminLayout = ({ onLogout }) => {
         </div>
       </aside>
 
-      {/* Overlay cho Mobile khi mở menu */}
       {isMobileMenuOpen && <div className="mobile-overlay" onClick={() => setIsMobileMenuOpen(false)}></div>}
 
-      {/* MAIN CONTENT */}
       <div className="main-content">
-        {/* Header Mobile (Chỉ hiện khi màn hình nhỏ) */}
         <header className="mobile-header">
           <div className="mobile-brand">
-             <span className="material-icons-round logo-mini">soup_kitchen</span>
-             <strong>CookSpace</strong>
+             <Link to="/admin/dashboard" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FaUtensils size={20} color="#f97316" />
+                <strong>Bếp Việt 4.0</strong>
+             </Link>
           </div>
           <button className="btn-menu-toggle" onClick={() => setIsMobileMenuOpen(true)}>
             <span className="material-icons-round">menu</span>
           </button>
         </header>
 
-        {/* Nơi nội dung trang con hiển thị */}
         <div className="page-container">
           <Outlet />
         </div>

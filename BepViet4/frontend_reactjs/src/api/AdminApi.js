@@ -29,8 +29,10 @@ const  AdminApi = {
     },
     deleteUser: (id) => {
         return axiosClient.delete(`/admin/users/${id}`);
-    }
-    
+    },
+    getDashboardStats: () => {
+        return axiosClient.get('/admin/dashboard-stats');
+    },
 }
 
 export default AdminApi;
