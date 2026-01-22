@@ -21,11 +21,13 @@ const Explore = () => {
     const fetchRecipes = async () => {
       try {
         setLoading(true);
-        const response = await feedApi.getExploreRecipes(userId);
+        // userId có thể là null (khách) hoặc ID (user), API vẫn chạy tốt
+        const response = await feedApi.getExploreRecipes(userId); 
 
         console.log("🔍 API Response:", response);
 
         let rawList = [];
+        // (Giữ nguyên đoạn xử lý data của bạn ở đây...)
         if (response?.data?.data && Array.isArray(response.data.data)) {
             rawList = response.data.data;
         } else if (response?.data && Array.isArray(response.data)) {
@@ -52,13 +54,13 @@ const Explore = () => {
         console.error('❌ Lỗi:', err);
         setError('Không thể tải danh sách món ăn.');
       } finally {
-        setLoading(false);
+        setLoading(false); // Dù lỗi hay không cũng phải tắt loading
       }
     };
 
-    if (userId) {
-      fetchRecipes();
-    }
+    // --- SỬA Ở ĐÂY: Bỏ if(userId), gọi luôn! ---
+    fetchRecipes(); 
+    
   }, [userId]);
 
   const handleSave = (e, recipeId) => {

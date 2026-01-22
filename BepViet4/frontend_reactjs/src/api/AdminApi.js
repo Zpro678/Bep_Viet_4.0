@@ -3,7 +3,7 @@ import axiosClient from '../api/axiosClient';
 const  AdminApi = {
 
     getCongThucDangChoDuyet:()=>{
-        const url = `/recipes/getDanhSachChoDuyet`;
+        const url = `/admin/recipes/getDanhSachChoDuyet`;
         return axiosClient.get(url);
     },
     /** 
@@ -14,7 +14,7 @@ const  AdminApi = {
     },
     // Duyệt hoặc Từ chối (status: 'cong_khai' | 'tu_choi')
     updateStatus: (id, status) => {
-        return axiosClient.put(`/recipes/${id}/duyetCT`, { status });
+        return axiosClient.put(`/admin/recipes/${id}/duyetCT`, { status });
     },
 
     // API User

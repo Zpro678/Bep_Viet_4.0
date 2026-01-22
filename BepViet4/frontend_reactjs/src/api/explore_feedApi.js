@@ -1,9 +1,14 @@
-// src/api/feedApi.js
 import axiosClient from './axiosClient';
 
 const feedApi = {
-    getExploreRecipes: (userId, page = 1) => {
-        return axiosClient.get(`/users/${userId}/explore/recipes?page=${page}`);
+    getExploreRecipes: (userId = null, page = 1) => {
+        // Nếu có userId → dùng route có auth
+        // Nếu không → dùng route public
+        const url = userId 
+            ? `/users/${userId}/explore/recipes?page=${page}`
+            : `/explore/recipes?page=${page}`;
+            
+        return axiosClient.get(url);
     },
 };
 

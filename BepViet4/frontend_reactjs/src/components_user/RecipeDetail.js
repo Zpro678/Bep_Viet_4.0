@@ -1,13 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  FaClock, FaUserFriends, FaFire, FaMapMarkerAlt, FaUtensils, 
-  FaPlayCircle, FaCalendarAlt, FaStar, FaBookmark, FaListAlt, 
-  FaTimes, FaPlus 
+import React, { useEffect, useState } from 'react';
+import {
+  FaBookmark,
+  FaCalendarAlt,
+  FaClock,
+  FaFire,
+  FaListAlt,
+  FaMapMarkerAlt,
+  FaPlayCircle,
+  FaPlus,
+  FaStar,
+  FaTimes,
+  FaUserFriends,
+  FaUtensils
 } from 'react-icons/fa';
+import { useNavigate, useParams } from 'react-router-dom';
 
 // Import API
-import { recipeDetailService } from '../api/recipeDetailServiceApi';
+import  recipeDetailService  from '../api/recipeDetailService';
 import { cookbookService } from '../services/cookbookService';
 
 import './CSS/RecipeDetail.css';

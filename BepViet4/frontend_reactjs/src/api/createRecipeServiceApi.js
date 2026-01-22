@@ -1,6 +1,6 @@
 import axiosClient from '../api/axiosClient';
 
-export const createRecipeService = {
+ const createRecipeService = {
   /**
    * API tạo công thức mới
    * @param {FormData} 
@@ -13,4 +13,21 @@ export const createRecipeService = {
       },
     });
   },
+
+  update: (id, formData) => {
+    return axiosClient.post(`/recipes/${id}/update`, formData, {
+      headers: {
+                'Content-Type': 'multipart/form-data', // Bắt buộc cho file upload
+            }
+    });
+  },
+
+  delete: (id) => {
+  
+    return axiosClient.delete(`/recipes/${id}/destroy`);
+  },
 };
+
+
+
+export default createRecipeService;

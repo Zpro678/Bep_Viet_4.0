@@ -45,7 +45,7 @@ const AdminRecipeApproval = () => {
         try {
             await AdminApi.updateStatus(id, status);
             
-            // Thành công -> Xóa khỏi list và đóng modal
+           
             setPendingRecipes(prev => prev.filter(item => (item.id || item.ma_cong_thuc) !== id));
             setSelectedRecipe(null);
             alert(`Đã ${actionName.toLowerCase()} thành công!`);
