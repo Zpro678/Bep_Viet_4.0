@@ -14,9 +14,10 @@ import Login from '../components_user/Login';
 import Register from '../components_user/Register';
 import ForgotPassword from '../components_user/ForgotPassword';
 import UserProfile from '../components_user/UserProfile';
+import UserPublicProfile from '../components_user/UserPublicProfile';
 import MyCookbooks from '../components_user/MyCookbooks';
 import CookbookDetail from '../components_user/CookbookDetail';
-import MealPlanner from '../components_user/MealPlanner'; 
+import MealPlanner from '../components_user/MealPlanner';
 import ShoppingList from '../components_user/ShoppingList';
 import CreateRecipe from '../components_user/CreateRecipe';
 import MyRecipes from '../components_user/MyRecipes';
@@ -53,24 +54,25 @@ const PublicRoute = ({ children, isLoggedIn, onLogout }) => {
 // PHẦN 2: LOGIC LOGIN/REGISTER
 // =========================================================================
 
-const LoginWrapper = ({ setIsLoggedIn, onLogout, children}) => {
+
+const LoginWrapper = ({ setIsLoggedIn, onLogout, children }) => {
   const navigate = useNavigate();
   const handleLoginSuccess = (role) => {
     setIsLoggedIn(true);
-    if (role && role.toUpperCase() == 'ADMIN') {
-        navigate('/admin/dashboard');
+    if (role && role.toUpperCase() === 'ADMIN') {
+      navigate('/admin/dashboard');
     } else {
-        navigate('/');
+      navigate('/');
     }
-  return <AdminLayout onLogout={onLogout}>{children}</AdminLayout>;
-};
+    return <AdminLayout onLogout={onLogout}>{children}</AdminLayout>;
+  };
 
 
   return (
-    <Login 
-      onLogin={handleLoginSuccess} 
-      onSwitchToRegister={() => navigate('/register')} 
-      onSwitchToForgotPassword={() => navigate('/forgot-password')} 
+    <Login
+      onLogin={handleLoginSuccess}
+      onSwitchToRegister={() => navigate('/register')}
+      onSwitchToForgotPassword={() => navigate('/forgot-password')}
     />
   );
 };
@@ -93,7 +95,7 @@ const ForgotPasswordWrapper = () => {
 const AppRouter = ({ isLoggedIn, setIsLoggedIn, onLogout }) => {
   return (
     <Routes>
-     
+
 
       <Route path="/login" element={!isLoggedIn ? <LoginWrapper setIsLoggedIn={setIsLoggedIn} /> : <Navigate to="/" replace />} />
       <Route path="/register" element={!isLoggedIn ? <RegisterWrapper /> : <Navigate to="/" replace />} />
@@ -101,7 +103,7 @@ const AppRouter = ({ isLoggedIn, setIsLoggedIn, onLogout }) => {
 
 
 
-     
+
       <Route path="/admin/dashboard" element={
         <AdminGuard isLoggedIn={isLoggedIn} onLogout={onLogout}>
           <Dashboard />
@@ -114,7 +116,7 @@ const AppRouter = ({ isLoggedIn, setIsLoggedIn, onLogout }) => {
         </PublicRoute>
       } />
 
-      
+
 
 
       <Route path="/post/:id" element={
@@ -139,7 +141,7 @@ const AppRouter = ({ isLoggedIn, setIsLoggedIn, onLogout }) => {
       <Route path="/shopping-list" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><ShoppingList /></ProtectedRoute>} />
       <Route path="/create-recipe" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><CreateRecipe /></ProtectedRoute>} />
       <Route path="/edit-recipe/:id" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><EditRecipe /></ProtectedRoute>} />
-      <Route path="/user/:id" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><div>Trang xem user khác</div></ProtectedRoute>} />
+      <Route path="/user/:id" element={<ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}><UserPublicProfile /></ProtectedRoute>} />
 
 
 
@@ -154,7 +156,7 @@ const AppRouter = ({ isLoggedIn, setIsLoggedIn, onLogout }) => {
           <MyCookbooks />
         </ProtectedRoute>
       } />
-      
+
       <Route path="/cookbook/:id" element={
         <ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}>
           <CookbookDetail />
@@ -163,13 +165,13 @@ const AppRouter = ({ isLoggedIn, setIsLoggedIn, onLogout }) => {
 
       <Route path="/meal-planner" element={
         <ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}>
-           <MealPlanner />
+          <MealPlanner />
         </ProtectedRoute>
       } />
 
       <Route path="/shopping-list" element={
-          <ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}>
-            <ShoppingList />
+        <ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}>
+          <ShoppingList />
         </ProtectedRoute>
       } />
 
@@ -179,13 +181,11 @@ const AppRouter = ({ isLoggedIn, setIsLoggedIn, onLogout }) => {
         </ProtectedRoute>
       } />
 
-      <Route path="/user/:id" element={
-        <ProtectedRoute isLoggedIn={isLoggedIn} onLogout={onLogout}>
-           <div className="placeholder-page">
-              <h2>Trang cá nhân người dùng (Public View)</h2>
-           </div>
+      {/* <Route path="/user/:id" element={
+        <ProtectedRoute isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn}>
+          <UserPublicProfile />
         </ProtectedRoute>
-      } />
+      } /> */}
 
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

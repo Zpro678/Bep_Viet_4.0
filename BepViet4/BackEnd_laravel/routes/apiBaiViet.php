@@ -24,3 +24,4 @@ Route::middleware('auth:sanctum')->group(function () {
     
 });
 
+Route::get('/users/{id}/posts', [BaiVietController::class, 'getDanhSachBaiViet']);

@@ -8,7 +8,6 @@ use App\Http\Controllers\CongThucController;
 Route::middleware('auth:sanctum')->group(function(){
     
     Route::post('/addRecipes', [CongThucController::class, 'store']);
-    Route::get('/users/{id}/recipes',[CongThucController::class, 'getDanhSachCongThuc'])->where('id', '[0-9]+');
     Route::get('/feed', [CongThucController::class, 'getNewsFeed']);
 
     // EXPLORE(Trang Khám phá) – CHỈ CÔNG THỨC – ƯU TIÊN NGƯỜI THEO DÕI
@@ -17,6 +16,7 @@ Route::middleware('auth:sanctum')->group(function(){
         [CongThucController::class, 'exploreCongThuc']
     )->where('id', '[0-9]+');
 });
+Route::get('/users/{id}/recipes',[CongThucController::class, 'getDanhSachCongThuc'])->where('id', '[0-9]+');
 
 // EXPLORE(Trang Khám phá) – CHỈ CÔNG THỨC – ƯU TIÊN NGƯỜI THEO DÕI
 Route::get(

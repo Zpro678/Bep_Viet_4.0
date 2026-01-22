@@ -9,6 +9,7 @@ use App\Exceptions\ForbiddenException;
 use App\Models\BaiViet;
 use App\Models\HinhAnhBaiViet; 
 use Illuminate\Support\Facades\Storage; 
+use App\Models\NguoiDung;
 
 class BaiVietController extends Controller
 {
@@ -189,4 +190,62 @@ class BaiVietController extends Controller
             ], 403);
         }
     }
+
+
+    // lấy danh sách bài viết của 1 member
+    public function getDanhSachBaiViet($id)
+    {
+        // Kiểm tra người dùng tồn tại
+        $user = NguoiDung::where('ma_nguoi_dung', $id)->first();
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Người dùng không tồn tại'
+            ], 404);
+        }
+
+        // Lấy danh sách bài viết của người dùng
+        $posts = BaiViet::where('ma_nguoi_dung', $id)
+            ->with([
+                'nguoiDung:ma_nguoi_dung,ho_ten',
+                'hinhAnh:ma_bai_viet,duong_dan'
+            ])
+            ->select(
+                'ma_bai_viet',
+                'ma_nguoi_dung',
+                'tieu_de',
+                'noi_dung',
+                'hinh_anh_dai_dien',
+                'ngay_dang',
+                'luot_yeu_thich',
+                'luot_chia_se'
+            )
+            ->orderBy('ngay_dang', 'desc')
+            ->paginate(10);
+
+        // Transform dữ liệu cho frontend
+        $posts->getCollection()->transform(function ($post) {
+            return [
+                'id' => $post->ma_bai_viet,
+                'tieu_de' => $post->tieu_de,
+                'noi_dung' => $post->noi_dung,
+                'hinh_anh' => $post->hinh_anh_dai_dien
+                    ? $post->hinh_anh_dai_dien
+                    : ($post->hinhAnh->first()->duong_dan ?? null),
+                'luot_yeu_thich' => $post->luot_yeu_thich,
+                'luot_chia_se' => $post->luot_chia_se,
+                'ngay_dang' => $post->ngay_dang,
+                'nguoi_dung' => [
+                    'id' => $post->nguoiDung->ma_nguoi_dung,
+                    'ho_ten' => $post->nguoiDung->ho_ten,
+                ]
+            ];
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $posts
+        ], 200);
+    }
 }
+

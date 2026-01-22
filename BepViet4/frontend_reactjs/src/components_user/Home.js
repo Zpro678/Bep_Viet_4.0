@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import  postService  from '../services/postService';
+import postService from '../services/postService';
 import { useNavigate } from 'react-router-dom';
 import {
     FaRegHeart, FaHeart, FaComment, FaShare,
@@ -52,7 +52,7 @@ const ImageGrid = ({ images }) => {
     let safeImages = Array.isArray(images) ? images : [];
     const count = safeImages.length;
     const getPath = (img) => (typeof img === 'string' ? img : img.duong_dan || img.path || '');
-    
+
     let gridClass = count === 2 ? 'grid-2' : count === 3 ? 'grid-3' : count >= 4 ? 'grid-4' : 'grid-1';
     const displayImages = safeImages.slice(0, 4);
     const remaining = count - 4;
@@ -138,13 +138,13 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated, currentUser }) => {
                 <div className="modal-body">
                     <input type="text" className="post-title-input" placeholder="Tiêu đề bài viết..." value={tieuDe} onChange={e => setTieuDe(e.target.value)} />
                     <textarea className="post-input-area" placeholder={`${currentUser.name} ơi, bạn đang nghĩ gì thế?`} value={noiDung} onChange={e => setNoiDung(e.target.value)} />
-                    
+
                     {previewUrls.length > 0 && (
                         <div className="edit-preview-container" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
                             {previewUrls.map((url, index) => (
                                 <div key={index} style={{ position: 'relative', width: '60px', height: '60px' }}>
                                     <img src={url} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
-                                    <button onClick={() => removeImage(index)} style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'red', color: 'white', border: 'none', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px' }}><FaTimes size={8}/></button>
+                                    <button onClick={() => removeImage(index)} style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'red', color: 'white', border: 'none', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px' }}><FaTimes size={8} /></button>
                                 </div>
                             ))}
                         </div>
@@ -237,13 +237,13 @@ const EditPostModal = ({ isOpen, onClose, onPostUpdated, post }) => {
                 <div className="modal-body">
                     <input type="text" className="post-title-input" value={tieuDe} onChange={e => setTieuDe(e.target.value)} />
                     <textarea className="post-input-area" value={noiDung} onChange={e => setNoiDung(e.target.value)} />
-                    
+
                     {previewUrls.length > 0 && (
                         <div className="edit-preview-container" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
                             {previewUrls.map((url, index) => (
                                 <div key={index} style={{ position: 'relative', width: '60px', height: '60px' }}>
                                     <img src={url} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
-                                    <button onClick={() => removeImage(index)} style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'red', color: 'white', border: 'none', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px' }}><FaTimes size={8}/></button>
+                                    <button onClick={() => removeImage(index)} style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'red', color: 'white', border: 'none', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px' }}><FaTimes size={8} /></button>
                                 </div>
                             ))}
                         </div>
@@ -282,7 +282,7 @@ const PostCard = ({ post, currentUser, onDeletePost, onUpdatePost }) => {
             try {
                 const data = await postService.getPostLikeInfo(postId);
                 if (data) { setLikeCount(Number(data.total_likes)); setIsLiked(!!data.has_liked); }
-            } catch (e) {}
+            } catch (e) { }
         };
         fetchLike();
     }, [postId]);
@@ -292,16 +292,31 @@ const PostCard = ({ post, currentUser, onDeletePost, onUpdatePost }) => {
         try {
             const res = await postService.toggleLikePost(postId);
             if (res) { setIsLiked(!!res.has_liked); setLikeCount(Number(res.total_likes)); }
-        } catch (e) {}
+        } catch (e) { }
+    };
+
+    // tới trang public profile của user theo id
+    const goToProfile = (e) => {
+        e.stopPropagation(); // ngăn sự kiện click lan ra ngoài
+        navigate(`/user/${postAuthorId}`);
     };
 
     return (
         <div className="post-card">
             <div className="post-header">
-                <div className="user-info-wrapper">
-                    <UserAvatar src={post.nguoi_dung?.anh_dai_dien || post.user?.avatar} name={post.nguoi_dung?.ho_ten || post.user?.name} className="avatar" />
+                <div className="user-info-wrapper"
+                    style={{ cursor: 'pointer', fontWeight: 'bold' }}
+                    onClick={goToProfile} // sang profile
+                >
+                    <UserAvatar src={post.nguoi_dung?.anh_dai_dien || post.user?.avatar}
+                        name={post.nguoi_dung?.ho_ten || post.user?.name}
+                        className="avatar"
+                    />
                     <div className="user-info">
-                        <span className="username">{post.nguoi_dung?.ho_ten || post.user?.name}</span>
+                        <span className="username"
+                            style={{ cursor: 'pointer', fontWeight: 'bold' }}
+                            onClick={goToProfile} // sang profile
+                        >{post.nguoi_dung?.ho_ten || post.user?.name}</span>
                         <span className="post-date">{post.ngay_dang ? new Date(post.ngay_dang).toLocaleString('vi-VN') : 'Vừa xong'}</span>
                     </div>
                 </div>
@@ -402,12 +417,12 @@ const Home = () => {
                     <div style={{ textAlign: 'center', padding: '20px' }}>Đang tải...</div>
                 ) : posts.length > 0 ? (
                     posts.map(post => (
-                        <PostCard 
-                            key={post.ma_bai_viet || post.id} 
-                            post={post} 
-                            currentUser={currentUser} 
-                            onDeletePost={handlePostDeleted} 
-                            onUpdatePost={handlePostUpdated} 
+                        <PostCard
+                            key={post.ma_bai_viet || post.id}
+                            post={post}
+                            currentUser={currentUser}
+                            onDeletePost={handlePostDeleted}
+                            onUpdatePost={handlePostUpdated}
                         />
                     ))
                 ) : (
@@ -415,11 +430,11 @@ const Home = () => {
                 )}
             </div>
 
-            <CreatePostModal 
-                isOpen={isCreateModalOpen} 
-                onClose={() => setIsCreateModalOpen(false)} 
-                onPostCreated={handlePostCreated} 
-                currentUser={currentUser} 
+            <CreatePostModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onPostCreated={handlePostCreated}
+                currentUser={currentUser}
             />
         </div>
     );
