@@ -11,6 +11,8 @@ const SIDEBAR_ITEMS = [
 
 const CATEGORY_ITEMS = [
   { label: 'Nguyên liệu', path: '/admin/categories/ingredients', icon: 'egg' },
+  { label: 'Danh mục', path: '/admin/categories/category', icon: 'category' }, 
+  { label: 'Vùng miền', path: '/admin/categories/regions', icon: 'public' },
 ];
 
 const AdminLayout = ({ onLogout }) => {

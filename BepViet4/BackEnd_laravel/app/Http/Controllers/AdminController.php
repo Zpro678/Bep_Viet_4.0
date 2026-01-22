@@ -12,7 +12,7 @@ use App\Models\BaiViet;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Exception;
-
+use Illuminate\Support\Facades\Log;
 class AdminController extends Controller
 {
 
@@ -265,7 +265,7 @@ public function getDanhSachNguoiDung(Request $request)
 
     } catch (Exception $e) {
         // Log lỗi ra để bạn debug trong Laravel log
-        \Log::error("Dashboard Error: " . $e->getMessage());
+        Log::error("Dashboard Error: " . $e->getMessage());
         
         return response()->json([
             'message' => 'Lỗi Backend: ' . $e->getMessage()

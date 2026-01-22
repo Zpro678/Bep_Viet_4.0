@@ -20,6 +20,24 @@ class DanhMucController extends Controller
         ], 200);
     }
 
+    public function show($id)
+    {
+        $danhMuc = DanhMuc::find($id);
+
+        if (!$danhMuc) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Không tìm thấy danh mục'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Lấy thông tin danh mục thành công',
+            'data' => $danhMuc
+        ], 200);
+    }
+
     public function store(Request $request)
     {
         // 1. Kiểm tra quyền Admin (Placeholder)
@@ -100,5 +118,44 @@ class DanhMucController extends Controller
             'message' => 'Cập nhật danh mục thành công',
             'data'    => $danhMuc
         ], 200);
+    }
+    public function destroy($id)
+    {
+        // 1. Tìm danh mục
+        $danhMuc = DanhMuc::find($id);
+
+        if (!$danhMuc) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Không tìm thấy danh mục'
+            ], 404);
+        }
+
+        // 2. (Tùy chọn) Kiểm tra xem có bài viết/công thức nào thuộc danh mục này không?
+        // Nếu có thì chặn không cho xóa để tránh lỗi dữ liệu.
+        // Giả sử model DanhMuc có quan hệ hasMany với model CongThuc
+        /*
+        $count = $danhMuc->congThuc()->count();
+        if ($count > 0) {
+            return response()->json([
+                'status' => false, 
+                'message' => 'Danh mục này đang chứa ' . $count . ' công thức, không thể xóa!'
+            ], 400);
+        }
+        */
+
+        // 3. Thực hiện xóa
+        try {
+            $danhMuc->delete();
+            return response()->json([
+                'status' => true,
+                'message' => 'Xóa danh mục thành công'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Lỗi hệ thống: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

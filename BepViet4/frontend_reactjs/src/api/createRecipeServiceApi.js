@@ -1,15 +1,13 @@
-import axiosClient from '../api/axiosClient';
+import axiosClient from './axiosClient';
 
- const createRecipeService = {
+const createRecipeService = {
   /**
    * API tạo công thức mới
-   * @param {FormData} 
    */
   create: (formData) => {
-  
     return axiosClient.post('/addRecipes', formData, {
       headers: {
-        'Content-Type': 'multipart/form-data', 
+        'Content-Type': 'multipart/form-data',
       },
     });
   },
@@ -17,17 +15,26 @@ import axiosClient from '../api/axiosClient';
   update: (id, formData) => {
     return axiosClient.post(`/recipes/${id}/update`, formData, {
       headers: {
-                'Content-Type': 'multipart/form-data', // Bắt buộc cho file upload
-            }
+        'Content-Type': 'multipart/form-data',
+      }
     });
   },
 
   delete: (id) => {
-  
     return axiosClient.delete(`/recipes/${id}/destroy`);
   },
+
+  // --- THÊM MỚI 2 HÀM NÀY ---
+  
+  // Lấy danh sách danh mục
+  getCategories: () => {
+    return axiosClient.get('/categories');
+  },
+
+  // Lấy danh sách vùng miền
+  getRegions: () => {
+    return axiosClient.get('/regions');
+  }
 };
-
-
 
 export default createRecipeService;

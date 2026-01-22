@@ -10,6 +10,9 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::post('/addRecipes', [CongThucController::class, 'store']);
     Route::get('/feed', [CongThucController::class, 'getNewsFeed']);
 
+    // (Trang Công thức cá nhân)
+    Route::get('/users/{id}/my-recipes', [CongThucController::class, 'getCongThucCuaToi']);
+
     // EXPLORE(Trang Khám phá) – CHỈ CÔNG THỨC – ƯU TIÊN NGƯỜI THEO DÕI
     Route::get(
         '/users/{id}/explore/recipes',
@@ -21,7 +24,7 @@ Route::get('/users/{id}/recipes',[CongThucController::class, 'getDanhSachCongThu
 // EXPLORE(Trang Khám phá) – CHỈ CÔNG THỨC – ƯU TIÊN NGƯỜI THEO DÕI
 Route::get(
     '/explore/recipes',
-    [CongThucController::class, 'getDanhSachCongThuc']
+    [CongThucController::class, 'getDanhSachCongThuc_KhamPha']
 );
 
 
