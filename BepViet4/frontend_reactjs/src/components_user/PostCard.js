@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { postService } from '../services/postService';
+import  postService  from '../services/postService';
 
 const PostCard = ({ post }) => {
   const navigate = useNavigate();
@@ -8,7 +8,7 @@ const PostCard = ({ post }) => {
   const [likes, setLikes] = useState(post.likes_count);
 
   const handleDetailClick = () => {
-    navigate(`/recipe/${post.id}`);
+    navigate(`/posts/${post.id}`);
   };
 
   const handleLike = async (e) => {
@@ -49,7 +49,14 @@ const PostCard = ({ post }) => {
         {post.content}
       </div>
 
-      <img src={post.image} className="post-image" onClick={handleDetailClick} />
+      {/* <img src={post.image} className="post-image" onClick={handleDetailClick} /> */}
+      {post.image && (
+        <img
+          src={post.image}
+          className="post-image"
+          onClick={handleDetailClick}
+        />
+      )}
 
       <div className="post-actions">
         <span onClick={handleLike}>
